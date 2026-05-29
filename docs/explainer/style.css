@@ -1,0 +1,356 @@
+/* ============================================================
+   localhost-pages — explainer site, shared stylesheet
+   Each page sets its own identity colour with:
+     <style>:root{ --accent:#xxxxxx }</style>
+   ============================================================ */
+
+:root {
+  --bg:        #16141d;
+  --bg-deep:   #110f17;
+  --panel:     #1f1c29;
+  --panel-2:   #262232;
+  --line:      #322d40;
+  --ink:       #e9e5f1;
+  --muted:     #948da8;
+  --faint:     #645d78;
+
+  --sage:    #a8c8a3;
+  --mauve:   #c8a3c4;
+  --rose:    #d6a3a3;
+  --powder:  #a3b8d6;
+  --sand:    #c4b8a3;
+  --mist:    #a3c4c4;
+  --peach:   #d6c4a3;
+  --lavender:#b8a3d6;
+  --honey:   #e0d0b5;
+  --thistle: #c8bcdc;
+
+  --accent:  #b8a3d6;   /* default — overridden per page */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ---------- atmosphere ---------- */
+.atmos {
+  position: fixed; inset: 0; z-index: -2;
+  background:
+    radial-gradient(680px 520px at 82% -4%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 70%),
+    radial-gradient(720px 600px at 6% 8%, rgba(163,184,214,0.12), transparent 70%),
+    radial-gradient(900px 700px at 50% 108%, rgba(168,200,163,0.10), transparent 70%),
+    var(--bg);
+}
+.grain {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  opacity: 0.4;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+}
+
+/* ---------- layout ---------- */
+.wrap { max-width: 1000px; margin: 0 auto; padding: 0 28px; }
+section { padding: 64px 0; }
+
+/* ---------- status bar / breadcrumb ---------- */
+.statusbar {
+  position: sticky; top: 0; z-index: 50;
+  backdrop-filter: blur(10px);
+  background: rgba(22,20,29,0.78);
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.statusbar .wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 11px; padding-bottom: 11px;
+}
+.crumb { color: var(--faint); letter-spacing: 0.04em; }
+.crumb a { color: var(--muted); text-decoration: none; transition: color .15s ease; }
+.crumb a:hover { color: var(--ink); }
+.crumb b { color: var(--ink); font-weight: 600; }
+.crumb .sep { color: var(--faint); margin: 0 8px; }
+.crumb .here { color: var(--accent); }
+.live { display: inline-flex; align-items: center; gap: 8px; color: var(--sage); }
+.live .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--sage);
+  animation: pulse 2.4s infinite;
+}
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(168,200,163,0.5); }
+  70%  { box-shadow: 0 0 0 9px rgba(168,200,163,0); }
+  100% { box-shadow: 0 0 0 0 rgba(168,200,163,0); }
+}
+
+/* ---------- hero ---------- */
+.hero { padding-top: 90px; padding-bottom: 30px; }
+.eyebrow {
+  font-size: 12px; letter-spacing: 0.34em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 24px;
+}
+h1 {
+  font-family: 'Instrument Serif', serif;
+  font-weight: 400;
+  font-size: clamp(50px, 8.5vw, 108px);
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+}
+h1 em { font-style: italic; color: var(--accent); }
+h1 .mono {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.4em;
+  letter-spacing: -0.02em;
+  color: var(--sand);
+  vertical-align: 0.2em;
+}
+.hero p.lede {
+  margin-top: 28px; max-width: 660px;
+  color: var(--muted); font-size: 16px;
+}
+.hero p.lede b { color: var(--ink); font-weight: 500; }
+
+.stats { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 40px; }
+.stat {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  padding: 15px 22px; border-radius: 3px;
+}
+.stat .n {
+  font-family: 'Instrument Serif', serif;
+  font-size: 36px; line-height: 1; color: var(--ink);
+}
+.stat .l {
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--faint); margin-top: 7px;
+}
+
+/* ---------- section heading ---------- */
+.shead { margin-bottom: 36px; }
+.shead .tag {
+  font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase;
+  color: var(--faint); display: flex; align-items: center; gap: 12px;
+}
+.shead .tag::before { content: ""; width: 28px; height: 1px; background: var(--line); }
+.shead h2 {
+  font-family: 'Instrument Serif', serif;
+  font-weight: 400; font-size: clamp(32px, 5vw, 50px);
+  margin-top: 12px; line-height: 1.05; letter-spacing: -0.01em;
+}
+.shead h2 .mono {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.6em; color: var(--sand); vertical-align: 0.1em;
+}
+.shead p { margin-top: 13px; max-width: 660px; color: var(--muted); font-size: 14px; }
+
+/* ---------- prose ---------- */
+.prose { max-width: 720px; }
+.prose p { color: var(--muted); font-size: 14px; margin-bottom: 14px; }
+.prose p b { color: var(--ink); font-weight: 500; }
+.prose p:last-child { margin-bottom: 0; }
+
+/* inline code token */
+code.tok {
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-size: 0.86em;
+  color: var(--sand);
+  white-space: nowrap;
+}
+
+/* ---------- code block ---------- */
+.code {
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  margin: 22px 0;
+  overflow: hidden;
+}
+.code .cap {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+  font-size: 11px; color: var(--faint);
+  letter-spacing: 0.04em;
+}
+.code .cap .fn { color: var(--accent); }
+.code pre {
+  margin: 0; padding: 16px 0;
+  overflow-x: auto;
+  font-size: 12.7px; line-height: 1.78;
+}
+.code .cl { display: flex; padding: 0 16px; white-space: pre; }
+.code .cl:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.code .ln {
+  display: inline-block; width: 32px;
+  color: #443e54; text-align: right;
+  margin-right: 20px; user-select: none; flex: none;
+}
+.code .ct { color: #c4bfd2; }
+.k  { color: var(--lavender); }   /* keyword */
+.s  { color: var(--sage); }       /* string */
+.d  { color: var(--peach); }      /* decorator */
+.c  { color: var(--faint); font-style: italic; } /* comment */
+.f  { color: var(--mist); }       /* function / call */
+.n  { color: var(--rose); }       /* number / literal */
+
+/* annotation block under code */
+.ann { border-left: 2px solid var(--line); padding-left: 18px; margin: 0 0 8px 0; }
+.ann .row { display: flex; gap: 14px; padding: 7px 0; }
+.ann .lref { flex: none; width: 64px; font-size: 11px; color: var(--accent); padding-top: 2px; }
+.ann .txt { font-size: 13px; color: var(--muted); }
+.ann .txt b { color: var(--ink); font-weight: 500; }
+
+/* ---------- numbered cards (guards / steps) ---------- */
+.guards { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; margin-top: 22px; }
+.guard {
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--accent);
+  background: var(--panel);
+  border-radius: 3px; padding: 18px 20px;
+}
+.guard .gl {
+  font-size: 30px; font-family: 'Instrument Serif', serif;
+  color: var(--accent); line-height: 0.9; margin-bottom: 8px;
+}
+.guard h4 { font-size: 13px; color: var(--ink); margin-bottom: 6px; }
+.guard p { font-size: 12px; color: var(--muted); }
+
+/* ---------- callout notes ---------- */
+.notes { display: grid; gap: 12px; }
+.note {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--ac, var(--accent));
+  background: var(--panel);
+  border-radius: 3px;
+  padding: 16px 20px;
+}
+.note h4 { font-size: 13px; color: var(--ink); margin-bottom: 5px; }
+.note p { font-size: 12.5px; color: var(--muted); }
+
+/* ---------- definition rows (signature / field table) ---------- */
+.rows { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.drow {
+  display: grid; grid-template-columns: 200px 1fr;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+.drow:last-child { border-bottom: none; }
+.drow .dk {
+  padding: 13px 16px; font-size: 12.5px; color: var(--accent);
+  border-right: 1px solid var(--line); word-break: break-word;
+}
+.drow .dv { padding: 13px 16px; font-size: 12.5px; color: var(--muted); }
+.drow .dv b { color: var(--ink); font-weight: 500; }
+
+/* ---------- home: file grid ---------- */
+.filegrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.filecard {
+  position: relative;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 4px;
+  padding: 22px 24px;
+  text-decoration: none;
+  display: block;
+  overflow: hidden;
+  transition: transform .2s ease, border-color .2s ease, background .2s ease;
+}
+.filecard::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--fc, var(--lavender));
+}
+.filecard:hover {
+  transform: translateY(-3px);
+  border-color: var(--fc, var(--lavender));
+  background: var(--panel-2);
+}
+.filecard .ord {
+  font-size: 11px; color: var(--faint); letter-spacing: 0.1em;
+}
+.filecard .fn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 16px; font-weight: 600; color: var(--ink);
+  margin-top: 6px;
+}
+.filecard .fn b { color: var(--fc, var(--lavender)); font-weight: 600; }
+.filecard .role { margin-top: 10px; font-size: 12.5px; color: var(--muted); }
+.filecard .foot {
+  margin-top: 16px; padding-top: 13px;
+  border-top: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; color: var(--faint);
+}
+.filecard .foot .go { color: var(--fc, var(--lavender)); }
+.filecard.span2 { grid-column: 1 / -1; }
+
+/* ---------- reading order list ---------- */
+.reading { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.rrow {
+  display: grid; grid-template-columns: 54px 1fr;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+.rrow:last-child { border-bottom: none; }
+.rrow .ri {
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Instrument Serif', serif; font-size: 26px;
+  color: var(--faint); border-right: 1px solid var(--line);
+}
+.rrow .rc { padding: 16px 22px; }
+.rrow .rc h4 { font-size: 13px; color: var(--ink); margin-bottom: 4px; }
+.rrow .rc h4 span { color: var(--accent); }
+.rrow .rc p { font-size: 12px; color: var(--muted); }
+
+/* ---------- prev / next nav ---------- */
+.pager { display: flex; gap: 14px; margin-top: 8px; }
+.pager a {
+  flex: 1; border: 1px solid var(--line); background: var(--panel);
+  border-radius: 4px; padding: 16px 20px; text-decoration: none;
+  transition: border-color .18s ease, background .18s ease;
+}
+.pager a:hover { border-color: var(--accent); background: var(--panel-2); }
+.pager .lbl { font-size: 11px; color: var(--faint); letter-spacing: 0.1em; }
+.pager .nm { font-size: 14px; color: var(--ink); margin-top: 5px; }
+.pager .nm .mono { font-family: 'IBM Plex Mono', monospace; color: var(--accent); }
+.pager a.next { text-align: right; }
+
+/* ---------- footer ---------- */
+footer {
+  border-top: 1px solid var(--line);
+  padding: 36px 0 64px;
+  color: var(--faint); font-size: 12px;
+}
+footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+footer a { color: var(--muted); text-decoration: none; border-bottom: 1px dotted var(--faint); }
+footer a:hover { color: var(--ink); }
+
+/* ---------- reveal animation ---------- */
+.reveal {
+  opacity: 0; transform: translateY(20px);
+  transition: opacity .65s cubic-bezier(.2,.7,.2,1), transform .65s cubic-bezier(.2,.7,.2,1);
+}
+.reveal.in { opacity: 1; transform: none; }
+.reveal.d1 { transition-delay: .07s; }
+.reveal.d2 { transition-delay: .14s; }
+.reveal.d3 { transition-delay: .21s; }
+
+@media (max-width: 720px) {
+  .guards, .filegrid { grid-template-columns: 1fr; }
+  .filecard.span2 { grid-column: auto; }
+  .drow { grid-template-columns: 1fr; }
+  .drow .dk { border-right: none; border-bottom: 1px solid var(--line); }
+  .pager { flex-direction: column; }
+  section { padding: 48px 0; }
+  .code pre { font-size: 11.6px; }
+}

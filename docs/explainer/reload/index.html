@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>reload.js — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #e0b5b5; }   /* coral — reload.js */
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">static/reload.js</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">reload.js</span><br />closes <em>the loop.</em></h1>
+    <p class="lede reveal d2">
+      Every HTML page that localhost-pages serves gets this script spliced in before <code class="tok">&lt;/body&gt;</code>.
+      It opens a <b>Server-Sent Events</b> stream to <code class="tok">/__events</code>, listens for a
+      <code class="tok">change</code> event, and calls <code class="tok">location.reload()</code>.
+      Sixteen lines — the browser end of the live-reload loop.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">16</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">1</div><div class="l">IIFE</div></div>
+      <div class="stat reveal d3"><div class="n">1</div><div class="l">EventSource</div></div>
+      <div class="stat reveal d3"><div class="n">&#x221e;</div><div class="l">reconnects</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 the whole file ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — the whole file</div>
+      <h2>Sixteen lines. Nothing hidden.</h2>
+      <p>The entire script is an IIFE — immediately-invoked function expression — so it leaves no
+        global variables. It reads its own <code class="tok">data-app</code> attribute, builds a URL,
+        and calls <code class="tok">connect()</code> once to start the event stream.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">reload.js</span><span>lines 1 — 16</span></div>
+      <pre><div class="cl"><span class="ln">1</span><span class="ct">(<span class="k">function</span> () {</span></div><div class="cl"><span class="ln">2</span><span class="ct">  <span class="k">var</span> script = document.<span class="f">currentScript</span>;</span></div><div class="cl"><span class="ln">3</span><span class="ct">  <span class="k">var</span> app = script &amp;&amp; script.<span class="f">getAttribute</span>(<span class="s">"data-app"</span>);</span></div><div class="cl"><span class="ln">4</span><span class="ct">  <span class="k">if</span> (!app) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">5</span><span class="ct">  <span class="k">var</span> url = <span class="s">"/__events?app="</span> + <span class="f">encodeURIComponent</span>(app);</span></div><div class="cl"><span class="ln">6</span><span class="ct">  <span class="k">var</span> es;</span></div><div class="cl"><span class="ln">7</span><span class="ct">  <span class="k">function</span> <span class="f">connect</span>() {</span></div><div class="cl"><span class="ln">8</span><span class="ct">    es = <span class="k">new</span> <span class="f">EventSource</span>(url);</span></div><div class="cl"><span class="ln">9</span><span class="ct">    es.<span class="f">addEventListener</span>(<span class="s">"change"</span>, <span class="k">function</span> () { location.<span class="f">reload</span>(); });</span></div><div class="cl"><span class="ln">10</span><span class="ct">    es.onerror = <span class="k">function</span> () {</span></div><div class="cl"><span class="ln">11</span><span class="ct">      es.<span class="f">close</span>();</span></div><div class="cl"><span class="ln">12</span><span class="ct">      <span class="f">setTimeout</span>(<span class="f">connect</span>, <span class="n">1000</span>);</span></div><div class="cl"><span class="ln">13</span><span class="ct">    };</span></div><div class="cl"><span class="ln">14</span><span class="ct">  }</span></div><div class="cl"><span class="ln">15</span><span class="ct">  <span class="f">connect</span>();</span></div><div class="cl"><span class="ln">16</span><span class="ct">})();</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">2 — 3</div>
+        <div class="txt"><code class="tok">document.currentScript</code> is valid while the script executes — it points
+          to the <code class="tok">&lt;script&gt;</code> tag that <b>inject.py</b> spliced in. The
+          <code class="tok">data-app</code> attribute on that tag is the app name,
+          HTML-escaped by <code class="tok">inject.py</code> at serve time.</div>
+      </div>
+      <div class="row">
+        <div class="lref">4</div>
+        <div class="txt">If <code class="tok">data-app</code> is absent the script exits immediately — a silent no-op.
+          This makes the file safe to load in isolation, without a host page.</div>
+      </div>
+      <div class="row">
+        <div class="lref">5</div>
+        <div class="txt">The SSE endpoint — <code class="tok">/__events?app=&lt;name&gt;</code>. The name is
+          <b>URI-encoded</b> so any app name, even one with spaces or special characters, survives the
+          query string intact.</div>
+      </div>
+      <div class="row">
+        <div class="lref">8</div>
+        <div class="txt"><code class="tok">new EventSource(url)</code> opens a long-lived HTTP connection.
+          The browser holds it open, reading newline-delimited frames as they arrive —
+          the SSE protocol, native in every modern browser.</div>
+      </div>
+      <div class="row">
+        <div class="lref">9</div>
+        <div class="txt">The <b>only</b> event the script cares about: <code class="tok">change</code>.
+          When <code class="tok">server.py</code>'s <code class="tok">/__events</code> route streams
+          <code class="tok">event: change\n</code>, this listener fires and
+          <code class="tok">location.reload()</code> refreshes the tab.</div>
+      </div>
+      <div class="row">
+        <div class="lref">10 — 13</div>
+        <div class="txt">The error handler. <code class="tok">es.close()</code> tears down the dead connection;
+          <code class="tok">setTimeout(connect, 1000)</code> schedules a fresh one a second later —
+          an automatic reconnect loop with a one-second backoff.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 resilience ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — resilience</div>
+      <h2>Four lines that keep the tab alive.</h2>
+      <p>The <code class="tok">onerror</code> handler is small, but it handles every failure mode
+        the developer actually encounters day-to-day.</p>
+    </div>
+
+    <div class="prose reveal d1">
+      <p>An <code class="tok">EventSource</code> connection breaks in three common situations:
+        the <b>server restarts</b> during a code change, the <b>laptop sleeps</b> and the OS kills
+        idle connections, or an intermediate <b>proxy</b> closes the stream after a timeout. Without
+        an error handler, the <code class="tok">EventSource</code> enters a browser-managed retry loop
+        with exponential back-off — which is slow and not always reliable across all browsers.</p>
+      <p>With the explicit <code class="tok">onerror</code> on lines 10 — 13 the behaviour is
+        predictable: close the stale object immediately, wait exactly <b>one second</b>, and call
+        <code class="tok">connect()</code> again. The tab re-establishes its stream silently — no
+        user action required, no stale state. The developer saves a file, the server restarts, and
+        a second later the tab is listening again.</p>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>Why <code class="tok" style="font-size:.82em">es.close()</code> before <code class="tok" style="font-size:.82em">setTimeout</code>?</h4>
+      <p>The browser can fire <code class="tok">onerror</code> while the underlying connection is still
+        in a half-open state. Calling <code class="tok">close()</code> explicitly puts the
+        <code class="tok">EventSource</code> into <b>CLOSED</b> state and prevents the browser's own
+        reconnect logic from running in parallel with ours — so there is never more than one
+        active connection at a time.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 the full loop ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — the full loop</div>
+      <h2>From file save to tab reload.</h2>
+      <p>This script is the last step of a four-part chain. Each part hands off to the next
+        through a well-defined interface — file events, a pubsub queue, an SSE frame, a browser API.</p>
+    </div>
+
+    <div class="guards reveal d1">
+      <div class="guard">
+        <div class="gl">1</div>
+        <h4>watcher.py detects</h4>
+        <p><code class="tok">watchfiles</code> fires a filesystem event. The watcher resolves which
+          app owns the changed path and publishes the app's topic name to the shared
+          <code class="tok">PubSub</code> broker.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">2</div>
+        <h4>pubsub.py fans out</h4>
+        <p><code class="tok">PubSub.publish(topic)</code> puts the message into every
+          <code class="tok">asyncio.Queue</code> subscribed to that topic — one queue per open browser tab
+          watching the same app.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">3</div>
+        <h4>server.py streams</h4>
+        <p>The <code class="tok">/__events</code> route's <code class="tok">stream()</code> generator
+          wakes, dequeues the message, and yields
+          <code class="tok">event: change\ndata: &lt;topic&gt;\n\n</code> — a valid SSE frame — over
+          the long-lived HTTP connection.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">4</div>
+        <h4>reload.js reloads</h4>
+        <p>The <code class="tok">EventSource</code> delivers the frame as a JavaScript
+          <code class="tok">change</code> event. The listener on line 9 fires:
+          <code class="tok">location.reload()</code>. The tab refreshes. Loop complete.</p>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--mist); margin-top:22px">
+      <h4>Where inject.py fits in</h4>
+      <p><code class="tok">inject.py</code>'s <code class="tok">inject_reload_script()</code> is called
+        by <code class="tok">server.py</code>'s file-serving route for every HTML response. It splices
+        <code class="tok">&lt;script data-app="&hellip;" src="/__static/reload.js"&gt;&lt;/script&gt;</code>
+        before <code class="tok">&lt;/body&gt;</code>. The source file on disk is never touched —
+        the injection happens <b>at serve time</b>, on the way out. This script is what that
+        injected tag loads.</p>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/styles/">
+        <div class="lbl">&larr; PREVIOUS</div>
+        <div class="nm"><span class="mono">index.css</span></div>
+      </a>
+      <a class="next" href="/technical-explanation/lp-log/">
+        <div class="lbl">NEXT &rarr;</div>
+        <div class="nm"><span class="mono">lp-log.js</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/static/reload.js — 16 lines, the browser end of the live-reload loop.</span>
+    <span><a href="/technical-explanation/">&larr; all the files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

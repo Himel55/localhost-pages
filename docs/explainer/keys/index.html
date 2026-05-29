@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>keys.js — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #96b4b4; }   /* slate — keys.js */
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">static/keys.js</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">keys.js</span><br />hands on the <em>home row.</em></h1>
+    <p class="lede reveal d2">
+      Seven key bindings, zero state. <code class="tok">keys.js</code> moves a <b>.kbd-focus</b> highlight
+      around the list — then delegates every real action by calling <b>.click()</b> on whichever
+      button the focused row already owns. It never reimplements delete, pin, or edit.
+      It just presses the button.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">95</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">7</div><div class="l">bindings</div></div>
+      <div class="stat reveal d3"><div class="n">0</div><div class="l">own state</div></div>
+      <div class="stat reveal d3"><div class="n">delegates</div><div class="l">clicks</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 the shortcut map ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — the shortcut map</div>
+      <h2>Seven bindings. Every one declared upfront.</h2>
+      <p>The file opens with an exact manifest of what it handles — and what it intentionally
+        leaves to others. <code class="tok">/</code> and <code class="tok">Esc</code> are called out
+        explicitly because those are <em>shared</em> keys that other modules touch too.</p>
+    </div>
+
+    <div class="rows reveal d1">
+      <div class="drow">
+        <div class="dk"><code class="tok">j</code> / <code class="tok">ArrowDown</code></div>
+        <div class="dv">Focus the <b>next</b> visible row — skips rows hidden by search filtering.</div>
+      </div>
+      <div class="drow">
+        <div class="dk"><code class="tok">k</code> / <code class="tok">ArrowUp</code></div>
+        <div class="dv">Focus the <b>previous</b> visible row.</div>
+      </div>
+      <div class="drow">
+        <div class="dk"><code class="tok">Enter</code></div>
+        <div class="dv">Open the focused row — delegates to <code class="tok">row.click()</code>, which <b>peek.js</b> intercepts to open the preview modal.</div>
+      </div>
+      <div class="drow">
+        <div class="dk"><code class="tok">x</code></div>
+        <div class="dv">Arm or confirm delete — finds the row's <code class="tok">.del</code> button and calls <code class="tok">.click()</code>. Logic lives entirely in <b>delete.js</b>.</div>
+      </div>
+      <div class="drow">
+        <div class="dk"><code class="tok">p</code></div>
+        <div class="dv">Toggle pin on the focused row — delegates to the row's <code class="tok">.pin</code> button. Logic lives in <b>pin.js</b>.</div>
+      </div>
+      <div class="drow">
+        <div class="dk"><code class="tok">e</code></div>
+        <div class="dv">Toggle edit mode — delegates to <code class="tok">.edit-toggle</code>. Logic lives in <b>edit.js</b>.</div>
+      </div>
+      <div class="drow">
+        <div class="dk"><code class="tok">Esc</code></div>
+        <div class="dv">Clear keyboard focus — but <b>only</b> when no other module owns Esc. Described in section 04.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="margin-top:22px">
+      <h4><code class="tok" style="font-size:.82em">/</code> is deliberately absent from the switch</h4>
+      <p>The header comment mentions <code class="tok">/</code> for search — but the binding itself is
+        registered in <code class="tok">search.js</code>. <code class="tok">keys.js</code> documents it
+        here only so the full keyboard contract is readable in one place.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 focus tracking ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — focus tracking</div>
+      <h2>Three helpers. One class, moved around.</h2>
+      <p>The entire focus model is a single CSS class, <code class="tok">.kbd-focus</code>, on at most
+        one row at a time. Three functions manage it — and a fourth moves the focus by a delta.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">keys.js</span><span>lines 15 — 38</span></div>
+      <pre><div class="cl"><span class="ln">15</span><span class="ct">  <span class="k">function</span> <span class="f">visibleRows</span>() {</span></div><div class="cl"><span class="ln">16</span><span class="ct">    <span class="k">return</span> Array.<span class="f">from</span>(list.<span class="f">querySelectorAll</span>(<span class="s">'.row'</span>)).<span class="f">filter</span>((r) =&gt; r.style.display !== <span class="s">'none'</span>);</span></div><div class="cl"><span class="ln">17</span><span class="ct">  }</span></div><div class="cl"><span class="ln">18</span><span class="ct"></span></div><div class="cl"><span class="ln">19</span><span class="ct">  <span class="k">function</span> <span class="f">focusedRow</span>() {</span></div><div class="cl"><span class="ln">20</span><span class="ct">    <span class="k">return</span> document.activeElement?.<span class="f">closest</span>?.(<span class="s">'.row'</span>) || document.<span class="f">querySelector</span>(<span class="s">'.row.kbd-focus'</span>);</span></div><div class="cl"><span class="ln">21</span><span class="ct">  }</span></div><div class="cl"><span class="ln">22</span><span class="ct"></span></div><div class="cl"><span class="ln">23</span><span class="ct">  <span class="k">function</span> <span class="f">setFocus</span>(row) {</span></div><div class="cl"><span class="ln">24</span><span class="ct">    list.<span class="f">querySelectorAll</span>(<span class="s">'.row.kbd-focus'</span>).<span class="f">forEach</span>((r) =&gt; r.classList.<span class="f">remove</span>(<span class="s">'kbd-focus'</span>));</span></div><div class="cl"><span class="ln">25</span><span class="ct">    <span class="k">if</span> (!row) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">26</span><span class="ct">    row.classList.<span class="f">add</span>(<span class="s">'kbd-focus'</span>);</span></div><div class="cl"><span class="ln">27</span><span class="ct">    row.<span class="f">scrollIntoView</span>({ block: <span class="s">'nearest'</span> });</span></div><div class="cl"><span class="ln">28</span><span class="ct">  }</span></div><div class="cl"><span class="ln">29</span><span class="ct"></span></div><div class="cl"><span class="ln">30</span><span class="ct">  <span class="k">function</span> <span class="f">move</span>(delta) {</span></div><div class="cl"><span class="ln">31</span><span class="ct">    <span class="k">const</span> rows = <span class="f">visibleRows</span>();</span></div><div class="cl"><span class="ln">32</span><span class="ct">    <span class="k">if</span> (!rows.length) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">33</span><span class="ct">    <span class="k">const</span> current = <span class="f">focusedRow</span>();</span></div><div class="cl"><span class="ln">34</span><span class="ct">    <span class="k">let</span> i = rows.<span class="f">indexOf</span>(current);</span></div><div class="cl"><span class="ln">35</span><span class="ct">    <span class="k">if</span> (i === -<span class="n">1</span>) i = delta &gt; <span class="n">0</span> ? -<span class="n">1</span> : rows.length;</span></div><div class="cl"><span class="ln">36</span><span class="ct">    <span class="k">const</span> next = rows[Math.<span class="f">max</span>(<span class="n">0</span>, Math.<span class="f">min</span>(rows.length - <span class="n">1</span>, i + delta))];</span></div><div class="cl"><span class="ln">37</span><span class="ct">    <span class="f">setFocus</span>(next);</span></div><div class="cl"><span class="ln">38</span><span class="ct">  }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">15 — 17</div>
+        <div class="txt"><b>visibleRows()</b> filters by <code class="tok">display !== 'none'</code> — the exact
+          test <code class="tok">search.js</code> uses to hide non-matching rows. Navigation automatically
+          skips filtered-out rows without any coordination.</div>
+      </div>
+      <div class="row">
+        <div class="lref">19 — 21</div>
+        <div class="txt"><b>focusedRow()</b> checks <code class="tok">activeElement</code> first — if a button
+          inside a row has real DOM focus, that row is the focused one. The <code class="tok">.kbd-focus</code>
+          class is the fallback for when nothing has DOM focus.</div>
+      </div>
+      <div class="row">
+        <div class="lref">23 — 28</div>
+        <div class="txt"><b>setFocus()</b> removes <code class="tok">.kbd-focus</code> from every row before
+          adding it to the new one — enforcing the invariant that at most one row is highlighted.
+          Passing <code class="tok">null</code> clears focus entirely. <code class="tok">scrollIntoView</code>
+          with <code class="tok">nearest</code> avoids jarring jumps.</div>
+      </div>
+      <div class="row">
+        <div class="lref">34 — 35</div>
+        <div class="txt"><b>move(delta)</b> handles the "nothing focused yet" case cleanly. When
+          <code class="tok">indexOf</code> returns <code class="tok">-1</code>, pressing <code class="tok">j</code>
+          (delta &gt; 0) snaps to index <code class="tok">0</code>; pressing <code class="tok">k</code> (delta &lt; 0)
+          snaps to the last row — whichever end is natural for the direction of travel.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 the keydown switch ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — the keydown switch</div>
+      <h2>No logic. Just button clicks.</h2>
+      <p>The <code class="tok">keydown</code> handler first filters out the two contexts where
+        bindings must never fire — then dispatches. The key insight: every case that touches
+        a row finds the appropriate button and calls <code class="tok">.click()</code>.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">keys.js</span><span>lines 40 — 44</span></div>
+      <pre><div class="cl"><span class="ln">40</span><span class="ct">  document.<span class="f">addEventListener</span>(<span class="s">'keydown'</span>, (e) =&gt; {</span></div><div class="cl"><span class="ln">41</span><span class="ct">    <span class="k">const</span> tag = e.target.tagName;</span></div><div class="cl"><span class="ln">42</span><span class="ct">    <span class="k">if</span> (tag === <span class="s">'INPUT'</span> || tag === <span class="s">'TEXTAREA'</span> || tag === <span class="s">'SELECT'</span>) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">43</span><span class="ct">    <span class="k">if</span> (e.metaKey || e.ctrlKey || e.altKey) <span class="k">return</span>;</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">42</div>
+        <div class="txt">All bindings are <b>no-ops when the user is typing</b>. Checking
+          <code class="tok">tagName</code> is the lightest possible guard — no class inspection, no
+          attribute lookup.</div>
+      </div>
+      <div class="row">
+        <div class="lref">43</div>
+        <div class="txt">Modifier keys are ignored wholesale. <code class="tok">Cmd+j</code>,
+          <code class="tok">Ctrl+k</code>, and similar chords are left to the browser or OS.</div>
+      </div>
+    </div>
+
+    <div class="code reveal d2">
+      <div class="cap"><span class="fn">keys.js</span><span>lines 56 — 93</span></div>
+      <pre><div class="cl"><span class="ln">56</span><span class="ct">    <span class="k">switch</span> (e.key) {</span></div><div class="cl"><span class="ln">57</span><span class="ct">      <span class="k">case</span> <span class="s">'j'</span>:</span></div><div class="cl"><span class="ln">58</span><span class="ct">      <span class="k">case</span> <span class="s">'ArrowDown'</span>:</span></div><div class="cl"><span class="ln">59</span><span class="ct">        e.<span class="f">preventDefault</span>();</span></div><div class="cl"><span class="ln">60</span><span class="ct">        <span class="f">move</span>(<span class="n">1</span>);</span></div><div class="cl"><span class="ln">61</span><span class="ct">        <span class="k">return</span>;</span></div><div class="cl"><span class="ln">62</span><span class="ct">      <span class="k">case</span> <span class="s">'k'</span>:</span></div><div class="cl"><span class="ln">63</span><span class="ct">      <span class="k">case</span> <span class="s">'ArrowUp'</span>:</span></div><div class="cl"><span class="ln">64</span><span class="ct">        e.<span class="f">preventDefault</span>();</span></div><div class="cl"><span class="ln">65</span><span class="ct">        <span class="f">move</span>(-<span class="n">1</span>);</span></div><div class="cl"><span class="ln">66</span><span class="ct">        <span class="k">return</span>;</span></div><div class="cl"><span class="ln">67</span><span class="ct">      <span class="k">case</span> <span class="s">'Enter'</span>: {</span></div><div class="cl"><span class="ln">68</span><span class="ct">        <span class="k">const</span> row = <span class="f">focusedRow</span>();</span></div><div class="cl"><span class="ln">69</span><span class="ct">        <span class="k">if</span> (!row) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">70</span><span class="ct">        e.<span class="f">preventDefault</span>();</span></div><div class="cl"><span class="ln">71</span><span class="ct">        row.<span class="f">click</span>();   <span class="c">// intercepted by peek.js</span></span></div><div class="cl"><span class="ln">72</span><span class="ct">        <span class="k">return</span>;</span></div><div class="cl"><span class="ln">73</span><span class="ct">      }</span></div><div class="cl"><span class="ln">75</span><span class="ct">      <span class="k">case</span> <span class="s">'x'</span>: {</span></div><div class="cl"><span class="ln">76</span><span class="ct">        <span class="k">const</span> row = <span class="f">focusedRow</span>();</span></div><div class="cl"><span class="ln">77</span><span class="ct">        <span class="k">if</span> (!row) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">78</span><span class="ct">        e.<span class="f">preventDefault</span>();</span></div><div class="cl"><span class="ln">79</span><span class="ct">        row.<span class="f">querySelector</span>(<span class="s">'.del'</span>)?.<span class="f">click</span>();</span></div><div class="cl"><span class="ln">80</span><span class="ct">        <span class="k">return</span>;</span></div><div class="cl"><span class="ln">81</span><span class="ct">      }</span></div><div class="cl"><span class="ln">82</span><span class="ct">      <span class="k">case</span> <span class="s">'p'</span>: {</span></div><div class="cl"><span class="ln">83</span><span class="ct">        <span class="k">const</span> row = <span class="f">focusedRow</span>();</span></div><div class="cl"><span class="ln">84</span><span class="ct">        <span class="k">if</span> (!row) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">85</span><span class="ct">        e.<span class="f">preventDefault</span>();</span></div><div class="cl"><span class="ln">86</span><span class="ct">        row.<span class="f">querySelector</span>(<span class="s">'.pin'</span>)?.<span class="f">click</span>();</span></div><div class="cl"><span class="ln">87</span><span class="ct">        <span class="k">return</span>;</span></div><div class="cl"><span class="ln">88</span><span class="ct">      }</span></div><div class="cl"><span class="ln">89</span><span class="ct">      <span class="k">case</span> <span class="s">'e'</span>:</span></div><div class="cl"><span class="ln">90</span><span class="ct">        e.<span class="f">preventDefault</span>();</span></div><div class="cl"><span class="ln">91</span><span class="ct">        document.<span class="f">querySelector</span>(<span class="s">'.edit-toggle'</span>)?.<span class="f">click</span>();</span></div><div class="cl"><span class="ln">92</span><span class="ct">        <span class="k">return</span>;</span></div><div class="cl"><span class="ln">93</span><span class="ct">    }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d2">
+      <div class="row">
+        <div class="lref">71</div>
+        <div class="txt"><b>Enter</b> calls <code class="tok">row.click()</code> on the whole row element —
+          not on any button. <code class="tok">peek.js</code> has its own click listener on <code class="tok">.row</code>
+          elements; this key triggers that handler without <code class="tok">keys.js</code> knowing anything
+          about the preview.</div>
+      </div>
+      <div class="row">
+        <div class="lref">79</div>
+        <div class="txt"><b>x</b> finds <code class="tok">.del</code> inside the row and clicks it.
+          The two-step arm/confirm dance, the <code class="tok">DELETE</code> fetch, the timeout reset —
+          none of that is here. It all lives in <b>delete.js</b>.</div>
+      </div>
+      <div class="row">
+        <div class="lref">86</div>
+        <div class="txt"><b>p</b> finds <code class="tok">.pin</code> and clicks it. The PATCH request,
+          optimistic UI update, and error rollback are in <b>pin.js</b>.</div>
+      </div>
+      <div class="row">
+        <div class="lref">91</div>
+        <div class="txt"><b>e</b> is the one binding that doesn't need a focused row — edit mode is
+          global. It locates <code class="tok">.edit-toggle</code> (a single element in the page header)
+          and delegates to <b>edit.js</b>.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d3" style="margin-top:22px">
+      <h4>The optional-chaining <code class="tok" style="font-size:.82em">?.</code> is the entire guard</h4>
+      <p>If a row has no <code class="tok">.del</code> button — perhaps because edit mode is off and
+        the button is not rendered — the optional chain short-circuits silently. No conditionals,
+        no feature flags. The key is a no-op whenever the affordance is absent.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 cooperative Esc ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — cooperative Esc</div>
+      <h2>Esc only fires when nothing else needs it.</h2>
+      <p><code class="tok">Escape</code> is shared across several modules. <code class="tok">keys.js</code>
+        checks a <b>busy</b> flag before acting — standing down when any other handler has
+        prior claim.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">keys.js</span><span>lines 48 — 54</span></div>
+      <pre><div class="cl"><span class="ln">48</span><span class="ct">    <span class="k">if</span> (e.key === <span class="s">'Escape'</span>) {</span></div><div class="cl"><span class="ln">49</span><span class="ct">      <span class="k">const</span> busy = document.<span class="f">querySelector</span>(<span class="s">'.peek-backdrop.open, .help-backdrop.open'</span>)</span></div><div class="cl"><span class="ln">50</span><span class="ct">        || document.body.classList.<span class="f">contains</span>(<span class="s">'editing'</span>)</span></div><div class="cl"><span class="ln">51</span><span class="ct">        || !document.<span class="f">querySelector</span>(<span class="s">'.sort-menu[hidden]'</span>);</span></div><div class="cl"><span class="ln">52</span><span class="ct">      <span class="k">if</span> (!busy) <span class="f">setFocus</span>(<span class="k">null</span>);</span></div><div class="cl"><span class="ln">53</span><span class="ct">      <span class="k">return</span>;</span></div><div class="cl"><span class="ln">54</span><span class="ct">    }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">49</div>
+        <div class="txt"><b>.peek-backdrop.open</b> — the preview modal is open. <b>.help-backdrop.open</b> —
+          the help overlay is showing. Either truthy element means Esc belongs to those handlers,
+          not here.</div>
+      </div>
+      <div class="row">
+        <div class="lref">50</div>
+        <div class="txt"><code class="tok">body.editing</code> — edit mode is active. <code class="tok">edit.js</code>
+          owns Esc in that context to exit edit mode.</div>
+      </div>
+      <div class="row">
+        <div class="lref">51</div>
+        <div class="txt"><code class="tok">!querySelector('.sort-menu[hidden]')</code> — the sort menu is
+          open when the element exists but lacks the <code class="tok">hidden</code> attribute.
+          <code class="tok">sort.js</code> closes it on Esc.</div>
+      </div>
+      <div class="row">
+        <div class="lref">52</div>
+        <div class="txt">Only when <b>none</b> of the above is true does <code class="tok">keys.js</code>
+          act — calling <code class="tok">setFocus(null)</code> to clear the keyboard highlight.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="margin-top:22px">
+      <h4>The layered-Esc convention, across all modules</h4>
+      <p>There is no central Esc dispatcher. Instead, each module reads DOM state to decide
+        whether Esc is "theirs." The <b>busy</b> check in <code class="tok">keys.js</code> is the
+        lowest-priority claim — it acts only when every higher-priority handler has already
+        cleaned up. This pattern lets any module own Esc during its active state without
+        coordinating through shared code.</p>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/edit/">
+        <div class="lbl">&larr; PREVIOUS</div>
+        <div class="nm"><span class="mono">edit.js</span></div>
+      </a>
+      <a class="next" href="/technical-explanation/peek/">
+        <div class="lbl">NEXT &rarr;</div>
+        <div class="nm"><span class="mono">peek.js</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/static/keys.js — 95 lines, keyboard navigation.</span>
+    <span><a href="/technical-explanation/">&larr; all the files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

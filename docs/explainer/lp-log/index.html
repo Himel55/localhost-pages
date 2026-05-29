@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>lp-log.js — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #d6a89e; }   /* soft coral — lp-log.js */
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">lp-log.js</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">lp-log.js</span><br />sends bugs <em>home.</em></h1>
+    <p class="lede reveal d2">
+      When a user hits a glitch in the dashboard, the browser side of the failure is normally invisible —
+      it lives in a console nobody is looking at. This script catches those front-end errors and forwards
+      them to the server via <code class="tok">POST /__log</code>, so they land in the <b>same log file</b>
+      as the backend's. One file to send, one place to look.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">65</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">2</div><div class="l">global error hooks</div></div>
+      <div class="stat reveal d3"><div class="n">25</div><div class="l">reports / page cap</div></div>
+      <div class="stat reveal d3"><div class="n">1</div><div class="l">endpoint (/__log)</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 the send path ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — the send path</div>
+      <h2>One function ferries every report to the server.</h2>
+      <p>The whole file is an IIFE, so it leaves no globals behind except the one it deliberately exposes.
+        At its centre is <code class="tok">send()</code> — the single path every report takes to reach
+        <code class="tok">/__log</code>. It is capped, beacon-first, and engineered never to throw.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">lp-log.js</span><span>lines 5 — 28</span></div>
+      <pre><div class="cl"><span class="ln">5</span><span class="ct">(<span class="k">function</span> () {</span></div><div class="cl"><span class="ln">6</span><span class="ct">  <span class="k">var</span> ENDPOINT = <span class="s">"/__log"</span>;</span></div><div class="cl"><span class="ln">7</span><span class="ct">  <span class="k">var</span> sent = <span class="n">0</span>;</span></div><div class="cl"><span class="ln">8</span><span class="ct">  <span class="k">var</span> MAX = <span class="n">25</span>; <span class="c">// cap per page load so an error loop can't flood the log</span></span></div><div class="cl"><span class="ln">9</span><span class="ct"></span></div><div class="cl"><span class="ln">10</span><span class="ct">  <span class="k">function</span> <span class="f">send</span>(payload) {</span></div><div class="cl"><span class="ln">11</span><span class="ct">    <span class="k">if</span> (sent &gt;= MAX) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">12</span><span class="ct">    sent++;</span></div><div class="cl"><span class="ln">13</span><span class="ct">    <span class="k">try</span> {</span></div><div class="cl"><span class="ln">14</span><span class="ct">      <span class="k">var</span> body = JSON.<span class="f">stringify</span>(payload);</span></div><div class="cl"><span class="ln">15</span><span class="ct">      <span class="k">if</span> (navigator.sendBeacon) {</span></div><div class="cl"><span class="ln">16</span><span class="ct">        navigator.<span class="f">sendBeacon</span>(ENDPOINT, <span class="k">new</span> <span class="f">Blob</span>([body], { type: <span class="s">"application/json"</span> }));</span></div><div class="cl"><span class="ln">17</span><span class="ct">      } <span class="k">else</span> {</span></div><div class="cl"><span class="ln">18</span><span class="ct">        <span class="f">fetch</span>(ENDPOINT, {</span></div><div class="cl"><span class="ln">19</span><span class="ct">          method: <span class="s">"POST"</span>,</span></div><div class="cl"><span class="ln">20</span><span class="ct">          headers: { <span class="s">"Content-Type"</span>: <span class="s">"application/json"</span> },</span></div><div class="cl"><span class="ln">21</span><span class="ct">          body: body,</span></div><div class="cl"><span class="ln">22</span><span class="ct">          keepalive: <span class="k">true</span>,</span></div><div class="cl"><span class="ln">23</span><span class="ct">        });</span></div><div class="cl"><span class="ln">24</span><span class="ct">      }</span></div><div class="cl"><span class="ln">25</span><span class="ct">    } <span class="k">catch</span> (_) {</span></div><div class="cl"><span class="ln">26</span><span class="ct">      <span class="c">// Logging must be invisible — swallow everything.</span></span></div><div class="cl"><span class="ln">27</span><span class="ct">    }</span></div><div class="cl"><span class="ln">28</span><span class="ct">  }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">7 — 8</div>
+        <div class="txt">Two counters guard the page. <code class="tok">sent</code> tracks how many reports have gone
+          out; <code class="tok">MAX</code> is the ceiling — <b>25</b> per page load. An error inside a
+          render loop could otherwise fire thousands of times, drowning the log.</div>
+      </div>
+      <div class="row">
+        <div class="lref">11 — 12</div>
+        <div class="txt">The cap is enforced first: once <code class="tok">sent</code> reaches <code class="tok">MAX</code>
+          every further call is a no-op. The counter is incremented <b>before</b> the send so even a
+          payload that fails to serialize still counts against the budget.</div>
+      </div>
+      <div class="row">
+        <div class="lref">15 — 16</div>
+        <div class="txt"><code class="tok">navigator.sendBeacon</code> is preferred: it hands the request to the
+          browser to deliver in the background, surviving even a page that is unloading. The payload is
+          wrapped in a <code class="tok">Blob</code> tagged <code class="tok">application/json</code>.</div>
+      </div>
+      <div class="row">
+        <div class="lref">17 — 24</div>
+        <div class="txt">Where <code class="tok">sendBeacon</code> is unavailable, it falls back to
+          <code class="tok">fetch</code> with <code class="tok">keepalive: true</code> — the same
+          "deliver even if the page goes away" guarantee, by a different route.</div>
+      </div>
+      <div class="row">
+        <div class="lref">13 / 25 — 27</div>
+        <div class="txt">The entire body sits inside <code class="tok">try { … } catch (_) {}</code>. Logging must
+          stay <b>invisible</b>: if the report itself can't be built or sent, the error is swallowed
+          silently. <code class="tok">send()</code> can never throw into the page it is watching.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 two ways in ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — two ways in</div>
+      <h2>Automatic for uncaught, manual for caught.</h2>
+      <p>Errors arrive at <code class="tok">send()</code> by two routes. The global hooks catch what no one
+        handled; <code class="tok">window.lpReport</code> catches what someone already did.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">lp-log.js</span><span>lines 34 — 64</span></div>
+      <pre><div class="cl"><span class="ln">34</span><span class="ct">  window.lpReport = <span class="k">function</span> (message, extra) {</span></div><div class="cl"><span class="ln">35</span><span class="ct">    <span class="k">var</span> payload = {</span></div><div class="cl"><span class="ln">36</span><span class="ct">      message: <span class="f">String</span>(message),</span></div><div class="cl"><span class="ln">37</span><span class="ct">      page: location.pathname,</span></div><div class="cl"><span class="ln">38</span><span class="ct">      userAgent: navigator.userAgent,</span></div><div class="cl"><span class="ln">39</span><span class="ct">    };</span></div><div class="cl"><span class="ln">40</span><span class="ct">    <span class="k">if</span> (extra &amp;&amp; extra.stack) payload.stack = <span class="f">String</span>(extra.stack);</span></div><div class="cl"><span class="ln">41</span><span class="ct">    <span class="f">send</span>(payload);</span></div><div class="cl"><span class="ln">42</span><span class="ct">  };</span></div><div class="cl"><span class="ln">43</span><span class="ct"></span></div><div class="cl"><span class="ln">44</span><span class="ct">  window.<span class="f">addEventListener</span>(<span class="s">"error"</span>, <span class="k">function</span> (e) {</span></div><div class="cl"><span class="ln">45</span><span class="ct">    <span class="f">send</span>({</span></div><div class="cl"><span class="ln">46</span><span class="ct">      message: <span class="f">String</span>((e &amp;&amp; e.message) || (e &amp;&amp; e.type) || <span class="s">"error"</span>),</span></div><div class="cl"><span class="ln">47</span><span class="ct">      source: (e &amp;&amp; e.filename) || <span class="s">""</span>,</span></div><div class="cl"><span class="ln">48</span><span class="ct">      line: (e &amp;&amp; e.lineno) || <span class="s">""</span>,</span></div><div class="cl"><span class="ln">49</span><span class="ct">      column: (e &amp;&amp; e.colno) || <span class="s">""</span>,</span></div><div class="cl"><span class="ln">50</span><span class="ct">      stack: e &amp;&amp; e.error &amp;&amp; e.error.stack ? <span class="f">String</span>(e.error.stack) : <span class="s">""</span>,</span></div><div class="cl"><span class="ln">51</span><span class="ct">      page: location.pathname,</span></div><div class="cl"><span class="ln">52</span><span class="ct">      userAgent: navigator.userAgent,</span></div><div class="cl"><span class="ln">53</span><span class="ct">    });</span></div><div class="cl"><span class="ln">54</span><span class="ct">  });</span></div><div class="cl"><span class="ln">55</span><span class="ct"></span></div><div class="cl"><span class="ln">56</span><span class="ct">  window.<span class="f">addEventListener</span>(<span class="s">"unhandledrejection"</span>, <span class="k">function</span> (e) {</span></div><div class="cl"><span class="ln">57</span><span class="ct">    <span class="k">var</span> r = e &amp;&amp; e.reason;</span></div><div class="cl"><span class="ln">58</span><span class="ct">    <span class="f">send</span>({</span></div><div class="cl"><span class="ln">59</span><span class="ct">      message: <span class="s">"unhandledrejection: "</span> + (r &amp;&amp; r.message ? r.message : <span class="f">String</span>(r)),</span></div><div class="cl"><span class="ln">60</span><span class="ct">      stack: r &amp;&amp; r.stack ? <span class="f">String</span>(r.stack) : <span class="s">""</span>,</span></div><div class="cl"><span class="ln">61</span><span class="ct">      page: location.pathname,</span></div><div class="cl"><span class="ln">62</span><span class="ct">      userAgent: navigator.userAgent,</span></div><div class="cl"><span class="ln">63</span><span class="ct">    });</span></div><div class="cl"><span class="ln">64</span><span class="ct">  });</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">44 — 54</div>
+        <div class="txt">The <code class="tok">"error"</code> hook catches any <b>uncaught</b> exception that bubbles to
+          <code class="tok">window</code>. It records the message, the offending file
+          (<code class="tok">filename</code>), the <code class="tok">lineno</code> / <code class="tok">colno</code>,
+          and — when present — the real stack from <code class="tok">e.error.stack</code>.</div>
+      </div>
+      <div class="row">
+        <div class="lref">56 — 64</div>
+        <div class="txt">The <code class="tok">"unhandledrejection"</code> hook catches the promise equivalent: a rejected
+          promise no <code class="tok">.catch()</code> ever handled. It reads <code class="tok">e.reason</code>,
+          preferring its <code class="tok">.message</code>, and prefixes the report so the two failure
+          kinds stay distinguishable in the log.</div>
+      </div>
+      <div class="row">
+        <div class="lref">34 — 42</div>
+        <div class="txt"><code class="tok">window.lpReport(message, extra)</code> is the manual path. Some errors are
+          <b>caught locally</b> — a <code class="tok">try/catch</code> around a <code class="tok">fetch</code>,
+          say — and so never reach the global <code class="tok">"error"</code> hook. This lets that code
+          report deliberately. <code class="tok">extra.stack</code> is attached only when supplied.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>Why a bare global, not <code class="tok" style="font-size:.82em">window.LP</code>?</h4>
+      <p><code class="tok">lpReport</code> is attached straight to <code class="tok">window</code> rather than
+        hung off the <code class="tok">window.LP</code> namespace. The reason is load order:
+        <code class="tok">lp-log.js</code> is the <b>first</b> script on the dashboard, loading before
+        <code class="tok">lp-util.js</code> defines <code class="tok">window.LP</code>. If it tried to attach to
+        <code class="tok">LP</code> the object wouldn't exist yet. Callers guard with
+        <code class="tok">window.lpReport &amp;&amp; window.lpReport(&hellip;)</code> — and
+        <code class="tok">delete.js</code> uses exactly this to report a failed delete.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 scope ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — scope</div>
+      <h2>The dashboard only — never the served apps.</h2>
+      <p>This is the deliberate boundary of the file, and it is easy to get wrong. Error capture runs on
+        the localhost-pages dashboard and <b>nowhere else</b>.</p>
+    </div>
+
+    <div class="prose reveal d1">
+      <p><code class="tok">lp-log.js</code> is loaded as a plain <code class="tok">&lt;script&gt;</code> tag in
+        <code class="tok">templates/index.html</code> — the dashboard's own page. It is placed
+        <b>first</b>, before the other dashboard scripts, so it is already listening when any of them throws.
+        Its job is to catch bugs in <b>our</b> front end.</p>
+      <p>It is deliberately <b>not</b> injected into served user apps. <code class="tok">inject.py</code> splices
+        only <code class="tok">reload.js</code> into served pages and explicitly leaves error capture out.
+        A served app is the user's own HTML; capturing its runtime errors would be <b>noise</b> — those are
+        the user's bugs, not localhost-pages bugs — and injecting a logger would modify content that isn't
+        ours to touch.</p>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>Contrast with <code class="tok" style="font-size:.82em">reload.js</code></h4>
+      <p><code class="tok">reload.js</code> <b>is</b> injected into every served page, because live-reload is
+        the core feature those pages exist to get. <code class="tok">lp-log.js</code> is the opposite case:
+        it is infrastructure for the dashboard, so it stays on the dashboard. Two scripts, two scopes —
+        one injected everywhere, one loaded in exactly one place.</p>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/reload/">
+        <div class="lbl">&larr; PREVIOUS</div>
+        <div class="nm"><span class="mono">reload.js</span></div>
+      </a>
+      <a class="next" href="/technical-explanation/delete/">
+        <div class="lbl">NEXT &rarr;</div>
+        <div class="nm"><span class="mono">delete.js</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/static/lp-log.js — 65 lines, browser error capture for the dashboard.</span>
+    <span><a href="/technical-explanation/">&larr; all the files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

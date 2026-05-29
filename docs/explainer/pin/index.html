@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>pin.js — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #d0c8b5; }   /* wheat — pin.js */
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">static/pin.js</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">pin.js</span><br />keep the ones you <em>reach for</em> on top.</h1>
+    <p class="lede reveal d2">
+      <b>pin.js</b> is 56 lines of pure DOM logic — no framework, no server round-trip.
+      It maintains a <b>JSON array</b> of app names in <code class="tok">localStorage</code>, stamps a
+      <code class="tok">.pinned</code> class onto matching rows, and hands a read API to
+      <code class="tok">sort.js</code> so pinned apps always float above the rest.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">56</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">lp:pinned</div><div class="l">storage key</div></div>
+      <div class="stat reveal d3"><div class="n">.pinned</div><div class="l">class applied</div></div>
+      <div class="stat reveal d3"><div class="n">__lpPinned</div><div class="l">export</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 the pinned set ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — the pinned set</div>
+      <h2>Four small functions own the state.</h2>
+      <p><code class="tok">load()</code>, <code class="tok">save()</code>, <code class="tok">isPinned()</code>,
+        and <code class="tok">toggle()</code> — no class, no object. The entire data model is a
+        JSON array in one <code class="tok">localStorage</code> slot.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">pin.js</span><span>lines 6 — 27</span></div>
+      <pre><div class="cl"><span class="ln">6</span><span class="ct">  <span class="k">const</span> KEY = <span class="s">'lp:pinned'</span>;</span></div><div class="cl"><span class="ln">7</span><span class="ct"></span></div><div class="cl"><span class="ln">8</span><span class="ct">  <span class="k">function</span> <span class="f">load</span>() {</span></div><div class="cl"><span class="ln">9</span><span class="ct">    <span class="k">try</span> {</span></div><div class="cl"><span class="ln">10</span><span class="ct">      <span class="k">const</span> raw = localStorage.<span class="f">getItem</span>(KEY);</span></div><div class="cl"><span class="ln">11</span><span class="ct">      <span class="k">const</span> arr = raw ? <span class="f">JSON.parse</span>(raw) : [];</span></div><div class="cl"><span class="ln">12</span><span class="ct">      <span class="k">return</span> Array.<span class="f">isArray</span>(arr) ? arr : [];</span></div><div class="cl"><span class="ln">13</span><span class="ct">    } <span class="k">catch</span> { <span class="k">return</span> []; }</span></div><div class="cl"><span class="ln">14</span><span class="ct">  }</span></div><div class="cl"><span class="ln">15</span><span class="ct"></span></div><div class="cl"><span class="ln">16</span><span class="ct">  <span class="k">function</span> <span class="f">save</span>(arr) {</span></div><div class="cl"><span class="ln">17</span><span class="ct">    localStorage.<span class="f">setItem</span>(KEY, <span class="f">JSON.stringify</span>(arr));</span></div><div class="cl"><span class="ln">18</span><span class="ct">  }</span></div><div class="cl"><span class="ln">19</span><span class="ct"></span></div><div class="cl"><span class="ln">20</span><span class="ct">  <span class="k">function</span> <span class="f">isPinned</span>(name) { <span class="k">return</span> <span class="f">load</span>().<span class="f">includes</span>(name); }</span></div><div class="cl"><span class="ln">21</span><span class="ct"></span></div><div class="cl"><span class="ln">22</span><span class="ct">  <span class="k">function</span> <span class="f">toggle</span>(name) {</span></div><div class="cl"><span class="ln">23</span><span class="ct">    <span class="k">const</span> arr = <span class="f">load</span>();</span></div><div class="cl"><span class="ln">24</span><span class="ct">    <span class="k">const</span> i = arr.<span class="f">indexOf</span>(name);</span></div><div class="cl"><span class="ln">25</span><span class="ct">    <span class="k">if</span> (i === -<span class="n">1</span>) arr.<span class="f">push</span>(name); <span class="k">else</span> arr.<span class="f">splice</span>(i, <span class="n">1</span>);</span></div><div class="cl"><span class="ln">26</span><span class="ct">    <span class="f">save</span>(arr);</span></div><div class="cl"><span class="ln">27</span><span class="ct">  }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">6</div>
+        <div class="txt"><code class="tok">lp:pinned</code> — the <b>lp:</b> namespace prefix keeps this key distinct from any app's own storage.</div>
+      </div>
+      <div class="row">
+        <div class="lref">9 — 13</div>
+        <div class="txt"><b>load()</b> is defensively layered. The outer <code class="tok">try/catch</code> handles a corrupted or quota-denied read; the inner <code class="tok">Array.isArray</code> guard handles the case where valid JSON was stored but is not an array — both paths return a safe <code class="tok">[]</code>.</div>
+      </div>
+      <div class="row">
+        <div class="lref">16 — 18</div>
+        <div class="txt"><b>save()</b> is deliberately thin — no validation, no deduplication. <code class="tok">toggle()</code> owns the logic; <code class="tok">save()</code> just serialises.</div>
+      </div>
+      <div class="row">
+        <div class="lref">22 — 27</div>
+        <div class="txt"><b>toggle()</b> reads current state, finds the index — <code class="tok">-1</code> means absent, so <code class="tok">push</code>; any other index means present, so <code class="tok">splice</code> it out. One branch, no separate pin/unpin functions.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 marking rows ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — marking rows</div>
+      <h2><span class="mono" style="font-size:0.6em;vertical-align:0.1em;color:var(--sand)">markRows()</span> — one pass, one class.</h2>
+      <p>After any state change, the DOM is brought into sync. Every row is inspected; the
+        <code class="tok">.pinned</code> class is added or removed — no partial updates, no diffing.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">pin.js</span><span>lines 29 — 35</span></div>
+      <pre><div class="cl"><span class="ln">29</span><span class="ct">  <span class="k">function</span> <span class="f">markRows</span>() {</span></div><div class="cl"><span class="ln">30</span><span class="ct">    <span class="k">const</span> set = <span class="k">new</span> <span class="f">Set</span>(<span class="f">load</span>());</span></div><div class="cl"><span class="ln">31</span><span class="ct">    document.<span class="f">querySelectorAll</span>(<span class="s">'.row'</span>).<span class="f">forEach</span>((row) =&gt; {</span></div><div class="cl"><span class="ln">32</span><span class="ct">      <span class="k">if</span> (set.<span class="f">has</span>(row.dataset.name)) row.classList.<span class="f">add</span>(<span class="s">'pinned'</span>);</span></div><div class="cl"><span class="ln">33</span><span class="ct">      <span class="k">else</span> row.classList.<span class="f">remove</span>(<span class="s">'pinned'</span>);</span></div><div class="cl"><span class="ln">34</span><span class="ct">    });</span></div><div class="cl"><span class="ln">35</span><span class="ct">  }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">30</div>
+        <div class="txt">The stored array is converted to a <b>Set</b> once before the loop — <code class="tok">Set.has()</code> is O(1) versus <code class="tok">Array.includes()</code> which is O(n) per row. Trivial at typical scale, but the right choice.</div>
+      </div>
+      <div class="row">
+        <div class="lref">31 — 34</div>
+        <div class="txt">Every <code class="tok">.row</code> element carries a <code class="tok">data-name</code> attribute set by the server template. The function adds <b>.pinned</b> for matches and explicitly <em>removes</em> it for non-matches — so a newly-unpinned row is cleaned up in the same pass.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>Why a full re-mark after every toggle?</h4>
+      <p>It is simpler and safer than tracking which row changed. The entire operation costs one
+        <code class="tok">localStorage</code> read and one DOM query — both are synchronous and
+        near-instantaneous at the scale of a local index page. Correctness beats micro-optimisation here.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 wiring ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — wiring</div>
+      <h2>Delegated clicks, bfcache restore, and a public API.</h2>
+      <p>Three final responsibilities: handle user gestures, survive the browser back-cache,
+        and expose helpers so <code class="tok">sort.js</code> can read the pinned set when ordering.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">pin.js</span><span>lines 37 — 56</span></div>
+      <pre><div class="cl"><span class="ln">37</span><span class="ct">  document.<span class="f">addEventListener</span>(<span class="s">'click'</span>, (e) =&gt; {</span></div><div class="cl"><span class="ln">38</span><span class="ct">    <span class="k">const</span> btn = e.target.<span class="f">closest</span>(<span class="s">'.pin'</span>);</span></div><div class="cl"><span class="ln">39</span><span class="ct">    <span class="k">if</span> (!btn) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">40</span><span class="ct">    e.<span class="f">preventDefault</span>();</span></div><div class="cl"><span class="ln">41</span><span class="ct">    e.<span class="f">stopPropagation</span>();</span></div><div class="cl"><span class="ln">42</span><span class="ct">    <span class="k">const</span> row = btn.<span class="f">closest</span>(<span class="s">'.row'</span>);</span></div><div class="cl"><span class="ln">43</span><span class="ct">    <span class="k">if</span> (!row || !row.dataset.name) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">44</span><span class="ct">    <span class="f">toggle</span>(row.dataset.name);</span></div><div class="cl"><span class="ln">45</span><span class="ct">    <span class="f">markRows</span>();</span></div><div class="cl"><span class="ln">46</span><span class="ct">    <span class="c">// Re-sort so the pinned row jumps to/from the top section.</span></span></div><div class="cl"><span class="ln">47</span><span class="ct">    <span class="k">const</span> wrap = document.<span class="f">querySelector</span>(<span class="s">'.sort-wrap'</span>);</span></div><div class="cl"><span class="ln">48</span><span class="ct">    <span class="k">if</span> (wrap?.__setSort) wrap.<span class="f">__setSort</span>(localStorage.<span class="f">getItem</span>(<span class="s">'lp:sort'</span>) || <span class="s">'alpha'</span>);</span></div><div class="cl"><span class="ln">49</span><span class="ct">  });</span></div><div class="cl"><span class="ln">50</span><span class="ct"></span></div><div class="cl"><span class="ln">51</span><span class="ct">  <span class="f">markRows</span>();</span></div><div class="cl"><span class="ln">52</span><span class="ct">  window.<span class="f">addEventListener</span>(<span class="s">'pageshow'</span>, markRows);</span></div><div class="cl"><span class="ln">53</span><span class="ct"></span></div><div class="cl"><span class="ln">54</span><span class="ct">  <span class="c">// Expose helpers for sort.js.</span></span></div><div class="cl"><span class="ln">55</span><span class="ct">  window.__lpPinned = { isPinned, load };</span></div><div class="cl"><span class="ln">56</span><span class="ct">})();</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">37 — 39</div>
+        <div class="txt"><b>Delegated listener</b> on <code class="tok">document</code> — a single handler catches clicks on any <code class="tok">.pin</code> button, including ones added after page load. <code class="tok">closest('.pin')</code> bubbles up from the exact element hit; missing means the click was elsewhere, bail early.</div>
+      </div>
+      <div class="row">
+        <div class="lref">40 — 41</div>
+        <div class="txt"><code class="tok">preventDefault()</code> stops any anchor navigation; <code class="tok">stopPropagation()</code> prevents the row's own click handler (which navigates to the app) from firing — the pin button is <em>inside</em> the row link.</div>
+      </div>
+      <div class="row">
+        <div class="lref">47 — 48</div>
+        <div class="txt">After marking rows, the sort is immediately re-applied by calling <code class="tok">wrap.__setSort()</code> — a function <code class="tok">sort.js</code> attaches to the <code class="tok">.sort-wrap</code> element. Passing the current sort key means the pinned row jumps to or from the top section without waiting for the next interaction.</div>
+      </div>
+      <div class="row">
+        <div class="lref">51 — 52</div>
+        <div class="txt"><code class="tok">markRows()</code> runs once on load to stamp any previously-pinned rows. The <b>pageshow</b> listener re-runs it after a bfcache restore — the browser may replay a cached page without re-executing scripts, so the class state could otherwise be stale.</div>
+      </div>
+      <div class="row">
+        <div class="lref">55</div>
+        <div class="txt"><code class="tok">window.__lpPinned</code> exports exactly two helpers — <b>isPinned</b> and <b>load</b>. <code class="tok">sort.js</code> calls <code class="tok">load()</code> to get the full pinned set when building its sorted order. The double-underscore prefix signals "internal to this project, not a public API."</div>
+      </div>
+    </div>
+
+    <div class="notes" style="margin-top:28px">
+      <div class="note reveal d2">
+        <h4>One class, three consumers</h4>
+        <p><code class="tok">.pinned</code> is the single shared signal. <b>pin.js</b> writes it.
+          <b>sort.js</b> reads it — or reads <code class="tok">window.__lpPinned.load()</code> — to build the
+          two-section ordering: pinned rows first, unpinned rows below.
+          <b>index.css</b> reads it too, to highlight the pin button visually.
+          Three consumers, one source of truth — the DOM class is the contract.</p>
+      </div>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/visited/">
+        <div class="lbl">&larr; PREVIOUS</div>
+        <div class="nm"><span class="mono">visited.js</span></div>
+      </a>
+      <a class="next" href="/technical-explanation/sort/">
+        <div class="lbl">NEXT &rarr;</div>
+        <div class="nm"><span class="mono">sort.js</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/static/pin.js — 56 lines, pin apps to the top.</span>
+    <span><a href="/technical-explanation/">&larr; all the files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

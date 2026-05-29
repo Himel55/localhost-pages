@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>watcher.py — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #a3b8d6; }   /* powder — watcher.py */
+
+  /* page-local: the task map */
+  .tmap { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .tk {
+    display: grid; grid-template-columns: 170px 1fr 56px;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+    transition: background .16s ease;
+    text-decoration: none;
+  }
+  .tk:last-child { border-bottom: none; }
+  .tk:hover { background: var(--panel-2); }
+  .tk .kind {
+    font-size: 11px; font-weight: 600; padding: 14px 0 14px 18px;
+    letter-spacing: 0.06em;
+  }
+  .tk .kind.persist { color: var(--sage); }
+  .tk .kind.dyn { color: var(--peach); }
+  .tk .kind.safety { color: var(--rose); }
+  .tk .mid { padding: 12px 14px; }
+  .tk .nm { font-size: 13px; color: var(--ink); }
+  .tk .desc { font-size: 11.5px; color: var(--faint); margin-top: 2px; }
+  .tk .ll { font-size: 11px; color: var(--faint); text-align: right; padding-right: 16px; }
+  .msig {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.6em;
+    color: var(--sand); vertical-align: 0.12em;
+  }
+  @media (max-width: 720px) {
+    .tk { grid-template-columns: 64px 1fr; }
+    .tk .ll { display: none; }
+    .tk .kind { font-size: 0; padding-left: 14px; }
+    .tk .kind::first-letter { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">watcher.py</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">watcher.py</span><br />refuses to <em>stay dead.</em></h1>
+    <p class="lede reveal d2">
+      This module is the eyes of <b>localhost-pages</b>. It watches the symlinks directory and the
+      resolved target of every link, and on any change publishes a topic name onto the PubSub —
+      which the SSE stream turns into a browser reload. At 136 lines it is the largest module, and
+      almost half of it is <b>resilience</b>: an OS file-watcher that glitches must never permanently
+      blind the app.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">136</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">3</div><div class="l">resilience layers</div></div>
+      <div class="stat reveal d3"><div class="n">60s</div><div class="l">reaper interval</div></div>
+      <div class="stat reveal d3"><div class="n">1&rarr;30s</div><div class="l">backoff range</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 top of file ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — top of the file</div>
+      <h2>Imports and one constant.</h2>
+      <p>The imports name the whole job: <code class="tok">awatch</code> for the OS watcher,
+        <code class="tok">PubSub</code> to publish onto, <code class="tok">scan</code> to discover apps.
+        Then a single module constant — the topic that means "the index changed".</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">watcher.py</span><span>lines 1 — 13</span></div>
+      <pre><div class="cl"><span class="ln">1</span><span class="ct"><span class="k">from</span> __future__ <span class="k">import</span> annotations</span></div><div class="cl"><span class="ln">2</span><span class="ct"></span></div><div class="cl"><span class="ln">3</span><span class="ct"><span class="k">import</span> asyncio</span></div><div class="cl"><span class="ln">4</span><span class="ct"><span class="k">import</span> logging</span></div><div class="cl"><span class="ln">5</span><span class="ct"><span class="k">from</span> pathlib <span class="k">import</span> Path</span></div><div class="cl"><span class="ln">6</span><span class="ct"></span></div><div class="cl"><span class="ln">7</span><span class="ct"><span class="k">from</span> watchfiles <span class="k">import</span> awatch</span></div><div class="cl"><span class="ln">8</span><span class="ct"></span></div><div class="cl"><span class="ln">9</span><span class="ct"><span class="k">from</span> .pubsub <span class="k">import</span> PubSub</span></div><div class="cl"><span class="ln">10</span><span class="ct"><span class="k">from</span> .registry <span class="k">import</span> scan</span></div><div class="cl"><span class="ln">11</span><span class="ct"></span></div><div class="cl"><span class="ln">12</span><span class="ct">logger = logging.<span class="f">getLogger</span>(__name__)</span></div><div class="cl"><span class="ln">13</span><span class="ct">INDEX_TOPIC = <span class="s">"__index"</span></span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">7</div>
+        <div class="txt"><b>watchfiles.awatch</b> is an async generator: <code class="tok">async for</code> over it and
+          you receive a set of change events each time the OS reports filesystem activity. On macOS it
+          rides FSEvents; on Linux, inotify.</div>
+      </div>
+      <div class="row">
+        <div class="lref">9 — 10</div>
+        <div class="txt">The two collaborators. <b>PubSub</b> is the fan-out broker the watcher publishes onto;
+          <b>scan</b> walks the symlinks directory and returns one <code class="tok">App</code> record per link.</div>
+      </div>
+      <div class="row">
+        <div class="lref">13</div>
+        <div class="txt"><code class="tok">"__index"</code> is the sentinel topic for the index page. It carries the
+          <code class="tok">__</code> reserved prefix so it can never collide with a real app name — those
+          are rejected everywhere a <code class="tok">__</code> name appears. <b>server.py</b> imports this same
+          constant for the SSE route's default topic.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 the class ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — the contract</div>
+      <h2>The class docstring is the design.</h2>
+      <p>Before a line of logic, the docstring states both the job and the failure model. Read it
+        carefully — the rest of the file is just that paragraph made executable.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">watcher.py</span><span>lines 16 — 26</span></div>
+      <pre><div class="cl"><span class="ln">16</span><span class="ct"><span class="k">class</span> <span class="f">Watcher</span>:</span></div><div class="cl"><span class="ln">17</span><span class="ct">    <span class="s">"""Watches the symlinks directory and the resolved target of each link.</span></span></div><div class="cl"><span class="ln">18</span><span class="ct">    <span class="s">On any change, publishes the affected app name (or INDEX_TOPIC) onto the</span></span></div><div class="cl"><span class="ln">19</span><span class="ct">    <span class="s">given PubSub. Debounces bursts of events.</span></span></div><div class="cl"><span class="ln">20</span><span class="ct"></span></div><div class="cl"><span class="ln">21</span><span class="ct">    <span class="s">Resilience: each watch coroutine wraps its awatch() loop in a retry</span></span></div><div class="cl"><span class="ln">22</span><span class="ct">    <span class="s">loop with exponential backoff so an unexpected exception (FSEvents</span></span></div><div class="cl"><span class="ln">23</span><span class="ct">    <span class="s">glitch, transient OSError) doesn't permanently kill the watch. A</span></span></div><div class="cl"><span class="ln">24</span><span class="ct">    <span class="s">periodic reaper task also re-syncs every REAP_INTERVAL_S seconds so</span></span></div><div class="cl"><span class="ln">25</span><span class="ct">    <span class="s">any task that did exit gets recreated even without an external</span></span></div><div class="cl"><span class="ln">26</span><span class="ct">    <span class="s">trigger."""</span></span></div></pre>
+    </div>
+
+    <div class="prose reveal d1">
+      <p><b>The job</b> (lines 17–19): two kinds of thing are watched — the symlinks <em>directory</em>
+        itself, and the resolved <em>target</em> of each individual link. A change to the directory means an
+        app was registered or removed; a change inside a target means an app's own files were edited.
+        Either way a topic name is published, and bursts are <b>debounced</b> so a save that touches ten
+        files fires one event, not ten.</p>
+      <p><b>The failure model</b> (lines 21–26): an OS file-watcher is not reliable infrastructure. FSEvents
+        can glitch; a transient <code class="tok">OSError</code> can surface mid-stream. The watcher therefore
+        assumes its own <code class="tok">awatch()</code> loops <em>will</em> die, and is built to notice and
+        recover. Two mechanisms are named here — per-loop exponential-backoff retry, and a periodic reaper —
+        and a third, the clean-exit path, is described in section 06.</p>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>Why this matters so much</h4>
+      <p>If an <code class="tok">awatch()</code> loop dies silently, the symptom is invisible: the page
+        simply stops live-reloading, with no error the user ever sees. There is nothing to alert on. The
+        only defence is to make silent death structurally impossible — which is exactly what the next
+        five sections build.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 constants & init ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — class constants &amp; __init__</div>
+      <h2>Three numbers and the state.</h2>
+      <p>Class-level constants pin the resilience timings; <code class="tok">__init__</code> sets up the
+        instance state — two task collections and one stop event.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">watcher.py</span><span>lines 28 — 38</span></div>
+      <pre><div class="cl"><span class="ln">28</span><span class="ct">    REAP_INTERVAL_S = <span class="n">60.0</span></span></div><div class="cl"><span class="ln">29</span><span class="ct">    BACKOFF_INITIAL_S = <span class="n">1.0</span></span></div><div class="cl"><span class="ln">30</span><span class="ct">    BACKOFF_MAX_S = <span class="n">30.0</span></span></div><div class="cl"><span class="ln">31</span><span class="ct"></span></div><div class="cl"><span class="ln">32</span><span class="ct">    <span class="k">def</span> <span class="f">__init__</span>(self, symlinks_dir: Path, pubsub: PubSub, debounce_ms: int = <span class="n">300</span>) -> <span class="k">None</span>:</span></div><div class="cl"><span class="ln">33</span><span class="ct">        self.symlinks_dir = symlinks_dir</span></div><div class="cl"><span class="ln">34</span><span class="ct">        self.pubsub = pubsub</span></div><div class="cl"><span class="ln">35</span><span class="ct">        self.debounce_ms = debounce_ms</span></div><div class="cl"><span class="ln">36</span><span class="ct">        self._tasks: list[asyncio.Task] = []</span></div><div class="cl"><span class="ln">37</span><span class="ct">        self._stop = asyncio.<span class="f">Event</span>()</span></div><div class="cl"><span class="ln">38</span><span class="ct">        self._app_tasks: dict[str, asyncio.Task] = {}</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">28</div>
+        <div class="txt"><b>REAP_INTERVAL_S = 60</b> — how often the reaper wakes to re-sync. The upper bound on how
+          long a silently-dead watch can stay dead.</div>
+      </div>
+      <div class="row">
+        <div class="lref">29 — 30</div>
+        <div class="txt"><b>The backoff envelope.</b> After a crash a loop waits 1 s, then 2, 4, 8&hellip;, capped at
+          30 s. Initial is short so a one-off glitch barely registers; the cap stops a persistently broken
+          watch from spinning hot.</div>
+      </div>
+      <div class="row">
+        <div class="lref">32</div>
+        <div class="txt">Constructed by <code class="tok">create_app()</code> in server.py with the symlinks directory and
+          the shared pubsub. <code class="tok">debounce_ms</code> defaults to <b>300 ms</b> — the window in
+          which a burst of filesystem events collapses into one.</div>
+      </div>
+      <div class="row">
+        <div class="lref">36</div>
+        <div class="txt"><code class="tok">_tasks</code> — the <b>long-lived</b> tasks: the symlinks-dir watcher and
+          the reaper. Created once at start, never replaced.</div>
+      </div>
+      <div class="row">
+        <div class="lref">37</div>
+        <div class="txt"><code class="tok">_stop</code> — a single <code class="tok">asyncio.Event</code>. It is the shutdown
+          signal threaded through <em>every</em> loop and every <code class="tok">awatch()</code> call. One
+          flag stops the whole machine.</div>
+      </div>
+      <div class="row">
+        <div class="lref">38</div>
+        <div class="txt"><code class="tok">_app_tasks</code> — the <b>dynamic</b> set: one per-app watch task, keyed by app
+          name. This dict is continually diffed against reality as apps come and go.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 lifecycle ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — lifecycle</div>
+      <h2><span class="msig">start()</span> &amp; <span class="msig">stop()</span></h2>
+      <p>The two methods server.py's <code class="tok">lifespan</code> hook calls. <code class="tok">start</code>
+        spins up the machine; <code class="tok">stop</code> tears every part of it down.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">watcher.py</span><span>lines 40 — 53</span></div>
+      <pre><div class="cl"><span class="ln">40</span><span class="ct">    <span class="k">async def</span> <span class="f">start</span>(self) -> <span class="k">None</span>:</span></div><div class="cl"><span class="ln">41</span><span class="ct">        self._tasks.<span class="f">append</span>(asyncio.<span class="f">create_task</span>(self.<span class="f">_watch_symlinks_dir</span>()))</span></div><div class="cl"><span class="ln">42</span><span class="ct">        self._tasks.<span class="f">append</span>(asyncio.<span class="f">create_task</span>(self.<span class="f">_reaper</span>()))</span></div><div class="cl"><span class="ln">43</span><span class="ct">        <span class="k">await</span> self.<span class="f">_sync_app_watches</span>()</span></div><div class="cl"><span class="ln">44</span><span class="ct"></span></div><div class="cl"><span class="ln">45</span><span class="ct">    <span class="k">async def</span> <span class="f">stop</span>(self) -> <span class="k">None</span>:</span></div><div class="cl"><span class="ln">46</span><span class="ct">        self._stop.<span class="f">set</span>()</span></div><div class="cl"><span class="ln">47</span><span class="ct">        <span class="k">for</span> t <span class="k">in</span> self._tasks:</span></div><div class="cl"><span class="ln">48</span><span class="ct">            t.<span class="f">cancel</span>()</span></div><div class="cl"><span class="ln">49</span><span class="ct">        <span class="k">for</span> t <span class="k">in</span> self._app_tasks.<span class="f">values</span>():</span></div><div class="cl"><span class="ln">50</span><span class="ct">            t.<span class="f">cancel</span>()</span></div><div class="cl"><span class="ln">51</span><span class="ct">        <span class="k">await</span> asyncio.<span class="f">gather</span>(*self._tasks, *self._app_tasks.<span class="f">values</span>(), return_exceptions=<span class="k">True</span>)</span></div><div class="cl"><span class="ln">52</span><span class="ct">        self._tasks.<span class="f">clear</span>()</span></div><div class="cl"><span class="ln">53</span><span class="ct">        self._app_tasks.<span class="f">clear</span>()</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">41 — 42</div>
+        <div class="txt">The two long-lived tasks are created and parked in <code class="tok">_tasks</code>:
+          the symlinks-dir watcher and the reaper. <code class="tok">create_task</code> schedules them; it
+          does not block.</div>
+      </div>
+      <div class="row">
+        <div class="lref">43</div>
+        <div class="txt"><code class="tok">_sync_app_watches()</code> is <code class="tok">await</code>ed once here, so the
+          per-app watches exist <b>before</b> <code class="tok">start()</code> returns — when the app begins
+          serving requests, every already-registered app is already watched.</div>
+      </div>
+      <div class="row">
+        <div class="lref">46</div>
+        <div class="txt"><b>Step one of shutdown.</b> Setting <code class="tok">_stop</code> asks every loop to exit
+          gracefully at its next check — and, because the same event is passed as
+          <code class="tok">awatch</code>'s <code class="tok">stop_event</code>, the generators themselves end.</div>
+      </div>
+      <div class="row">
+        <div class="lref">47 — 50</div>
+        <div class="txt"><code class="tok">cancel()</code> on top of the stop flag — belt and braces. A task blocked
+          somewhere that does not check <code class="tok">_stop</code> still gets a
+          <code class="tok">CancelledError</code> and unwinds.</div>
+      </div>
+      <div class="row">
+        <div class="lref">51</div>
+        <div class="txt"><code class="tok">gather(&hellip;, return_exceptions=True)</code> waits for every task to actually
+          finish. <code class="tok">return_exceptions=True</code> means a <code class="tok">CancelledError</code>
+          or stray exception is collected rather than re-raised — shutdown never fails partway.</div>
+      </div>
+      <div class="row">
+        <div class="lref">52 — 53</div>
+        <div class="txt">Both collections are cleared, leaving the <code class="tok">Watcher</code> in a clean,
+          re-startable state.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 05 the three layers ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">05 — the resilience model</div>
+      <h2>Three layers against silent death.</h2>
+      <p>No single mechanism is trusted. A failure mode that slips past one layer is caught by the
+        next — defence in depth, applied to an unreliable OS file-watcher.</p>
+    </div>
+
+    <div class="guards reveal d1">
+      <div class="guard">
+        <div class="gl">1</div>
+        <h4>Per-loop backoff retry</h4>
+        <p>Each watch wraps <code class="tok">awatch()</code> in a <code class="tok">while not _stop</code>
+          loop. An unexpected exception is logged, the loop sleeps with exponential backoff (1&rarr;30 s),
+          then re-enters <code class="tok">awatch()</code>. A glitch is a hiccup, not a death.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">2</div>
+        <h4>FileNotFoundError clean exit</h4>
+        <p>If a watched <em>target</em> vanishes, retrying is pointless — there is nothing to watch.
+          That one exception is caught separately and the task <code class="tok">return</code>s cleanly,
+          deliberately leaving its slot for the reaper or the dir-watcher to reconcile.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">3</div>
+        <h4>The periodic reaper</h4>
+        <p>Every 60 s the reaper re-runs <code class="tok">_sync_app_watches()</code>. Any per-app task
+          that exited — crash or clean return — is detected as <code class="tok">done()</code> and
+          recreated. The safety net beneath the other two.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">&infin;</div>
+        <h4>The stop event ties it together</h4>
+        <p>Every loop and every backoff sleep checks <code class="tok">_stop</code>. Resilience never
+          fights shutdown: the same flag that survives crashes also guarantees a clean, prompt exit.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 06 task map ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">06 — the coroutines</div>
+      <h2>Five methods, three kinds of task.</h2>
+      <p>Everything below the lifecycle is coroutines. Two run forever, the rest are spawned on
+        demand. This is the map of what follows.</p>
+    </div>
+
+    <div class="tmap reveal d1">
+      <a class="tk" href="#m-symlinks">
+        <span class="kind persist">PERSISTENT</span>
+        <span class="mid"><div class="nm">_watch_symlinks_dir</div><div class="desc">watches the symlinks dir — apps appearing &amp; disappearing</div></span>
+        <span class="ll">55—72</span>
+      </a>
+      <a class="tk" href="#m-sync">
+        <span class="kind dyn">DIFF</span>
+        <span class="mid"><div class="nm">_sync_app_watches</div><div class="desc">reconciles wanted apps against running per-app tasks</div></span>
+        <span class="ll">74—89</span>
+      </a>
+      <a class="tk" href="#m-app">
+        <span class="kind dyn">PER-APP</span>
+        <span class="mid"><div class="nm">_watch_app</div><div class="desc">watches one app's target directory, recursively</div></span>
+        <span class="ll">91—116</span>
+      </a>
+      <a class="tk" href="#m-reaper">
+        <span class="kind safety">SAFETY NET</span>
+        <span class="mid"><div class="nm">_reaper</div><div class="desc">periodically re-syncs, recreating any dead watch</div></span>
+        <span class="ll">118—136</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 07 _watch_symlinks_dir ====================== -->
+<section id="m-symlinks">
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">07 — the directory watcher</div>
+      <h2><span class="msig">_watch_symlinks_dir()</span></h2>
+      <p>The first long-lived task. It watches the symlinks directory itself — not recursively — so it
+        sees links being added or removed, and re-derives the per-app watches whenever they do.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">watcher.py</span><span>lines 55 — 72</span></div>
+      <pre><div class="cl"><span class="ln">55</span><span class="ct">    <span class="k">async def</span> <span class="f">_watch_symlinks_dir</span>(self) -> <span class="k">None</span>:</span></div><div class="cl"><span class="ln">56</span><span class="ct">        backoff = self.BACKOFF_INITIAL_S</span></div><div class="cl"><span class="ln">57</span><span class="ct">        <span class="k">while not</span> self._stop.<span class="f">is_set</span>():</span></div><div class="cl"><span class="ln">58</span><span class="ct">            <span class="k">try</span>:</span></div><div class="cl"><span class="ln">59</span><span class="ct">                <span class="k">async for</span> _ <span class="k">in</span> <span class="f">awatch</span>(self.symlinks_dir, stop_event=self._stop,</span></div><div class="cl"><span class="ln">60</span><span class="ct">                                      debounce=self.debounce_ms, recursive=<span class="k">False</span>):</span></div><div class="cl"><span class="ln">61</span><span class="ct">                    <span class="k">await</span> self.pubsub.<span class="f">publish</span>(INDEX_TOPIC)</span></div><div class="cl"><span class="ln">62</span><span class="ct">                    <span class="k">await</span> self.<span class="f">_sync_app_watches</span>()</span></div><div class="cl"><span class="ln">63</span><span class="ct">                    backoff = self.BACKOFF_INITIAL_S</span></div><div class="cl"><span class="ln">64</span><span class="ct">                <span class="k">return</span>  <span class="c"># awatch exited cleanly because _stop was set</span></span></div><div class="cl"><span class="ln">65</span><span class="ct">            <span class="k">except</span> Exception:</span></div><div class="cl"><span class="ln">66</span><span class="ct">                logger.<span class="f">exception</span>(<span class="s">"symlinks dir watch crashed; restarting in %.1fs"</span>, backoff)</span></div><div class="cl"><span class="ln">67</span><span class="ct">                <span class="k">try</span>:</span></div><div class="cl"><span class="ln">68</span><span class="ct">                    <span class="k">await</span> asyncio.<span class="f">wait_for</span>(self._stop.<span class="f">wait</span>(), timeout=backoff)</span></div><div class="cl"><span class="ln">69</span><span class="ct">                    <span class="k">return</span>  <span class="c"># asked to stop while sleeping</span></span></div><div class="cl"><span class="ln">70</span><span class="ct">                <span class="k">except</span> asyncio.TimeoutError:</span></div><div class="cl"><span class="ln">71</span><span class="ct">                    <span class="k">pass</span></span></div><div class="cl"><span class="ln">72</span><span class="ct">                backoff = <span class="f">min</span>(backoff * <span class="n">2</span>, self.BACKOFF_MAX_S)</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">57</div>
+        <div class="txt">The outer <b>retry loop</b>. It keeps re-entering <code class="tok">awatch()</code> as long as
+          shutdown has not been requested — so a crash inside means another attempt, not the end.</div>
+      </div>
+      <div class="row">
+        <div class="lref">59 — 60</div>
+        <div class="txt"><code class="tok">recursive=False</code> — only the directory's <em>own</em> entries matter here;
+          changes <em>inside</em> a target are <code class="tok">_watch_app</code>'s job.
+          <code class="tok">stop_event=self._stop</code> lets shutdown end the generator from outside.</div>
+      </div>
+      <div class="row">
+        <div class="lref">61 — 62</div>
+        <div class="txt">On any directory change: publish <b>INDEX_TOPIC</b> so open index tabs reload, then
+          <code class="tok">_sync_app_watches()</code> so the per-app watch set matches the new reality.
+          The loop variable is <code class="tok">_</code> — the <em>fact</em> of a change is all that is used,
+          never its detail.</div>
+      </div>
+      <div class="row">
+        <div class="lref">63</div>
+        <div class="txt">A successful event resets <code class="tok">backoff</code> to its initial value. Health is
+          proven by progress — so a glitch hours later starts its retry sequence fresh from 1 s.</div>
+      </div>
+      <div class="row">
+        <div class="lref">64</div>
+        <div class="txt">Reaching here means <code class="tok">awatch()</code> ended <b>without</b> raising — which only
+          happens because <code class="tok">_stop</code> was set. <code class="tok">return</code> exits the
+          retry loop for good. The trailing comment marks this as the intended clean exit.</div>
+      </div>
+      <div class="row">
+        <div class="lref">65 — 66</div>
+        <div class="txt">Any other exception is caught broadly and logged with a full traceback via
+          <code class="tok">logger.exception</code>. The watch is <b>not</b> abandoned — control falls through
+          to the backoff sleep.</div>
+      </div>
+      <div class="row">
+        <div class="lref">68 — 71</div>
+        <div class="txt"><b>The interruptible sleep.</b> Rather than <code class="tok">asyncio.sleep(backoff)</code>,
+          it <code class="tok">wait_for</code>s the stop event with a timeout. If stop fires first the task
+          <code class="tok">return</code>s immediately; if the timeout wins, a
+          <code class="tok">TimeoutError</code> is caught and the loop retries. Shutdown is never made to
+          wait out a 30 s backoff.</div>
+      </div>
+      <div class="row">
+        <div class="lref">72</div>
+        <div class="txt">Backoff doubles, clamped at <code class="tok">BACKOFF_MAX_S</code> (30 s). The classic
+          exponential-backoff curve: forgiving of one-offs, gentle on a persistently broken watch.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>Why <code class="tok" style="font-size:.82em">except Exception</code> and not a precise type</h4>
+      <p>An OS file-watcher can fail in ways the code cannot enumerate — FSEvents quirks, transient
+        <code class="tok">OSError</code>s, library-internal faults. The contract is "<em>survive anything</em>",
+        so the catch is deliberately broad. Note it is <code class="tok">Exception</code>, not bare
+        <code class="tok">except:</code> — <code class="tok">CancelledError</code> derives from
+        <code class="tok">BaseException</code> and so still propagates, keeping <code class="tok">stop()</code>'s
+        <code class="tok">cancel()</code> effective.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 08 _sync_app_watches ====================== -->
+<section id="m-sync">
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">08 — the reconciler</div>
+      <h2><span class="msig">_sync_app_watches()</span></h2>
+      <p>The pivot of the whole module. It computes the set of apps that <em>should</em> be watched,
+        diffs it against the tasks currently running, and makes reality match — cancelling the stale,
+        spawning the missing.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">watcher.py</span><span>lines 74 — 89</span></div>
+      <pre><div class="cl"><span class="ln">74</span><span class="ct">    <span class="k">async def</span> <span class="f">_sync_app_watches</span>(self) -> <span class="k">None</span>:</span></div><div class="cl"><span class="ln">75</span><span class="ct">        apps = <span class="f">scan</span>(self.symlinks_dir)</span></div><div class="cl"><span class="ln">76</span><span class="ct">        wanted = {a.name: a <span class="k">for</span> a <span class="k">in</span> apps <span class="k">if</span> a.target <span class="k">is not None</span> <span class="k">and</span> a.error <span class="k">is None</span>}</span></div><div class="cl"><span class="ln">77</span><span class="ct"></span></div><div class="cl"><span class="ln">78</span><span class="ct">        <span class="k">for</span> name <span class="k">in</span> <span class="f">list</span>(self._app_tasks):</span></div><div class="cl"><span class="ln">79</span><span class="ct">            <span class="k">if</span> name <span class="k">not in</span> wanted:</span></div><div class="cl"><span class="ln">80</span><span class="ct">                self._app_tasks[name].<span class="f">cancel</span>()</span></div><div class="cl"><span class="ln">81</span><span class="ct">                <span class="k">del</span> self._app_tasks[name]</span></div><div class="cl"><span class="ln">82</span><span class="ct"></span></div><div class="cl"><span class="ln">83</span><span class="ct">        <span class="k">for</span> name, app <span class="k">in</span> wanted.<span class="f">items</span>():</span></div><div class="cl"><span class="ln">84</span><span class="ct">            existing = self._app_tasks.<span class="f">get</span>(name)</span></div><div class="cl"><span class="ln">85</span><span class="ct">            <span class="k">if</span> existing <span class="k">and not</span> existing.<span class="f">done</span>():</span></div><div class="cl"><span class="ln">86</span><span class="ct">                <span class="k">continue</span></span></div><div class="cl"><span class="ln">87</span><span class="ct">            self._app_tasks[name] = asyncio.<span class="f">create_task</span>(</span></div><div class="cl"><span class="ln">88</span><span class="ct">                self.<span class="f">_watch_app</span>(name, app.target)</span></div><div class="cl"><span class="ln">89</span><span class="ct">            )</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">75 — 76</div>
+        <div class="txt"><code class="tok">scan()</code> returns one <code class="tok">App</code> per symlink. <b>wanted</b> keeps
+          only the healthy ones — a resolvable <code class="tok">target</code> and no
+          <code class="tok">error</code>. Broken symlinks and missing-<code class="tok">index.html</code> apps
+          are silently excluded; there is nothing watchable about them.</div>
+      </div>
+      <div class="row">
+        <div class="lref">78 — 81</div>
+        <div class="txt"><b>The removal pass.</b> Iterating a <code class="tok">list()</code> copy of the keys (the dict
+          is mutated inside the loop), any running task whose app is no longer wanted is cancelled and
+          dropped. This is how a deleted symlink stops its watch.</div>
+      </div>
+      <div class="row">
+        <div class="lref">83 — 86</div>
+        <div class="txt"><b>The addition pass.</b> For each wanted app, if a task already exists <em>and</em> is not
+          <code class="tok">done()</code>, leave it — <code class="tok">continue</code>. A live healthy watch is
+          never disturbed by a re-sync.</div>
+      </div>
+      <div class="row">
+        <div class="lref">87 — 89</div>
+        <div class="txt">Otherwise — no task, or one that has finished — spawn a fresh
+          <code class="tok">_watch_app</code> for it. This single line is what makes the method a true
+          <b>reconciler</b>: it both adds genuinely new apps and resurrects any whose watch died.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--sage)">
+      <h4>One method, three callers</h4>
+      <p><code class="tok">_sync_app_watches</code> is called from <code class="tok">start()</code> (initial
+        population), from <code class="tok">_watch_symlinks_dir</code> (event-driven, the moment a link
+        changes), and from <code class="tok">_reaper</code> (time-driven, every 60 s). Because it is
+        <b>idempotent</b> — it computes desired state and converges on it — calling it from three
+        unrelated triggers is safe. A redundant call simply does nothing.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 09 _watch_app ====================== -->
+<section id="m-app">
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">09 — the per-app watcher</div>
+      <h2><span class="msig">_watch_app()</span></h2>
+      <p>One instance of this runs per registered app. It watches that app's target directory
+        <em>recursively</em>, and on any change publishes twice. It also carries the second resilience
+        layer — the <code class="tok">FileNotFoundError</code> clean exit.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">watcher.py</span><span>lines 91 — 116</span></div>
+      <pre><div class="cl"><span class="ln">91</span><span class="ct">    <span class="k">async def</span> <span class="f">_watch_app</span>(self, name: str, target: Path) -> <span class="k">None</span>:</span></div><div class="cl"><span class="ln">92</span><span class="ct">        backoff = self.BACKOFF_INITIAL_S</span></div><div class="cl"><span class="ln">93</span><span class="ct">        <span class="k">while not</span> self._stop.<span class="f">is_set</span>():</span></div><div class="cl"><span class="ln">94</span><span class="ct">            <span class="k">try</span>:</span></div><div class="cl"><span class="ln">95</span><span class="ct">                <span class="k">async for</span> _ <span class="k">in</span> <span class="f">awatch</span>(target, stop_event=self._stop,</span></div><div class="cl"><span class="ln">96</span><span class="ct">                                      debounce=self.debounce_ms, recursive=<span class="k">True</span>):</span></div><div class="cl"><span class="ln">97</span><span class="ct">                    <span class="k">await</span> self.pubsub.<span class="f">publish</span>(name)</span></div><div class="cl"><span class="ln">98</span><span class="ct">                    <span class="c"># Also reload the index so the per-row "NEW" indicator</span></span></div><div class="cl"><span class="ln">99</span><span class="ct">                    <span class="c"># picks up the freshness change.</span></span></div><div class="cl"><span class="ln">100</span><span class="ct">                    <span class="k">await</span> self.pubsub.<span class="f">publish</span>(INDEX_TOPIC)</span></div><div class="cl"><span class="ln">101</span><span class="ct">                    backoff = self.BACKOFF_INITIAL_S</span></div><div class="cl"><span class="ln">102</span><span class="ct">                <span class="k">return</span></span></div><div class="cl"><span class="ln">103</span><span class="ct">            <span class="k">except</span> FileNotFoundError:</span></div><div class="cl"><span class="ln">104</span><span class="ct">                <span class="c"># Target went away (symlink target deleted). Don't retry —</span></span></div><div class="cl"><span class="ln">105</span><span class="ct">                <span class="c"># the symlinks-dir watcher will notice and call</span></span></div><div class="cl"><span class="ln">106</span><span class="ct">                <span class="c"># _sync_app_watches, which drops us from the dict.</span></span></div><div class="cl"><span class="ln">107</span><span class="ct">                logger.<span class="f">info</span>(<span class="s">"app %s target vanished; exiting watch"</span>, name)</span></div><div class="cl"><span class="ln">108</span><span class="ct">                <span class="k">return</span></span></div><div class="cl"><span class="ln">109</span><span class="ct">            <span class="k">except</span> Exception:</span></div><div class="cl"><span class="ln">110</span><span class="ct">                logger.<span class="f">exception</span>(<span class="s">"app %s watch crashed; restarting in %.1fs"</span>, name, backoff)</span></div><div class="cl"><span class="ln">111</span><span class="ct">                <span class="k">try</span>:</span></div><div class="cl"><span class="ln">112</span><span class="ct">                    <span class="k">await</span> asyncio.<span class="f">wait_for</span>(self._stop.<span class="f">wait</span>(), timeout=backoff)</span></div><div class="cl"><span class="ln">113</span><span class="ct">                    <span class="k">return</span></span></div><div class="cl"><span class="ln">114</span><span class="ct">                <span class="k">except</span> asyncio.TimeoutError:</span></div><div class="cl"><span class="ln">115</span><span class="ct">                    <span class="k">pass</span></span></div><div class="cl"><span class="ln">116</span><span class="ct">                backoff = <span class="f">min</span>(backoff * <span class="n">2</span>, self.BACKOFF_MAX_S)</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">95 — 96</div>
+        <div class="txt"><code class="tok">recursive=True</code> — the opposite of the dir watcher. An app's files can sit
+          in nested folders, and a save to any of them must trigger a reload, so the entire subtree is
+          watched.</div>
+      </div>
+      <div class="row">
+        <div class="lref">97</div>
+        <div class="txt">First publish: the app's <b>own topic</b> (its name). The SSE stream for any tab open on
+          <code class="tok">/{name}/&hellip;</code> is subscribed to exactly this topic, and reloads.</div>
+      </div>
+      <div class="row">
+        <div class="lref">98 — 100</div>
+        <div class="txt"><b>Second publish: INDEX_TOPIC.</b> Editing an app's files also changes its freshness —
+          its <code class="tok">index.html</code> mtime moves — and the index page renders a per-row "NEW"
+          indicator from that. Publishing the index topic too keeps that badge accurate without the user
+          reloading the index by hand.</div>
+      </div>
+      <div class="row">
+        <div class="lref">101 — 102</div>
+        <div class="txt">As in the dir watcher: a successful event resets backoff; a clean
+          <code class="tok">awatch()</code> exit (only via <code class="tok">_stop</code>)
+          <code class="tok">return</code>s the task for good.</div>
+      </div>
+      <div class="row">
+        <div class="lref">103 — 108</div>
+        <div class="txt"><b>The clean-exit special case.</b> <code class="tok">FileNotFoundError</code> means the
+          watched directory itself is gone — the symlink target was deleted. Retrying with backoff would be
+          pointless: there is nothing left to watch. The task logs at <code class="tok">info</code> level
+          (this is normal, not an error) and <code class="tok">return</code>s.</div>
+      </div>
+      <div class="row">
+        <div class="lref">109 — 116</div>
+        <div class="txt">Every <em>other</em> exception takes the standard backoff-retry path, identical to the
+          dir watcher's — a glitch is survived, a vanished target is not pointlessly chased.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--rose)">
+      <h4>Why a vanished target <em>exits</em> instead of retrying</h4>
+      <p>The comment on lines 104–106 spells out the choreography. When a target disappears, the
+        <b>symlinks-dir watcher</b> sees the directory change, runs <code class="tok">_sync_app_watches</code>,
+        finds the app no longer in <code class="tok">wanted</code>, and removes it from
+        <code class="tok">_app_tasks</code>. So this task <em>returning</em> is correct: it deliberately
+        steps aside and lets the reconciler do the bookkeeping. Two coroutines, one consistent outcome —
+        no orphaned task, no dict left out of sync. And even if the dir-watcher event were somehow missed,
+        the reaper would catch the now-<code class="tok">done()</code> task within 60 s.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 10 _reaper ====================== -->
+<section id="m-reaper">
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">10 — the safety net</div>
+      <h2><span class="msig">_reaper()</span></h2>
+      <p>The second long-lived task and the third resilience layer. It assumes the event-driven
+        machinery can fail, and re-synchronises on a fixed clock regardless.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">watcher.py</span><span>lines 118 — 136</span></div>
+      <pre><div class="cl"><span class="ln">118</span><span class="ct">    <span class="k">async def</span> <span class="f">_reaper</span>(self) -> <span class="k">None</span>:</span></div><div class="cl"><span class="ln">119</span><span class="ct">        <span class="s">"""Periodically resync app watches. Cleans up any per-app task that</span></span></div><div class="cl"><span class="ln">120</span><span class="ct">        <span class="s">exited (crash or clean return) and recreates watches for newly</span></span></div><div class="cl"><span class="ln">121</span><span class="ct">        <span class="s">wanted apps that are missing. This is the safety net against silent</span></span></div><div class="cl"><span class="ln">122</span><span class="ct">        <span class="s">watcher death."""</span></span></div><div class="cl"><span class="ln">123</span><span class="ct">        <span class="k">while not</span> self._stop.<span class="f">is_set</span>():</span></div><div class="cl"><span class="ln">124</span><span class="ct">            <span class="k">try</span>:</span></div><div class="cl"><span class="ln">125</span><span class="ct">                <span class="k">await</span> asyncio.<span class="f">wait_for</span>(self._stop.<span class="f">wait</span>(), timeout=self.REAP_INTERVAL_S)</span></div><div class="cl"><span class="ln">126</span><span class="ct">                <span class="k">return</span></span></div><div class="cl"><span class="ln">127</span><span class="ct">            <span class="k">except</span> asyncio.TimeoutError:</span></div><div class="cl"><span class="ln">128</span><span class="ct">                <span class="k">pass</span></span></div><div class="cl"><span class="ln">129</span><span class="ct">            dead = [n <span class="k">for</span> n, t <span class="k">in</span> self._app_tasks.<span class="f">items</span>() <span class="k">if</span> t.<span class="f">done</span>()]</span></div><div class="cl"><span class="ln">130</span><span class="ct">            <span class="k">for</span> n <span class="k">in</span> dead:</span></div><div class="cl"><span class="ln">131</span><span class="ct">                logger.<span class="f">warning</span>(<span class="s">"reaper: app watch %s was dead, recreating"</span>, n)</span></div><div class="cl"><span class="ln">132</span><span class="ct">                <span class="k">del</span> self._app_tasks[n]</span></div><div class="cl"><span class="ln">133</span><span class="ct">            <span class="k">try</span>:</span></div><div class="cl"><span class="ln">134</span><span class="ct">                <span class="k">await</span> self.<span class="f">_sync_app_watches</span>()</span></div><div class="cl"><span class="ln">135</span><span class="ct">            <span class="k">except</span> Exception:</span></div><div class="cl"><span class="ln">136</span><span class="ct">                logger.<span class="f">exception</span>(<span class="s">"reaper: _sync_app_watches failed"</span>)</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">125 — 128</div>
+        <div class="txt">The same interruptible-sleep idiom as the backoff path, used here as a plain <b>60 s
+          tick</b>. <code class="tok">wait_for</code> on the stop event: if stop fires the reaper
+          <code class="tok">return</code>s at once; otherwise the <code class="tok">TimeoutError</code> is the
+          signal that an interval elapsed and there is work to do.</div>
+      </div>
+      <div class="row">
+        <div class="lref">129 — 132</div>
+        <div class="txt"><b>The reap.</b> Every <code class="tok">done()</code> per-app task — finished by crash or by
+          clean <code class="tok">return</code> — is collected and deleted from the dict. The
+          <code class="tok">warning</code> log makes a watch that needed resurrecting visible in the logs.</div>
+      </div>
+      <div class="row">
+        <div class="lref">133 — 134</div>
+        <div class="txt">Then <code class="tok">_sync_app_watches()</code>. With the dead entries already removed, its
+          addition pass sees those apps as missing and respawns their watches — and it also picks up any
+          app added since the last tick. <b>One call, both jobs.</b></div>
+      </div>
+      <div class="row">
+        <div class="lref">135 — 136</div>
+        <div class="txt">Even the reaper's own re-sync is wrapped: if <code class="tok">_sync_app_watches</code>
+          throws, it is logged and swallowed so the <code class="tok">while</code> loop survives to the next
+          tick. <b>The safety net itself cannot fall.</b></div>
+      </div>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>Why a reaper at all, when there's already backoff retry?</h4>
+      <p>Backoff retry only saves a loop that crashes with a <em>catchable exception</em>. It cannot save a
+        task that the event loop kills outright, or one that <code class="tok">return</code>s cleanly (the
+        <code class="tok">FileNotFoundError</code> path) and leaves a stale slot, or — more subtly — a
+        symlinks-dir watcher event that was simply missed, so a new app never got a watch. The reaper
+        closes all of those gaps by re-deriving desired state from the filesystem on a fixed clock. It
+        does not need to understand <em>how</em> a watch went missing; it only needs to notice that it
+        did. That is what makes it a true safety net — bounded recovery time, no matter the cause.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 11 worth noticing ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">11 — step back</div>
+      <h2>Four things to take away.</h2>
+    </div>
+    <div class="notes">
+      <div class="note reveal d1">
+        <h4>The module is built around its own unreliability</h4>
+        <p>An OS file-watcher will glitch — that is taken as given. Every loop assumes it will die, every
+          backoff sleep checks for shutdown, and a periodic reaper re-derives the truth from disk.
+          Resilience here is not a feature bolted on; it is the shape of the file.</p>
+      </div>
+      <div class="note reveal d1" style="--ac:var(--sage)">
+        <h4>Idempotent reconciliation beats event tracking</h4>
+        <p><code class="tok">_sync_app_watches</code> never trusts a stream of "app added / app removed"
+          events. It re-computes the full desired set and converges on it. That is why three unrelated
+          callers — startup, the dir watcher, the reaper — can all invoke it safely and redundantly.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--peach)">
+        <h4>One stop event, threaded everywhere</h4>
+        <p>A single <code class="tok">asyncio.Event</code> is the loop condition, the
+          <code class="tok">awatch</code> <code class="tok">stop_event</code>, and the
+          <code class="tok">wait_for</code> target inside every sleep. Shutdown is therefore both
+          <b>prompt</b> and <b>total</b> — no loop and no backoff timer can outlive
+          <code class="tok">stop()</code>.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--mist)">
+        <h4>Every file change publishes a topic — that is the whole external effect</h4>
+        <p>The watcher writes nothing and serves nothing. Its entire output is
+          <code class="tok">pubsub.publish(&hellip;)</code>: an app's own name, and/or
+          <code class="tok">INDEX_TOPIC</code>. server.py's SSE route turns those topic names into
+          <code class="tok">change</code> events, and the injected <code class="tok">reload.js</code> turns
+          those into a browser reload. This module is one link in that chain.</p>
+      </div>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/inject/"><div class="lbl">&larr; PREVIOUS</div><div class="nm"><span class="mono">inject.py</span></div></a>
+      <a class="next" href="/technical-explanation/registry/"><div class="lbl">NEXT &rarr;</div><div class="nm"><span class="mono">registry.py</span></div></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/watcher.py — 136 lines, 3 resilience layers, 1 class.</span>
+    <span><a href="/technical-explanation/">&larr; all twelve files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

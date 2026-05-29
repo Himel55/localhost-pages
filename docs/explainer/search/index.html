@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>search.js — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #9eaecc; }   /* denim — search.js */
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">static/search.js</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">search.js</span><br />filter as you <em>type.</em></h1>
+    <p class="lede reveal d2">
+      Three fields, one substring match, forty lines. <code class="tok">search.js</code> is the smallest
+      interaction script on the index — and the quietest. It sets <b>display:none</b> on rows that
+      don't match, and that single convention is all the other modules need to respect.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">40</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">3</div><div class="l">fields matched</div></div>
+      <div class="stat reveal d2"><div class="n">/</div><div class="l">to focus</div></div>
+      <div class="stat reveal d3"><div class="n">display</div><div class="l">toggle</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 the filter ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — the filter</div>
+      <h2>apply() — one query, three fields.</h2>
+      <p><code class="tok">apply()</code> lowercases the trimmed input, then walks every <code class="tok">.row</code>
+        element — testing the query as a substring of the app name, card title, and description.
+        An empty query matches everything. Non-matches vanish via <code class="tok">style.display&nbsp;=&nbsp;'none'</code>.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">search.js</span><span>lines 7 — 16</span></div>
+      <pre><div class="cl"><span class="ln">7</span><span class="ct">  <span class="k">function</span> <span class="f">apply</span>() {</span></div><div class="cl"><span class="ln">8</span><span class="ct">    <span class="k">const</span> q = input.value.<span class="f">trim</span>().<span class="f">toLowerCase</span>();</span></div><div class="cl"><span class="ln">9</span><span class="ct">    document.<span class="f">querySelectorAll</span>(<span class="s">'.row'</span>).<span class="f">forEach</span>((row) =&gt; {</span></div><div class="cl"><span class="ln">10</span><span class="ct">      <span class="k">const</span> name  = (row.dataset.name || <span class="s">''</span>).<span class="f">toLowerCase</span>();</span></div><div class="cl"><span class="ln">11</span><span class="ct">      <span class="k">const</span> title = (row.<span class="f">querySelector</span>(<span class="s">'.name'</span>)?.<span class="f">textContent</span> || <span class="s">''</span>).<span class="f">toLowerCase</span>();</span></div><div class="cl"><span class="ln">12</span><span class="ct">      <span class="k">const</span> desc  = (row.<span class="f">querySelector</span>(<span class="s">'.desc'</span>)?.<span class="f">textContent</span> || <span class="s">''</span>).<span class="f">toLowerCase</span>();</span></div><div class="cl"><span class="ln">13</span><span class="ct">      <span class="k">const</span> match = !q || name.<span class="f">includes</span>(q) || title.<span class="f">includes</span>(q) || desc.<span class="f">includes</span>(q);</span></div><div class="cl"><span class="ln">14</span><span class="ct">      row.style.display = match ? <span class="s">''</span> : <span class="s">'none'</span>;</span></div><div class="cl"><span class="ln">15</span><span class="ct">    });</span></div><div class="cl"><span class="ln">16</span><span class="ct">  }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">8</div>
+        <div class="txt"><code class="tok">trim().toLowerCase()</code> before anything else — the query is normalised once,
+          not per field. Trailing spaces and case differences never matter.</div>
+      </div>
+      <div class="row">
+        <div class="lref">10 — 12</div>
+        <div class="txt">Three sources. <b>data-name</b> is the slug written directly into the HTML attribute —
+          the filesystem name. <b>.name</b> is the display title. <b>.desc</b> is the one-line description.
+          All three are lowercased to match the normalised query.</div>
+      </div>
+      <div class="row">
+        <div class="lref">13</div>
+        <div class="txt"><code class="tok">!q</code> short-circuits for an empty input — every row is visible
+          without touching the DOM. A non-empty query must appear as a substring of <em>at least one</em> field.</div>
+      </div>
+      <div class="row">
+        <div class="lref">14</div>
+        <div class="txt">Resetting to <code class="tok">''</code> (not <code class="tok">'block'</code>) lets the row's
+          natural CSS display rule re-apply — the filter doesn't need to know how rows are laid out.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>The quiet contract with <code class="tok" style="font-size:.82em">keys.js</code> and <code class="tok" style="font-size:.82em">sort.js</code></h4>
+      <p><code class="tok">keys.js</code>'s <code class="tok">visibleRows()</code> calls
+        <code class="tok">getComputedStyle(row).display !== 'none'</code> to skip hidden rows during keyboard
+        navigation. <code class="tok">sort.js</code> re-orders the DOM in place but leaves filtered rows hidden.
+        The <code class="tok">display</code> toggle is the shared language — no events, no shared state.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 wiring ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — wiring</div>
+      <h2>Two event listeners hook it up.</h2>
+      <p>The <code class="tok">input</code> event fires on every keystroke. The clear button empties the field,
+        re-applies the filter, and returns focus — so the keyboard shortcut stays live.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">search.js</span><span>lines 18 — 27</span></div>
+      <pre><div class="cl"><span class="ln">18</span><span class="ct">  input.<span class="f">addEventListener</span>(<span class="s">'input'</span>, apply);</span></div><div class="cl"><span class="ln">19</span><span class="ct"></span></div><div class="cl"><span class="ln">20</span><span class="ct">  <span class="k">const</span> clearBtn = document.<span class="f">querySelector</span>(<span class="s">'.search-clear'</span>);</span></div><div class="cl"><span class="ln">21</span><span class="ct">  <span class="k">if</span> (clearBtn) {</span></div><div class="cl"><span class="ln">22</span><span class="ct">    clearBtn.<span class="f">addEventListener</span>(<span class="s">'click'</span>, () =&gt; {</span></div><div class="cl"><span class="ln">23</span><span class="ct">      input.value = <span class="s">''</span>;</span></div><div class="cl"><span class="ln">24</span><span class="ct">      <span class="f">apply</span>();</span></div><div class="cl"><span class="ln">25</span><span class="ct">      input.<span class="f">focus</span>();</span></div><div class="cl"><span class="ln">26</span><span class="ct">    });</span></div><div class="cl"><span class="ln">27</span><span class="ct">  }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">18</div>
+        <div class="txt"><code class="tok">'input'</code> — not <code class="tok">'keyup'</code> or <code class="tok">'change'</code>.
+          <b>input</b> fires on every character, including paste and autocomplete; the filter is always current.</div>
+      </div>
+      <div class="row">
+        <div class="lref">21</div>
+        <div class="txt">The <code class="tok">if (clearBtn)</code> guard mirrors the early-return at line 5 — the file
+          is safe to load on any page that happens to share the stylesheet, even if the clear button is absent.</div>
+      </div>
+      <div class="row">
+        <div class="lref">23 — 25</div>
+        <div class="txt">Clear: three steps in order — empty the value, re-apply so all rows reappear,
+          then refocus. Refocusing means <b>Esc</b> or another <b>/</b> keypress is immediately handled
+          without the user re-clicking.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 keyboard ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — keyboard</div>
+      <h2>Two global keys — / and Esc.</h2>
+      <p>A single <code class="tok">keydown</code> listener on <code class="tok">document</code> handles both.
+        The conditions are mutually exclusive — one focuses, the other blurs — so there is no ordering issue.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">search.js</span><span>lines 29 — 39</span></div>
+      <pre><div class="cl"><span class="ln">29</span><span class="ct">  document.<span class="f">addEventListener</span>(<span class="s">'keydown'</span>, (e) =&gt; {</span></div><div class="cl"><span class="ln">30</span><span class="ct">    <span class="k">if</span> (e.key === <span class="s">'/'</span> &amp;&amp; document.activeElement !== input) {</span></div><div class="cl"><span class="ln">31</span><span class="ct">      e.<span class="f">preventDefault</span>();</span></div><div class="cl"><span class="ln">32</span><span class="ct">      input.<span class="f">focus</span>();</span></div><div class="cl"><span class="ln">33</span><span class="ct">      input.<span class="f">select</span>();</span></div><div class="cl"><span class="ln">34</span><span class="ct">    } <span class="k">else if</span> (e.key === <span class="s">'Escape'</span> &amp;&amp; document.activeElement === input) {</span></div><div class="cl"><span class="ln">35</span><span class="ct">      input.value = <span class="s">''</span>;</span></div><div class="cl"><span class="ln">36</span><span class="ct">      <span class="f">apply</span>();</span></div><div class="cl"><span class="ln">37</span><span class="ct">      input.<span class="f">blur</span>();</span></div><div class="cl"><span class="ln">38</span><span class="ct">    }</span></div><div class="cl"><span class="ln">39</span><span class="ct">  });</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">30 — 31</div>
+        <div class="txt">The <code class="tok">activeElement !== input</code> guard prevents the shortcut firing when
+          already inside the field. <code class="tok">preventDefault()</code> stops the slash from being typed into
+          whatever had focus before — a text input on another widget, for instance.</div>
+      </div>
+      <div class="row">
+        <div class="lref">33</div>
+        <div class="txt"><code class="tok">select()</code> highlights any existing text. A user who pressed <b>/</b>
+          and starts typing replaces the previous query immediately — no backspacing required.</div>
+      </div>
+      <div class="row">
+        <div class="lref">34 — 37</div>
+        <div class="txt"><b>Esc</b> only acts when the input is focused — it doesn't swallow the key globally.
+          Clear, re-apply, then <code class="tok">blur()</code> — after which keyboard nav in <code class="tok">keys.js</code>
+          (arrow keys, Enter) resumes naturally.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--powder)">
+      <h4>Forty lines, one responsibility</h4>
+      <p>There is no state object, no event bus, no import. The file reads exactly as long as its job —
+        wire an input to a DOM walk, add two keyboard shortcuts, ship it. The <code class="tok">display</code>
+        toggle it sets is the only interface it publishes, and every sibling module reads it the same way.</p>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/peek/">
+        <div class="lbl">&larr; PREVIOUS</div>
+        <div class="nm"><span class="mono">peek.js</span></div>
+      </a>
+      <a class="next" href="/technical-explanation/help/">
+        <div class="lbl">NEXT &rarr;</div>
+        <div class="nm"><span class="mono">help.js</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/static/search.js — 40 lines, live filter-as-you-type.</span>
+    <span><a href="/technical-explanation/">&larr; all the files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

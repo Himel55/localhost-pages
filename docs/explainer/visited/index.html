@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>visited.js — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #b5d0d0; }   /* seafoam — visited.js */
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">static/visited.js</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">visited.js</span><br />is the <em>badge.</em></h1>
+    <p class="lede reveal d2">
+      A self-contained IIFE that compares each index row's <b>file mtime</b> against
+      the last time you clicked into it. When the file is newer, a coloured left bar appears.
+      When you click, the timestamp is written to <b>localStorage</b> and the bar disappears.
+      Sixty-one lines — no framework, no imports, just storage and DOM.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">61</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">lp:visited:*</div><div class="l">storage keys</div></div>
+      <div class="stat reveal d3"><div class="n">2</div><div class="l">localStorage prefixes</div></div>
+      <div class="stat reveal d3"><div class="n">pageshow</div><div class="l">aware</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 read & mark ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — read &amp; mark</div>
+      <h2>Parse the timestamp. Toggle the badge.</h2>
+      <p><code class="tok">lastVisitedAt</code> reads one localStorage entry and parses it back to a Unix
+        millisecond integer. <code class="tok">markRows</code> runs that check against every row's
+        <code class="tok">data-mtime</code> and adds or removes <code class="tok">.has-update</code>.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">visited.js</span><span>lines 5 — 25</span></div>
+      <pre><div class="cl"><span class="ln">5</span><span class="ct">  <span class="k">const</span> STORAGE_PREFIX = <span class="s">'lp:visited:'</span>;</span></div><div class="cl"><span class="ln">6</span><span class="ct"></span></div><div class="cl"><span class="ln">7</span><span class="ct">  <span class="k">function</span> <span class="f">lastVisitedAt</span>(name) {</span></div><div class="cl"><span class="ln">8</span><span class="ct">    <span class="k">const</span> v = localStorage.<span class="f">getItem</span>(STORAGE_PREFIX + name);</span></div><div class="cl"><span class="ln">9</span><span class="ct">    <span class="k">return</span> v ? Date.<span class="f">parse</span>(v) : <span class="n">0</span>;</span></div><div class="cl"><span class="ln">10</span><span class="ct">  }</span></div><div class="cl"><span class="ln">11</span><span class="ct"></span></div><div class="cl"><span class="ln">12</span><span class="ct">  <span class="k">function</span> <span class="f">markRows</span>() {</span></div><div class="cl"><span class="ln">13</span><span class="ct">    document.<span class="f">querySelectorAll</span>(<span class="s">'.row'</span>).<span class="f">forEach</span>((row) =&gt; {</span></div><div class="cl"><span class="ln">14</span><span class="ct">      <span class="k">const</span> name = row.dataset.name;</span></div><div class="cl"><span class="ln">15</span><span class="ct">      <span class="k">const</span> mtimeIso = row.dataset.mtime;</span></div><div class="cl"><span class="ln">16</span><span class="ct">      <span class="k">if</span> (!name || !mtimeIso) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">17</span><span class="ct">      <span class="k">const</span> mtime = Date.<span class="f">parse</span>(mtimeIso);</span></div><div class="cl"><span class="ln">18</span><span class="ct">      <span class="k">if</span> (Number.<span class="f">isNaN</span>(mtime)) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">19</span><span class="ct">      <span class="k">if</span> (mtime &gt; <span class="f">lastVisitedAt</span>(name)) {</span></div><div class="cl"><span class="ln">20</span><span class="ct">        row.classList.<span class="f">add</span>(<span class="s">'has-update'</span>);</span></div><div class="cl"><span class="ln">21</span><span class="ct">      } <span class="k">else</span> {</span></div><div class="cl"><span class="ln">22</span><span class="ct">        row.classList.<span class="f">remove</span>(<span class="s">'has-update'</span>);</span></div><div class="cl"><span class="ln">23</span><span class="ct">      }</span></div><div class="cl"><span class="ln">24</span><span class="ct">    });</span></div><div class="cl"><span class="ln">25</span><span class="ct">  }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">5</div>
+        <div class="txt"><b>STORAGE_PREFIX</b> namespaces every key as <code class="tok">lp:visited:&lt;name&gt;</code> — a simple
+          convention that keeps visited.js's keys distinguishable from the visit-count keys used later.</div>
+      </div>
+      <div class="row">
+        <div class="lref">9</div>
+        <div class="txt">Absent entry returns <code class="tok">0</code> — epoch. Any real file mtime will be greater,
+          so an app that has never been clicked is always flagged as updated on first view.</div>
+      </div>
+      <div class="row">
+        <div class="lref">14 — 15</div>
+        <div class="txt">Both values come from <b>data attributes</b> stamped on each row by the server's index
+          template — <code class="tok">data-name</code> and <code class="tok">data-mtime</code> (an ISO 8601 string).</div>
+      </div>
+      <div class="row">
+        <div class="lref">17 — 18</div>
+        <div class="txt"><code class="tok">Date.parse</code> returns <code class="tok">NaN</code> on a malformed string.
+          The explicit <code class="tok">isNaN</code> guard means a bad mtime is silently skipped —
+          the row is neither badged nor cleared.</div>
+      </div>
+      <div class="row">
+        <div class="lref">19 — 23</div>
+        <div class="txt">The comparison is a strict greater-than. Equal timestamps — visited at the exact same
+          millisecond as the mtime — do <em>not</em> trigger the badge. Both branches are explicit:
+          the <code class="tok">else</code> actively removes the class so a row already badged from a previous
+          render is cleared if the user visited in the meantime.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 record a visit ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — record a visit</div>
+      <h2>Stamp now. Bump the counter. Re-sort.</h2>
+      <p><code class="tok">recordVisit</code> writes two localStorage entries and, if the active sort
+        depends on visit data, immediately re-applies it so the row jumps to its new position
+        without waiting for a page reload.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">visited.js</span><span>lines 27 — 47</span></div>
+      <pre><div class="cl"><span class="ln">27</span><span class="ct">  <span class="k">function</span> <span class="f">recordVisit</span>(row) {</span></div><div class="cl"><span class="ln">28</span><span class="ct">    <span class="k">if</span> (!row || !row.dataset.name) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">29</span><span class="ct">    <span class="k">const</span> name = row.dataset.name;</span></div><div class="cl"><span class="ln">30</span><span class="ct">    <span class="c">// Always stamp with "now" so recently-visited sorts by actual click</span></span></div><div class="cl"><span class="ln">31</span><span class="ct">    <span class="c">// time. The has-update indicator still works because now &gt; any past</span></span></div><div class="cl"><span class="ln">32</span><span class="ct">    <span class="c">// mtime, and if the file gets touched later (mtime &gt; now) the badge</span></span></div><div class="cl"><span class="ln">33</span><span class="ct">    <span class="c">// reappears on next render.</span></span></div><div class="cl"><span class="ln">34</span><span class="ct">    <span class="k">const</span> stamp = <span class="k">new</span> Date().<span class="f">toISOString</span>();</span></div><div class="cl"><span class="ln">35</span><span class="ct">    localStorage.<span class="f">setItem</span>(STORAGE_PREFIX + name, stamp);</span></div><div class="cl"><span class="ln">36</span><span class="ct">    <span class="k">const</span> countKey = <span class="s">'lp:visits:'</span> + name;</span></div><div class="cl"><span class="ln">37</span><span class="ct">    <span class="k">const</span> current = <span class="f">parseInt</span>(localStorage.<span class="f">getItem</span>(countKey) || <span class="s">'0'</span>, <span class="n">10</span>) || <span class="n">0</span>;</span></div><div class="cl"><span class="ln">38</span><span class="ct">    localStorage.<span class="f">setItem</span>(countKey, String(current + <span class="n">1</span>));</span></div><div class="cl"><span class="ln">39</span><span class="ct">    row.classList.<span class="f">remove</span>(<span class="s">'has-update'</span>);</span></div><div class="cl"><span class="ln">40</span><span class="ct">    <span class="c">// If the active sort depends on visit data, re-apply it so the row</span></span></div><div class="cl"><span class="ln">41</span><span class="ct">    <span class="c">// jumps to its new position. Otherwise the order would only update</span></span></div><div class="cl"><span class="ln">42</span><span class="ct">    <span class="c">// on the next page reload.</span></span></div><div class="cl"><span class="ln">43</span><span class="ct">    <span class="k">const</span> mode = localStorage.<span class="f">getItem</span>(<span class="s">'lp:sort'</span>);</span></div><div class="cl"><span class="ln">44</span><span class="ct">    <span class="k">if</span> (mode === <span class="s">'recently-visited'</span> || mode === <span class="s">'most-visited'</span>) {</span></div><div class="cl"><span class="ln">45</span><span class="ct">      document.<span class="f">querySelector</span>(<span class="s">'.sort-wrap'</span>)?.__setSort?.(mode);</span></div><div class="cl"><span class="ln">46</span><span class="ct">    }</span></div><div class="cl"><span class="ln">47</span><span class="ct">  }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">34</div>
+        <div class="txt"><code class="tok">new Date().toISOString()</code> — always <b>now</b>, never the file's mtime.
+          This is deliberate: the recently-visited sort orders by real click time, not by when the file was last
+          modified.</div>
+      </div>
+      <div class="row">
+        <div class="lref">36 — 38</div>
+        <div class="txt">A second key, <code class="tok">lp:visits:&lt;name&gt;</code>, increments a visit counter.
+          The <code class="tok">parseInt(&hellip;) || 0</code> double-default handles both a missing key
+          (<code class="tok">null</code>) and a corrupt value (<code class="tok">NaN</code>).</div>
+      </div>
+      <div class="row">
+        <div class="lref">39</div>
+        <div class="txt">The badge is cleared <em>immediately</em> on click — before the navigation —
+          so the index looks clean if the user presses back and returns.</div>
+      </div>
+      <div class="row">
+        <div class="lref">43 — 45</div>
+        <div class="txt">The <b>__setSort</b> hook. <code class="tok">sort.js</code> exposes this function on
+          the <code class="tok">.sort-wrap</code> DOM node so that visited.js can trigger a re-sort without
+          importing sort.js — modules cooperate through the DOM, not through bundler imports.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>Why stamp "now" and not the file's mtime?</h4>
+      <p>If the stored timestamp were the file's mtime, two consecutive visits to different apps at the
+        same mtime would be indistinguishable. Storing <b>click time</b> means the recently-visited sort
+        is stable and reflects real browsing order. The badge logic is unaffected: the next time the file
+        is touched, its new mtime will exceed the stored click time and the badge reappears.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 wiring ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — wiring</div>
+      <h2>One listener. One export. One event.</h2>
+      <p>The three lines that connect the two functions to the rest of the page — a delegated click
+        handler, a <code class="tok">window</code>-level export for <code class="tok">peek.js</code>,
+        and a <code class="tok">pageshow</code> listener that fires on bfcache restores.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">visited.js</span><span>lines 49 — 61</span></div>
+      <pre><div class="cl"><span class="ln">49</span><span class="ct">  document.<span class="f">addEventListener</span>(<span class="s">'click'</span>, (e) =&gt; {</span></div><div class="cl"><span class="ln">50</span><span class="ct">    <span class="c">// Cmd / ctrl / middle-click on the row's body anchor (open in new tab)</span></span></div><div class="cl"><span class="ln">51</span><span class="ct">    <span class="c">// and explicit clicks on the maximize anchor in the preview modal.</span></span></div><div class="cl"><span class="ln">52</span><span class="ct">    <span class="k">const</span> link = e.target.<span class="f">closest</span>(<span class="s">'a.body'</span>);</span></div><div class="cl"><span class="ln">53</span><span class="ct">    <span class="k">if</span> (link) <span class="f">recordVisit</span>(link.<span class="f">closest</span>(<span class="s">'.row'</span>));</span></div><div class="cl"><span class="ln">54</span><span class="ct">  });</span></div><div class="cl"><span class="ln">55</span><span class="ct"></span></div><div class="cl"><span class="ln">56</span><span class="ct">  <span class="c">// Exposed so peek.js can record a visit when the preview is opened.</span></span></div><div class="cl"><span class="ln">57</span><span class="ct">  window.__lpRecordVisit = recordVisit;</span></div><div class="cl"><span class="ln">58</span><span class="ct"></span></div><div class="cl"><span class="ln">59</span><span class="ct">  <span class="c">// Run on first load AND on bfcache restore (browser back/forward).</span></span></div><div class="cl"><span class="ln">60</span><span class="ct">  window.<span class="f">addEventListener</span>(<span class="s">'pageshow'</span>, markRows);</span></div><div class="cl"><span class="ln">61</span><span class="ct">})();</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">49 — 54</div>
+        <div class="txt">A single <b>delegated</b> click listener on <code class="tok">document</code> — not one
+          per row. <code class="tok">closest('a.body')</code> walks up from whatever element was actually
+          clicked, so it catches clicks on child elements inside the anchor.</div>
+      </div>
+      <div class="row">
+        <div class="lref">57</div>
+        <div class="txt"><b>window.__lpRecordVisit</b> is the cross-module contract with <code class="tok">peek.js</code>.
+          When the preview modal opens an app, it calls this function directly — so a preview counts
+          as a visit and clears the badge without requiring the user to navigate away.</div>
+      </div>
+      <div class="row">
+        <div class="lref">60</div>
+        <div class="txt"><code class="tok">pageshow</code> fires on first load <em>and</em> on bfcache restore.
+          <code class="tok">DOMContentLoaded</code> alone would miss the back/forward case — the page is
+          served from cache and no DOM event fires, but <code class="tok">pageshow</code> always does.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 takeaways ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — step back</div>
+      <h2>Three things to take away.</h2>
+    </div>
+    <div class="notes">
+      <div class="note reveal d1">
+        <h4>localStorage as the only state store</h4>
+        <p>There is no server-side session, no cookie, no API call. The entire "what changed since you
+          looked" feature lives in the browser's own storage — which means it works offline,
+          survives page reloads, and costs exactly zero server resources.</p>
+      </div>
+      <div class="note reveal d1" style="--ac:var(--sage)">
+        <h4>Modules cooperate through <code class="tok" style="font-size:.82em">window</code> hooks, not imports</h4>
+        <p>visited.js reaches sort.js via <code class="tok">.sort-wrap.__setSort</code> and is reached by
+          peek.js via <code class="tok">window.__lpRecordVisit</code>. No bundler, no module graph —
+          coordination happens through named properties on DOM nodes and the global object.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--mist)">
+        <h4><code class="tok" style="font-size:.82em">pageshow</code> is the right hook for bfcache</h4>
+        <p>Browsers can serve a back-navigation from an in-memory snapshot without firing
+          <code class="tok">DOMContentLoaded</code> or <code class="tok">load</code>. Listening on
+          <code class="tok">pageshow</code> is the only way to guarantee badges are re-evaluated
+          after the user clicks back from an app they just visited.</p>
+      </div>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/delete/">
+        <div class="lbl">&larr; PREVIOUS</div>
+        <div class="nm"><span class="mono">delete.js</span></div>
+      </a>
+      <a class="next" href="/technical-explanation/pin/">
+        <div class="lbl">NEXT &rarr;</div>
+        <div class="nm"><span class="mono">pin.js</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/static/visited.js — 61 lines, the "what changed since you looked" indicator.</span>
+    <span><a href="/technical-explanation/">&larr; all the files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

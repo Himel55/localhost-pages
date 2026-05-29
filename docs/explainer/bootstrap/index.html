@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>bootstrap.py — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>:root{ --accent: #c9b6a0; }</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">bootstrap.py</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">bootstrap.py</span><br />seeds <em>once.</em></h1>
+    <p class="lede reveal d2">
+      An empty <code class="tok">symlinks/</code> directory would mean an empty index — and a first-time
+      user with nothing to look at. <b>bootstrap.py</b> solves that in 33 lines: on the very first run it
+      symlinks the bundled docs (this site) into the registry, writes a marker, and never touches the
+      directory again. It is the reason you are reading this <em>through</em> the server on a fresh checkout.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">33</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">1</div><div class="l">public fn</div></div>
+      <div class="stat reveal d3"><div class="n">1</div><div class="l">marker file</div></div>
+      <div class="stat reveal d3"><div class="n">0</div><div class="l">times it repeats</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 top of the file ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — top of the file</div>
+      <h2>Two imports and three constants.</h2>
+      <p>The module names its whole job at the top: a <code class="tok">logger</code> to narrate what it does,
+        a <code class="tok">MARKER</code> filename that records "already seeded", and a
+        <code class="tok">DEFAULT_APPS</code> map of slug &rarr; bundled directory.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">bootstrap.py</span><span>lines 1 — 12</span></div>
+      <pre><div class="cl"><span class="ln">1</span><span class="ct"><span class="k">from</span> __future__ <span class="k">import</span> annotations</span></div><div class="cl"><span class="ln">2</span><span class="ct"></span></div><div class="cl"><span class="ln">3</span><span class="ct"><span class="k">import</span> logging</span></div><div class="cl"><span class="ln">4</span><span class="ct"><span class="k">from</span> pathlib <span class="k">import</span> Path</span></div><div class="cl"><span class="ln">5</span><span class="ct"></span></div><div class="cl"><span class="ln">6</span><span class="ct">logger = logging.<span class="f">getLogger</span>(__name__)</span></div><div class="cl"><span class="ln">7</span><span class="ct"></span></div><div class="cl"><span class="ln">8</span><span class="ct">REPO_ROOT = Path(__file__).<span class="f">resolve</span>().parents[<span class="n">2</span>]</span></div><div class="cl"><span class="ln">9</span><span class="ct">MARKER = <span class="s">".initialized"</span></span></div><div class="cl"><span class="ln">10</span><span class="ct"></span></div><div class="cl"><span class="ln">11</span><span class="ct"><span class="c"># slug -> bundled docs directory</span></span></div><div class="cl"><span class="ln">12</span><span class="ct">DEFAULT_APPS = {<span class="s">"technical-explanation"</span>: REPO_ROOT / <span class="s">"docs"</span> / <span class="s">"explainer"</span>}</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">8</div>
+        <div class="txt"><code class="tok">parents[2]</code> walks up <code class="tok">bootstrap.py → localhost_pages → src → repo root</code>,
+          so the bundled docs can be located no matter the working directory.</div>
+      </div>
+      <div class="row">
+        <div class="lref">9</div>
+        <div class="txt"><b>MARKER</b> is the name of a sentinel file — <code class="tok">.initialized</code> — dropped
+          inside the symlinks directory. Its mere existence means "seeding has already happened here."</div>
+      </div>
+      <div class="row">
+        <div class="lref">12</div>
+        <div class="txt">The one default: the slug <code class="tok">technical-explanation</code> points at
+          <code class="tok">docs/explainer</code> — this very site. The value is a <code class="tok">Path</code>, built with
+          the <code class="tok">/</code> operator. The dict makes adding more bundled apps a one-line change.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--sage)">
+      <h4>Why the default app is the docs</h4>
+      <p>A brand-new checkout has an empty <code class="tok">symlinks/</code>, so the index would greet you with
+        nothing. Seeding this explainer means the very first thing the server can show is a guided tour of itself —
+        the docs are delivered <em>by</em> the machine they describe, with zero setup.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 the guard ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — the idempotency guard</div>
+      <h2>Run once, ever — the marker decides.</h2>
+      <p>The function's first act is to check for the marker and bail if it is there. Everything below the
+        guard runs exactly once in the lifetime of a symlinks directory.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">bootstrap.py</span><span>lines 15 — 23</span></div>
+      <pre><div class="cl"><span class="ln">15</span><span class="ct"><span class="k">def</span> <span class="f">seed_defaults</span>(symlinks_dir: Path) -> <span class="k">None</span>:</span></div><div class="cl"><span class="ln">16</span><span class="ct">    <span class="s">"""Register bundled default apps once, on first run.</span></span></div><div class="cl"><span class="ln">17</span><span class="ct"><span class="s"></span></span></div><div class="cl"><span class="ln">18</span><span class="ct">    <span class="s">Writes a marker so seeding never repeats — a default the user later</span></span></div><div class="cl"><span class="ln">19</span><span class="ct">    <span class="s">deletes stays gone.</span></span></div><div class="cl"><span class="ln">20</span><span class="ct">    <span class="s">"""</span></span></div><div class="cl"><span class="ln">21</span><span class="ct">    marker = symlinks_dir / MARKER</span></div><div class="cl"><span class="ln">22</span><span class="ct">    <span class="k">if</span> marker.<span class="f">exists</span>():</span></div><div class="cl"><span class="ln">23</span><span class="ct">        <span class="k">return</span></span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">15</div>
+        <div class="txt">The only public name. It takes the <code class="tok">symlinks_dir</code> to seed and returns
+          <code class="tok">None</code> — it is called for its side effect, not a value.</div>
+      </div>
+      <div class="row">
+        <div class="lref">22 — 23</div>
+        <div class="txt">The whole "run once" promise, in two lines. If <code class="tok">.initialized</code> exists, return
+          immediately. No flags, no database, no config — the filesystem itself remembers.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--peach)">
+      <h4>Why a marker, and not "is the directory empty?"</h4>
+      <p>If seeding triggered whenever <code class="tok">symlinks/</code> looked empty, deleting the bundled docs
+        from the index would simply bring them back on the next restart — an undeletable app. The marker decouples
+        "have we ever seeded?" from "what is in here now," so a default the user deletes <b>stays gone</b>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 the seeding loop ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — the loop</div>
+      <h2>Link what is missing, skip the rest.</h2>
+      <p>Past the guard, it walks <code class="tok">DEFAULT_APPS</code>, creating a symlink for each — but only
+        when it is safe to: never over an existing entry, never to a target that is not there.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">bootstrap.py</span><span>lines 24 — 33</span></div>
+      <pre><div class="cl"><span class="ln">24</span><span class="ct">    <span class="k">for</span> slug, target <span class="k">in</span> DEFAULT_APPS.<span class="f">items</span>():</span></div><div class="cl"><span class="ln">25</span><span class="ct">        link = symlinks_dir / slug</span></div><div class="cl"><span class="ln">26</span><span class="ct">        <span class="k">if</span> link.<span class="f">exists</span>():</span></div><div class="cl"><span class="ln">27</span><span class="ct">            <span class="k">continue</span></span></div><div class="cl"><span class="ln">28</span><span class="ct">        <span class="k">if</span> <span class="k">not</span> target.<span class="f">exists</span>():</span></div><div class="cl"><span class="ln">29</span><span class="ct">            logger.<span class="f">warning</span>(<span class="s">"default app %r target missing: %s"</span>, slug, target)</span></div><div class="cl"><span class="ln">30</span><span class="ct">            <span class="k">continue</span></span></div><div class="cl"><span class="ln">31</span><span class="ct">        link.<span class="f">symlink_to</span>(target)</span></div><div class="cl"><span class="ln">32</span><span class="ct">        logger.<span class="f">info</span>(<span class="s">"registered default app %r -> %s"</span>, slug, target)</span></div><div class="cl"><span class="ln">33</span><span class="ct">    marker.<span class="f">touch</span>()</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">26 — 27</div>
+        <div class="txt"><b>Never clobber.</b> If a <code class="tok">slug</code> already exists in the directory — say the
+          user made their own <code class="tok">technical-explanation</code> — it is left untouched.</div>
+      </div>
+      <div class="row">
+        <div class="lref">28 — 30</div>
+        <div class="txt"><b>Never link to nothing.</b> A missing bundled target logs a <code class="tok">warning</code> and
+          skips, rather than creating a dangling symlink the registry would later flag as broken. A packaging
+          mistake degrades to a log line, not a broken card.</div>
+      </div>
+      <div class="row">
+        <div class="lref">31 — 32</div>
+        <div class="txt">The actual work: <code class="tok">symlink_to</code> creates the registry entry, and an
+          <code class="tok">info</code> line records what was linked where.</div>
+      </div>
+      <div class="row">
+        <div class="lref">33</div>
+        <div class="txt"><code class="tok">marker.touch()</code> writes <code class="tok">.initialized</code> <b>after</b> the loop, so the
+          guard on line 22 short-circuits every subsequent run. This is the line that makes seeding a one-time event.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 where it runs ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — where it runs</div>
+      <h2>Called from the lifespan hook.</h2>
+      <p>Nothing imports <code class="tok">seed_defaults</code> except <code class="tok">server.py</code>, which calls it
+        once during application startup — after ensuring the directory exists, before the watcher begins.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">server.py</span><span>the lifespan hook</span></div>
+      <pre><div class="cl"><span class="ln">37</span><span class="ct">    <span class="k">async</span> <span class="k">def</span> <span class="f">lifespan</span>(_app: FastAPI):</span></div><div class="cl"><span class="ln">38</span><span class="ct">        symlinks_dir.<span class="f">mkdir</span>(parents=<span class="k">True</span>, exist_ok=<span class="k">True</span>)</span></div><div class="cl"><span class="ln">39</span><span class="ct">        <span class="f">seed_defaults</span>(symlinks_dir)</span></div><div class="cl"><span class="ln">40</span><span class="ct">        <span class="k">await</span> watcher.<span class="f">start</span>()</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">38</div>
+        <div class="txt"><code class="tok">mkdir(exist_ok=True)</code> guarantees the directory is present, so
+          <code class="tok">seed_defaults</code> can assume a place to write its marker and links.</div>
+      </div>
+      <div class="row">
+        <div class="lref">39 — 40</div>
+        <div class="txt">Seeding happens <b>before</b> <code class="tok">watcher.start()</code>. The links exist by the time the
+          watcher and the first <code class="tok">GET /</code> look at the directory — so the docs appear on the very
+          first page load, not the second.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 05 worth noticing ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">05 — step back</div>
+      <h2>Four things to take away.</h2>
+    </div>
+    <div class="notes">
+      <div class="note reveal d1">
+        <h4>The filesystem is the database</h4>
+        <p>"Have we seeded?" is answered by a file existing, "what is registered?" by symlinks existing. There is no
+          state store — consistent with the rest of the app, where <code class="tok">symlinks/</code> is the only
+          source of truth.</p>
+      </div>
+      <div class="note reveal d1" style="--ac:var(--rose)">
+        <h4>It respects deletion</h4>
+        <p>Because the marker — not directory contents — gates seeding, an app you delete from the index never comes
+          back. Seeding is a first-run convenience, not an enforced default.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--sage)">
+        <h4>It fails soft</h4>
+        <p>An already-present slug is skipped; a missing target is a logged warning. The worst case is a log line,
+          never a crash or a broken link on startup.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--peach)">
+        <h4>It is why this page exists on a fresh clone</h4>
+        <p>The single entry in <code class="tok">DEFAULT_APPS</code> is this explainer. Clone, run, open
+          <code class="tok">localhost/</code> — and the tour is already registered, served by the very server it documents.</p>
+      </div>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/server/"><div class="lbl">&larr; PREVIOUS</div><div class="nm"><span class="mono">server.py</span></div></a>
+      <a class="next" href="/technical-explanation/pubsub/"><div class="lbl">NEXT &rarr;</div><div class="nm"><span class="mono">pubsub.py</span></div></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/bootstrap.py — 33 lines, 1 public function, seeds bundled apps once.</span>
+    <span><a href="/technical-explanation/">&larr; all twelve files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+[Unit]
+Description=localhost-pages — always-on local web server for AI app HTML output
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=__PROJECT_DIR__
+ExecStart=__UV_PATH__ run --directory __PROJECT_DIR__ python -m localhost_pages
+Restart=always
+RestartSec=2
+Environment=PATH=__PATH_ENV__
+
+[Install]
+WantedBy=default.target

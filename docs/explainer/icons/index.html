@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>icons.py — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #c4b8a3; }   /* sand — icons.py */
+
+  /* page-local: the resolution-order ladder */
+  .ladder { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; margin-top: 22px; }
+  .rung {
+    display: grid; grid-template-columns: 54px 1fr 92px;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+  }
+  .rung:last-child { border-bottom: none; }
+  .rung .num {
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Instrument Serif', serif; font-size: 26px;
+    color: var(--accent); border-right: 1px solid var(--line);
+    align-self: stretch;
+  }
+  .rung .mid { padding: 13px 16px; }
+  .rung .cond { font-size: 13px; color: var(--ink); }
+  .rung .out { font-size: 11.5px; color: var(--faint); margin-top: 2px; }
+  .rung .ll { font-size: 11px; color: var(--faint); text-align: right; padding-right: 16px; }
+  @media (max-width: 720px) {
+    .rung { grid-template-columns: 44px 1fr; }
+    .rung .ll { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">icons.py</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">icons.py</span><br />turns a string <em>into a glyph.</em></h1>
+    <p class="lede reveal d2">
+      An app card needs a picture. The registry only ever has a <b>string</b> — maybe a Lucide
+      name, maybe raw SVG, maybe an emoji, maybe nothing at all. This 51-line file decides what
+      that string <em>means</em> and hands back inline-ready HTML. One function does the work;
+      <b>four ordered branches</b> cover every shape the input can take.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">51</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">4</div><div class="l">resolution branches</div></div>
+      <div class="stat reveal d3"><div class="n">1703</div><div class="l">bundled lucide svgs</div></div>
+      <div class="stat reveal d3"><div class="n">1</div><div class="l">module-level cache</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 module constants ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — top of the file</div>
+      <h2>Four constants set the stage.</h2>
+      <p>Before any function is defined, the module fixes where icons live, what a valid
+        Lucide name looks like, which icon to fall back to, and where to remember results.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">icons.py</span><span>lines 1 — 13</span></div>
+      <pre><div class="cl"><span class="ln">1</span><span class="ct"><span class="k">from</span> __future__ <span class="k">import</span> annotations</span></div><div class="cl"><span class="ln">2</span><span class="ct"></span></div><div class="cl"><span class="ln">3</span><span class="ct"><span class="k">import</span> logging</span></div><div class="cl"><span class="ln">4</span><span class="ct"><span class="k">import</span> re</span></div><div class="cl"><span class="ln">5</span><span class="ct"><span class="k">from</span> html <span class="k">import</span> escape</span></div><div class="cl"><span class="ln">6</span><span class="ct"><span class="k">from</span> pathlib <span class="k">import</span> Path</span></div><div class="cl"><span class="ln">7</span><span class="ct"></span></div><div class="cl"><span class="ln">8</span><span class="ct">logger = logging.<span class="f">getLogger</span>(__name__)</span></div><div class="cl"><span class="ln">9</span><span class="ct"></span></div><div class="cl"><span class="ln">10</span><span class="ct">LUCIDE_DIR = Path(__file__).parent / <span class="s">"static"</span> / <span class="s">"lucide"</span></span></div><div class="cl"><span class="ln">11</span><span class="ct">_LUCIDE_NAME_RE = re.<span class="f">compile</span>(<span class="s">r"^[a-z0-9][a-z0-9-]*$"</span>)</span></div><div class="cl"><span class="ln">12</span><span class="ct">_FALLBACK_NAME = <span class="s">"box"</span></span></div><div class="cl"><span class="ln">13</span><span class="ct">_cache: dict[str, str] = {}</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">5</div>
+        <div class="txt"><code class="tok">escape</code> from the standard library — pulled in for exactly one job:
+          neutralising untrusted text in the emoji branch. Its presence here is a hint that this file
+          handles a <b>trust boundary</b>.</div>
+      </div>
+      <div class="row">
+        <div class="lref">10</div>
+        <div class="txt"><b>LUCIDE_DIR</b> points at the package's bundled icon set —
+          <code class="tok">static/lucide/</code> ships <b>1703</b> pre-downloaded Lucide SVG files. Resolving
+          relative to <code class="tok">__file__</code> means it works regardless of the process's working directory.</div>
+      </div>
+      <div class="row">
+        <div class="lref">11</div>
+        <div class="txt">The whitelist. A name is "lucide-shaped" only if it is lowercase letters, digits,
+          and hyphens — starting with a letter or digit. That pattern <b>cannot contain</b> a slash, a dot,
+          or <code class="tok">..</code>, so a name that matches can never be used to climb out of
+          <code class="tok">LUCIDE_DIR</code>.</div>
+      </div>
+      <div class="row">
+        <div class="lref">12</div>
+        <div class="txt"><code class="tok">"box"</code> — the universal fallback. A plain outlined square, used both when
+          the input is empty and when a named icon turns up missing.</div>
+      </div>
+      <div class="row">
+        <div class="lref">13</div>
+        <div class="txt">A module-level <code class="tok">dict</code> mapping icon name &rarr; SVG text. It persists for the
+          life of the process and is never invalidated — a deliberate choice the next section explains.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>Why a regex and not just <code class="tok" style="font-size:.82em">if "/" not in name</code>?</h4>
+      <p>A <em>whitelist</em> is stronger than a blacklist. Rather than enumerate every dangerous
+        character, line 11 states the only acceptable shape and rejects everything else. The same string
+        then doubles as a filename on line 19 — and because the pattern admits no path separators,
+        that file lookup is provably confined to <code class="tok">LUCIDE_DIR</code>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 _read_lucide ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — the loader</div>
+      <h2><span class="mono">_read_lucide()</span> &nbsp;reads disk once.</h2>
+      <p>A small private helper: given a bare icon name, return the SVG text — or
+        <code class="tok">None</code> if no such file exists. Every successful read is memoised.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">icons.py</span><span>lines 16 — 24</span></div>
+      <pre><div class="cl"><span class="ln">16</span><span class="ct"><span class="k">def</span> <span class="f">_read_lucide</span>(name: str) -> str | <span class="k">None</span>:</span></div><div class="cl"><span class="ln">17</span><span class="ct">    <span class="k">if</span> name <span class="k">in</span> _cache:</span></div><div class="cl"><span class="ln">18</span><span class="ct">        <span class="k">return</span> _cache[name]</span></div><div class="cl"><span class="ln">19</span><span class="ct">    path = LUCIDE_DIR / <span class="s">f"{name}.svg"</span></span></div><div class="cl"><span class="ln">20</span><span class="ct">    <span class="k">if not</span> path.<span class="f">is_file</span>():</span></div><div class="cl"><span class="ln">21</span><span class="ct">        <span class="k">return</span> <span class="k">None</span></span></div><div class="cl"><span class="ln">22</span><span class="ct">    svg = path.<span class="f">read_text</span>(encoding=<span class="s">"utf-8"</span>).<span class="f">strip</span>()</span></div><div class="cl"><span class="ln">23</span><span class="ct">    _cache[name] = svg</span></div><div class="cl"><span class="ln">24</span><span class="ct">    <span class="k">return</span> svg</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">17 — 18</div>
+        <div class="txt">Cache first. If this name has been read before, the file system is never touched —
+          the stored string is returned immediately.</div>
+      </div>
+      <div class="row">
+        <div class="lref">19</div>
+        <div class="txt">The name is joined to <code class="tok">LUCIDE_DIR</code> with an <code class="tok">.svg</code> suffix.
+          Safe only because every caller has already passed the name through
+          <code class="tok">_LUCIDE_NAME_RE</code> — the helper itself does not re-validate.</div>
+      </div>
+      <div class="row">
+        <div class="lref">20 — 21</div>
+        <div class="txt">A missing file is <b>not</b> an error. <code class="tok">is_file()</code> failing returns a
+          quiet <code class="tok">None</code>, leaving the decision of what to do next to the caller.</div>
+      </div>
+      <div class="row">
+        <div class="lref">22</div>
+        <div class="txt">The file is read as UTF-8 and <code class="tok">strip()</code>-ped — trailing newlines would
+          otherwise sit inside the inlined markup. The result is SVG ready to drop straight into a page.</div>
+      </div>
+      <div class="row">
+        <div class="lref">23 — 24</div>
+        <div class="txt">The successful read is stored under its name, then returned. Note what is <b>not</b>
+          cached: a miss. Line 21 returns before reaching line 23, so a <code class="tok">None</code> result
+          is recomputed every time — see the note below.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--sage)">
+      <h4>Why cache at all?</h4>
+      <p>The index page renders one card per registered app, and many apps share an icon (or the
+        default <code class="tok">box</code>). Without the cache, a page with twenty cards could hit the
+        disk twenty times for the same file. With it, each distinct SVG is read <b>once per process</b> and
+        served from memory thereafter. The icon set never changes at runtime, so a never-invalidated
+        cache is correct, not a leak.</p>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--rose)">
+      <h4>Misses are not memoised</h4>
+      <p>Only hits land in <code class="tok">_cache</code>; a missing file returns at line 21 before
+        the store on line 23. A repeatedly requested bad name therefore re-stats the disk each time —
+        cheap at localhost scale, and it means dropping a new SVG into the folder is picked up without
+        a restart.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 resolve_icon overview ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — the public function</div>
+      <h2><span class="mono">resolve_icon()</span> &nbsp;and its docstring.</h2>
+      <p>This is the only name the rest of the codebase imports. <code class="tok">registry.py</code>
+        calls it for every app it scans. The docstring states the contract: four branches, tried in order.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">icons.py</span><span>lines 27 — 37</span></div>
+      <pre><div class="cl"><span class="ln">27</span><span class="ct"><span class="k">def</span> <span class="f">resolve_icon</span>(value: str | <span class="k">None</span>) -> str:</span></div><div class="cl"><span class="ln">28</span><span class="ct">    <span class="s">"""Return inline-ready HTML for an app's icon.</span></span></div><div class="cl"><span class="ln">29</span><span class="ct"><span class="s"></span></span></div><div class="cl"><span class="ln">30</span><span class="ct"><span class="s">    Branches (in order):</span></span></div><div class="cl"><span class="ln">31</span><span class="ct"><span class="s">      1. None or empty           &rarr; bundled `box.svg`</span></span></div><div class="cl"><span class="ln">32</span><span class="ct"><span class="s">      2. starts with `&lt;svg`      &rarr; returned verbatim (operator-trusted)</span></span></div><div class="cl"><span class="ln">33</span><span class="ct"><span class="s">      3. matches lucide name     &rarr; bundled svg, fallback to `box.svg` if missing</span></span></div><div class="cl"><span class="ln">34</span><span class="ct"><span class="s">      4. anything else           &rarr; wrapped emoji span</span></span></div><div class="cl"><span class="ln">35</span><span class="ct"><span class="s">    """</span></span></div><div class="cl"><span class="ln">36</span><span class="ct">    <span class="k">if not</span> value:</span></div><div class="cl"><span class="ln">37</span><span class="ct">        value = _FALLBACK_NAME</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">27</div>
+        <div class="txt">The signature is total: it accepts a <code class="tok">str</code> <b>or</b>
+          <code class="tok">None</code> and always returns a <code class="tok">str</code>. There is no error
+          path — every conceivable input produces displayable HTML.</div>
+      </div>
+      <div class="row">
+        <div class="lref">28 — 35</div>
+        <div class="txt">The docstring is the spec. The four branches below implement it line for line; reading
+          this block first makes the rest of the function predictable.</div>
+      </div>
+      <div class="row">
+        <div class="lref">36 — 37</div>
+        <div class="txt"><b>Branch 1, executed here.</b> <code class="tok">not value</code> is true for both
+          <code class="tok">None</code> and the empty string <code class="tok">""</code>. Rather than return early,
+          the function <em>rewrites</em> <code class="tok">value</code> to <code class="tok">"box"</code> and
+          lets it fall through — so the empty case is handled by the lucide branch below, with no
+          duplicated file-reading logic.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>Branch 1 is a rewrite, not a return</h4>
+      <p>The cleanest part of the design. Instead of <code class="tok">return _read_lucide("box")</code> at
+        line 37 — which would mean reading and fallback logic in two places — the empty input is simply
+        relabelled <code class="tok">"box"</code>. From line 38 onward it is indistinguishable from a request
+        for the box icon by name, and branch 3 does the rest.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 the four branches ====================== -->
+<section id="branches">
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — the decision</div>
+      <h2>Four branches, tried top to bottom.</h2>
+      <p>Order matters. Each branch claims a shape of input and returns; later branches only ever
+        see what earlier ones declined. This ladder is the whole behaviour of the file.</p>
+    </div>
+
+    <div class="ladder reveal d1">
+      <div class="rung">
+        <span class="num">1</span>
+        <span class="mid"><div class="cond"><code class="tok">None</code> or empty string</div><div class="out">rewritten to <code class="tok">"box"</code> &rarr; falls into branch 3</div></span>
+        <span class="ll">36—37</span>
+      </div>
+      <div class="rung">
+        <span class="num">2</span>
+        <span class="mid"><div class="cond">starts with <code class="tok">&lt;svg</code></div><div class="out">returned verbatim — operator-trusted raw markup</div></span>
+        <span class="ll">39—40</span>
+      </div>
+      <div class="rung">
+        <span class="num">3</span>
+        <span class="mid"><div class="cond">matches <code class="tok">_LUCIDE_NAME_RE</code></div><div class="out">bundled SVG, or <code class="tok">box.svg</code> if the name is unknown</div></span>
+        <span class="ll">42—49</span>
+      </div>
+      <div class="rung">
+        <span class="num">4</span>
+        <span class="mid"><div class="cond">anything else</div><div class="out">HTML-escaped and wrapped in an <code class="tok">.icon-emoji</code> span</div></span>
+        <span class="ll">51</span>
+      </div>
+    </div>
+
+    <div class="code reveal d2">
+      <div class="cap"><span class="fn">icons.py</span><span>lines 39 — 51</span></div>
+      <pre><div class="cl"><span class="ln">39</span><span class="ct">    <span class="k">if</span> value.<span class="f">startswith</span>(<span class="s">"&lt;svg"</span>):</span></div><div class="cl"><span class="ln">40</span><span class="ct">        <span class="k">return</span> value</span></div><div class="cl"><span class="ln">41</span><span class="ct"></span></div><div class="cl"><span class="ln">42</span><span class="ct">    <span class="k">if</span> _LUCIDE_NAME_RE.<span class="f">match</span>(value):</span></div><div class="cl"><span class="ln">43</span><span class="ct">        svg = <span class="f">_read_lucide</span>(value)</span></div><div class="cl"><span class="ln">44</span><span class="ct">        <span class="k">if</span> svg <span class="k">is</span> <span class="k">None</span>:</span></div><div class="cl"><span class="ln">45</span><span class="ct">            logger.<span class="f">warning</span>(<span class="s">"lucide icon %r not found, using %r"</span>, value, _FALLBACK_NAME)</span></div><div class="cl"><span class="ln">46</span><span class="ct">            svg = <span class="f">_read_lucide</span>(_FALLBACK_NAME)</span></div><div class="cl"><span class="ln">47</span><span class="ct">            <span class="k">if</span> svg <span class="k">is</span> <span class="k">None</span>:</span></div><div class="cl"><span class="ln">48</span><span class="ct">                <span class="k">return</span> <span class="s">'&lt;span class="icon-emoji"&gt;&lt;/span&gt;'</span></span></div><div class="cl"><span class="ln">49</span><span class="ct">        <span class="k">return</span> svg</span></div><div class="cl"><span class="ln">50</span><span class="ct"></span></div><div class="cl"><span class="ln">51</span><span class="ct">    <span class="k">return</span> <span class="s">f'&lt;span class="icon-emoji"&gt;{</span><span class="f">escape</span><span class="s">(value)}&lt;/span&gt;'</span></span></div></pre>
+    </div>
+
+    <div class="guards reveal d2">
+      <div class="guard">
+        <div class="gl">1</div>
+        <h4>Empty &rarr; box</h4>
+        <p>Lines 36 — 37, already executed above. <code class="tok">None</code> or <code class="tok">""</code>
+          becomes the string <code class="tok">"box"</code>, so the empty case is served by branch 3 with
+          no special-case code of its own.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">2</div>
+        <h4>Raw <code class="tok" style="font-size:.85em">&lt;svg</code> &rarr; verbatim</h4>
+        <p>Lines 39 — 40. If the string already <em>is</em> SVG markup, it is returned <b>unchanged and
+          unescaped</b>. The operator who registered the app supplied this; it is treated as trusted code,
+          not data.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">3</div>
+        <h4>Lucide name &rarr; bundled file</h4>
+        <p>Lines 42 — 49. A whitelist-shaped name is loaded from <code class="tok">static/lucide/</code>.
+          A miss logs a warning and degrades to <code class="tok">box.svg</code> — it never raises.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">4</div>
+        <h4>Anything else &rarr; emoji</h4>
+        <p>Line 51. The final catch-all. The value is HTML-<b>escaped</b> and wrapped in a
+          <code class="tok">&lt;span class="icon-emoji"&gt;</code> — fit for an emoji character, and safe even
+          if it is not.</p>
+      </div>
+    </div>
+
+    <div class="ann reveal d2" style="margin-top:26px">
+      <div class="row">
+        <div class="lref">39 — 40</div>
+        <div class="txt"><b>Branch 2.</b> A prefix check, not a parse. Any string beginning with the literal
+          <code class="tok">&lt;svg</code> is assumed to be a complete, well-formed SVG element and is handed
+          back exactly as received — see the trust-boundary note below.</div>
+      </div>
+      <div class="row">
+        <div class="lref">42 — 43</div>
+        <div class="txt"><b>Branch 3.</b> If the value matches the lucide-name pattern, it is passed to
+          <code class="tok">_read_lucide</code>. Because the regex already proved the name is path-safe, this
+          call cannot escape <code class="tok">LUCIDE_DIR</code>.</div>
+      </div>
+      <div class="row">
+        <div class="lref">44 — 46</div>
+        <div class="txt">The name was well-formed but no such file exists. A <code class="tok">warning</code> is
+          logged — useful when an app declares a typo'd icon — and the function retries with
+          <code class="tok">_FALLBACK_NAME</code>, <code class="tok">"box"</code>. A wrong name degrades to a
+          generic glyph rather than a broken card or an exception.</div>
+      </div>
+      <div class="row">
+        <div class="lref">47 — 48</div>
+        <div class="txt">Defence at the bottom of the well: if even <code class="tok">box.svg</code> is missing
+          — a broken install — the function returns an empty <code class="tok">.icon-emoji</code> span.
+          It still returns valid HTML; it never lets a packaging fault crash a page render.</div>
+      </div>
+      <div class="row">
+        <div class="lref">49</div>
+        <div class="txt">The normal exit of branch 3: the resolved SVG, whether the requested icon or the
+          box fallback.</div>
+      </div>
+      <div class="row">
+        <div class="lref">51</div>
+        <div class="txt"><b>Branch 4.</b> Reached only when the value is non-empty, is not SVG, and is not a
+          lucide-shaped name — typically a literal emoji like <code class="tok">&#x1F680;</code>. It is run
+          through <code class="tok">escape()</code> and wrapped in a span, so the browser renders the
+          character itself rather than interpreting it.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d3" style="--ac:var(--rose); margin-top:22px">
+      <h4>The trust boundary &nbsp;— why branch 2 is raw and branch 4 is escaped</h4>
+      <p>Both branches end up as HTML on a page, but they are treated as opposites.
+        Branch 2's <code class="tok">&lt;svg&hellip;</code> is returned <b>verbatim</b>: it is
+        <em>code</em>, deliberately authored by whoever registered the app, and escaping it would break
+        the markup. Branch 4's value is treated as <b>data</b> of unknown origin — it is pushed through
+        <code class="tok">html.escape()</code> so that <code class="tok">&lt;</code>,
+        <code class="tok">&gt;</code> and <code class="tok">&amp;</code> become entities and nothing in it can
+        inject an element. The choice of which path a string takes is made entirely by the
+        <code class="tok">startswith("&lt;svg")</code> test on line 39 — that single check <em>is</em> the
+        boundary between trusted markup and escaped text.</p>
+    </div>
+
+    <div class="note reveal d3" style="--ac:var(--peach); margin-top:14px">
+      <h4>Why an unknown lucide name degrades instead of erroring</h4>
+      <p><code class="tok">resolve_icon</code> is called from <code class="tok">registry.py</code> while
+        building the list of app cards for the index page. A raised exception there would take down the
+        <em>entire</em> index over one app's bad icon string. So a missing icon is downgraded to a logged
+        warning plus the <code class="tok">box</code> glyph: the operator gets a breadcrumb in the logs,
+        the user still gets a working page.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 05 takeaways ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">05 — step back</div>
+      <h2>Four things to take away.</h2>
+    </div>
+    <div class="notes">
+      <div class="note reveal d1">
+        <h4>One function, total by construction</h4>
+        <p><code class="tok">resolve_icon</code> accepts <code class="tok">str | None</code> and always
+          returns a <code class="tok">str</code>. There is no failure mode the caller must handle —
+          every input, including a broken install, resolves to displayable HTML. That is what lets
+          <code class="tok">registry.py</code> call it unguarded.</p>
+      </div>
+      <div class="note reveal d1" style="--ac:var(--sage)">
+        <h4>The regex is a security control</h4>
+        <p><code class="tok">_LUCIDE_NAME_RE</code> is not just input tidying. By admitting no slashes
+          or dots, it guarantees that the name-to-filename join in <code class="tok">_read_lucide</code>
+          stays inside <code class="tok">LUCIDE_DIR</code> — a whitelist that doubles as path-traversal
+          defence.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--mist)">
+        <h4>Trusted code vs. untrusted data</h4>
+        <p>Raw <code class="tok">&lt;svg</code> is operator-authored and emitted verbatim; everything
+          in the emoji branch is escaped. The same file both <em>passes through</em> and
+          <em>neutralises</em> markup — and the difference is one <code class="tok">startswith</code> check.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--peach)">
+        <h4>Cache hits, log misses, degrade gracefully</h4>
+        <p>Every successful read is memoised so a card-heavy index touches disk once per icon.
+          A missing named icon logs a warning and falls back to <code class="tok">box</code>; a missing
+          fallback yields an empty span. Nothing here ever raises.</p>
+      </div>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/index/"><div class="lbl">&larr; PREVIOUS</div><div class="nm"><span class="mono">index.py</span></div></a>
+      <a class="next" href="/technical-explanation/accents/"><div class="lbl">NEXT &rarr;</div><div class="nm"><span class="mono">accents.py</span></div></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/icons.py — 51 lines, 1 public function, 4 branches.</span>
+    <span><a href="/technical-explanation/">&larr; all twelve files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+dist/
+build/
+
+# uv
+.python-version
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# User-registered apps (symlinks/ holds local symlinks; never ship them)
+/symlinks/*
+!/symlinks/.gitkeep
+
+# Local Claude / agent scratch
+.claude/
+.superpowers/
+
+# Rendered explainer video output (large MP4s; re-render from video/index.html)
+/video/renders/

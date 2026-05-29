@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>localhost</title>
+  <link rel="stylesheet" href="/__static/index.css">
+</head>
+<body>
+  <header>
+    <div class="header-top">
+      <div class="brand">LOCALHOST/</div>
+    </div>
+    <div class="meta">
+      [{{ count }} APPS · {{ broken }} BROKEN]
+      <span class="sep">·</span>
+      <span class="sort-wrap" aria-label="Sort apps">
+        <span class="sort-prefix">SORT</span>
+        <button type="button" class="sort-toggle" aria-haspopup="listbox" aria-expanded="false">
+          <span class="sort-current">a–z</span>
+          <svg class="sort-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <ul class="sort-menu" role="listbox" hidden>
+          <li role="option" data-value="alpha">a–z</li>
+          <li role="option" data-value="recently-updated">recently updated</li>
+          <li role="option" data-value="recently-visited">recently visited</li>
+          <li role="option" data-value="most-visited">most visited</li>
+          <li role="option" data-value="manual">manual</li>
+        </ul>
+      </span>
+      <span class="sep">·</span>
+      <button class="edit-toggle" type="button" aria-pressed="false">EDIT</button>
+      <span class="sep">·</span>
+      <button class="help-toggle" type="button" aria-label="Keyboard shortcuts" title="Help (?)">?</button>
+      <span class="sep">·</span>
+      <div class="search-wrap">
+        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.3-4.3"/>
+        </svg>
+        <input class="search" type="search" placeholder="filter…" aria-label="Filter apps" autocomplete="off" spellcheck="false">
+        <button class="search-clear" type="button" aria-label="Clear search">×</button>
+      </div>
+    </div>
+  </header>
+  <main>
+    {% if not apps %}
+      <p class="empty">[NO APPS] drop a symlink in <code>symlinks/</code></p>
+    {% else %}
+      <ol class="apps">
+        {% for app in apps %}
+          <li class="row{% if app.error %} broken{% endif %}"
+              style="--accent: {{ app.accent }}"
+              data-name="{{ app.name }}"
+              data-mtime="{{ app.mtime_iso }}">
+            <span class="drag" aria-hidden="true" title="Drag to reorder">⋮⋮</span>
+            <div class="num">{{ "%02d"|format(loop.index) }}</div>
+            <div class="ico">{{ app.icon_svg|safe }}</div>
+            <a class="body" href="/{{ app.name|urlencode }}/">
+              <div class="name">{{ app.title }}{% if app.error %} <span class="broken-tag">BROKEN</span>{% endif %}</div>
+              <div class="desc">{% if app.error %}{{ app.error }}{% else %}{{ app.description }}{% endif %}</div>
+            </a>
+            <button class="pin" type="button" aria-label="Pin {{ app.name }}" title="Pin to top">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>
+              </svg>
+            </button>
+            <button class="del" type="button" aria-label="Delete {{ app.name }}">×</button>
+          </li>
+        {% endfor %}
+      </ol>
+    {% endif %}
+  </main>
+  {{ reload_tag|safe }}
+  <!-- Error capture first so it observes failures in the scripts below. This
+       runs only on the dashboard (our UI), not on served user apps. -->
+  <script src="/__static/lp-log.js"></script>
+  <script src="/__static/lp-util.js"></script>
+  <script src="/__static/delete.js"></script>
+  <script src="/__static/visited.js"></script>
+  <script src="/__static/pin.js"></script>
+  <script src="/__static/sort.js"></script>
+  <script src="/__static/edit.js"></script>
+  <script src="/__static/keys.js"></script>
+  <script src="/__static/peek.js"></script>
+  <script src="/__static/search.js"></script>
+  <script src="/__static/help.js"></script>
+</body>
+</html>

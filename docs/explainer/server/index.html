@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>server.py — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #b8a3d6; }   /* lavender — server.py */
+
+  /* page-local: the route table */
+  .routes { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .rt {
+    display: grid; grid-template-columns: 78px 1fr 60px;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+    transition: background .16s ease;
+    text-decoration: none;
+  }
+  .rt:last-child { border-bottom: none; }
+  .rt:hover { background: var(--panel-2); }
+  .rt .verb { font-size: 11px; font-weight: 600; padding: 14px 0 14px 18px; letter-spacing: 0.06em; }
+  .rt .verb.get { color: var(--sage); }
+  .rt .verb.del { color: var(--rose); }
+  .rt .verb.post { color: var(--mauve); }
+  .rt .mid { padding: 13px 14px; }
+  .rt .pat { font-size: 13px; color: var(--ink); }
+  .rt .desc { font-size: 11.5px; color: var(--faint); margin-top: 2px; }
+  .rt .ll { font-size: 11px; color: var(--faint); text-align: right; padding-right: 16px; }
+  .rsig {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.6em;
+    color: var(--sand); vertical-align: 0.12em;
+  }
+  @media (max-width: 720px) {
+    .rt { grid-template-columns: 64px 1fr; }
+    .rt .ll { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">server.py</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">server.py</span><br />is the <em>spine.</em></h1>
+    <p class="lede reveal d2">
+      Every other module in <b>localhost-pages</b> is reached from this file. It is 205 lines:
+      one factory function, one lifespan hook, a static mount, request logging, and <b>seven routes</b>.
+      Read it and you have read the whole HTTP surface of the app.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">205</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">1</div><div class="l">factory fn</div></div>
+      <div class="stat reveal d3"><div class="n">7</div><div class="l">routes</div></div>
+      <div class="stat reveal d3"><div class="n">7</div><div class="l">imports of siblings</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 top of file ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — top of the file</div>
+      <h2>Imports and a few constants.</h2>
+      <p>The imports alone sketch the architecture: bootstrap, render, inject, log config, publish, scan, watch.
+        Then a handful of <code class="tok">Path</code> constants anchor the app to the filesystem.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">server.py</span><span>lines 15 — 28</span></div>
+      <pre><div class="cl"><span class="ln">15</span><span class="ct"><span class="k">from</span> .bootstrap <span class="k">import</span> seed_defaults</span></div><div class="cl"><span class="ln">16</span><span class="ct"><span class="k">from</span> .index <span class="k">import</span> render_index</span></div><div class="cl"><span class="ln">17</span><span class="ct"><span class="k">from</span> .inject <span class="k">import</span> inject_reload_script</span></div><div class="cl"><span class="ln">18</span><span class="ct"><span class="k">from</span> .logconfig <span class="k">import</span> app_version, get_log_path</span></div><div class="cl"><span class="ln">19</span><span class="ct"><span class="k">from</span> .pubsub <span class="k">import</span> PubSub</span></div><div class="cl"><span class="ln">20</span><span class="ct"><span class="k">from</span> .registry <span class="k">import</span> scan</span></div><div class="cl"><span class="ln">21</span><span class="ct"><span class="k">from</span> .watcher <span class="k">import</span> Watcher, INDEX_TOPIC</span></div><div class="cl"><span class="ln">22</span><span class="ct"></span></div><div class="cl"><span class="ln">23</span><span class="ct">logger = logging.<span class="f">getLogger</span>(__name__)</span></div><div class="cl"><span class="ln">24</span><span class="ct"></span></div><div class="cl"><span class="ln">25</span><span class="ct">REPO_ROOT = Path(__file__).resolve().parents[<span class="n">2</span>]</span></div><div class="cl"><span class="ln">26</span><span class="ct">DEFAULT_SYMLINKS = REPO_ROOT / <span class="s">"symlinks"</span></span></div><div class="cl"><span class="ln">27</span><span class="ct">STATIC_DIR = Path(__file__).parent / <span class="s">"static"</span></span></div><div class="cl"><span class="ln">28</span><span class="ct">HTML_SUFFIXES = {<span class="s">".html"</span>, <span class="s">".htm"</span>}</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">15 — 21</div>
+        <div class="txt">Seven sibling modules. Their names <b>are</b> the design: <b>seed</b> the defaults,
+          <b>render</b> the index, <b>inject</b> a reload script, read <b>log config</b>, <b>publish</b> via pubsub,
+          <b>scan</b> the symlinks, <b>watch</b> for changes.</div>
+      </div>
+      <div class="row">
+        <div class="lref">23</div>
+        <div class="txt">A module <code class="tok">logger</code> — the request middleware, the <code class="tok">/__log</code> route
+          and the delete route all write through this one channel.</div>
+      </div>
+      <div class="row">
+        <div class="lref">25</div>
+        <div class="txt"><code class="tok">parents[2]</code> walks up <code class="tok">server.py → localhost_pages → src → repo root</code>.</div>
+      </div>
+      <div class="row">
+        <div class="lref">26 — 28</div>
+        <div class="txt"><b>DEFAULT_SYMLINKS</b> is the directory of registered apps; <b>STATIC_DIR</b> is the package's own
+          CSS/JS. <b>HTML_SUFFIXES</b> is the set used later to decide which files get the reload script injected.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 create_app ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — the factory</div>
+      <h2>create_app() builds, never owns.</h2>
+      <p>The whole file is one function. It returns a configured FastAPI app — it does not create
+        a module-level <code class="tok">app</code>. That single choice is what makes the app testable.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">server.py</span><span>lines 47 — 65</span></div>
+      <pre><div class="cl"><span class="ln">47</span><span class="ct"><span class="k">def</span> <span class="f">create_app</span>(symlinks_dir: Path = DEFAULT_SYMLINKS) -> FastAPI:</span></div><div class="cl"><span class="ln">48</span><span class="ct">    pubsub = <span class="f">PubSub</span>()</span></div><div class="cl"><span class="ln">49</span><span class="ct">    watcher = <span class="f">Watcher</span>(symlinks_dir, pubsub)</span></div><div class="cl"><span class="ln">50</span><span class="ct"></span></div><div class="cl"><span class="ln">51</span><span class="ct">    <span class="d">@asynccontextmanager</span></span></div><div class="cl"><span class="ln">52</span><span class="ct">    <span class="k">async def</span> <span class="f">lifespan</span>(_app: FastAPI):</span></div><div class="cl"><span class="ln">53</span><span class="ct">        symlinks_dir.<span class="f">mkdir</span>(parents=<span class="k">True</span>, exist_ok=<span class="k">True</span>)</span></div><div class="cl"><span class="ln">54</span><span class="ct">        <span class="f">seed_defaults</span>(symlinks_dir)</span></div><div class="cl"><span class="ln">55</span><span class="ct">        apps = <span class="f">scan</span>(symlinks_dir)</span></div><div class="cl"><span class="ln">56</span><span class="ct">        logger.<span class="f">info</span>(<span class="s">"apps registered: %d (%d broken)"</span>,</span></div><div class="cl"><span class="ln">57</span><span class="ct">                    <span class="f">len</span>(apps), <span class="f">sum</span>(<span class="n">1</span> <span class="k">for</span> a <span class="k">in</span> apps <span class="k">if</span> a.error))</span></div><div class="cl"><span class="ln">58</span><span class="ct">        <span class="k">await</span> watcher.<span class="f">start</span>()</span></div><div class="cl"><span class="ln">59</span><span class="ct">        <span class="k">try</span>:</span></div><div class="cl"><span class="ln">60</span><span class="ct">            <span class="k">yield</span></span></div><div class="cl"><span class="ln">61</span><span class="ct">        <span class="k">finally</span>:</span></div><div class="cl"><span class="ln">62</span><span class="ct">            <span class="k">await</span> watcher.<span class="f">stop</span>()</span></div><div class="cl"><span class="ln">63</span><span class="ct"></span></div><div class="cl"><span class="ln">64</span><span class="ct">    app = <span class="f">FastAPI</span>(lifespan=lifespan)</span></div><div class="cl"><span class="ln">65</span><span class="ct">    app.<span class="f">mount</span>(<span class="s">"/__static"</span>, <span class="f">StaticFiles</span>(directory=STATIC_DIR), name=<span class="s">"static"</span>)</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">48 — 49</div>
+        <div class="txt">Per-app state, created fresh each call: a <b>PubSub</b> broker and a <b>Watcher</b>, wired together —
+          the watcher will publish onto this exact pubsub.</div>
+      </div>
+      <div class="row">
+        <div class="lref">52 — 62</div>
+        <div class="txt"><b>lifespan</b> is FastAPI's startup/shutdown hook. It ensures <code class="tok">symlinks/</code> exists,
+          <b>seeds the default apps</b>, then <b>scans and logs the app count</b> (<code class="tok">apps registered: N (M broken)</code>),
+          starts the watcher, and — via <code class="tok">try/finally</code> — guarantees the watcher is stopped cleanly on shutdown.</div>
+      </div>
+      <div class="row">
+        <div class="lref">65</div>
+        <div class="txt">The package's static assets mount under <b>/__static</b>. The <code class="tok">__</code> prefix is a
+          reserved namespace — note that the serve route below explicitly refuses any app named <code class="tok">__&hellip;</code>,
+          so user content can never shadow it.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="margin-top:22px">
+      <h4>Why a factory and not <code class="tok" style="font-size:.82em">app = FastAPI()</code>?</h4>
+      <p>Because <code class="tok">symlinks_dir</code> is a parameter. Each test can call
+        <code class="tok">create_app(symlinks_dir=tmp_path)</code> and get an app pointed at a throwaway directory —
+        no global state, no interference between tests. See <code class="tok">tests/conftest.py</code>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 route table ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — the surface</div>
+      <h2>Seven routes. That's the whole API.</h2>
+      <p>Everything the server can do is in this table. Five routes live in the reserved
+        <code class="tok">__</code> namespace; the last one serves everything else.</p>
+    </div>
+
+    <div class="routes reveal d1">
+      <a class="rt" href="#r-observability">
+        <span class="verb post">POST</span>
+        <span class="mid"><div class="pat">/__log</div><div class="desc">receive a browser error into the server log</div></span>
+        <span class="ll">86—98</span>
+      </a>
+      <a class="rt" href="#r-observability">
+        <span class="verb get">GET</span>
+        <span class="mid"><div class="pat">/__diagnostics</div><div class="desc">download a diagnostics bundle (env + log tail)</div></span>
+        <span class="ll">100—127</span>
+      </a>
+      <a class="rt" href="#r-index">
+        <span class="verb get">GET</span>
+        <span class="mid"><div class="pat">/</div><div class="desc">render the index page — a card per registered app</div></span>
+        <span class="ll">129—131</span>
+      </a>
+      <a class="rt" href="#r-events">
+        <span class="verb get">GET</span>
+        <span class="mid"><div class="pat">/__events</div><div class="desc">long-lived SSE stream — the live-reload channel</div></span>
+        <span class="ll">133—150</span>
+      </a>
+      <a class="rt" href="#r-delete">
+        <span class="verb del">DELETE</span>
+        <span class="mid"><div class="pat">/__apps/{name}</div><div class="desc">unregister an app by removing its symlink</div></span>
+        <span class="ll">152—167</span>
+      </a>
+      <a class="rt" href="#r-delete">
+        <span class="verb del">DELETE</span>
+        <span class="mid"><div class="pat">/__apps/{path:path}</div><div class="desc">catch-all — anything with slashes &rarr; 400</div></span>
+        <span class="ll">169—171</span>
+      </a>
+      <a class="rt" href="#r-serve">
+        <span class="verb get">GET</span>
+        <span class="mid"><div class="pat">/{app_name}/{path:path}</div><div class="desc">serve files from a registered app's directory</div></span>
+        <span class="ll">173—203</span>
+      </a>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--mauve); margin-top:22px">
+      <h4>Plus one thing that isn't a route &nbsp;— the request middleware (lines 67 — 84)</h4>
+      <p>An <code class="tok">@app.middleware("http")</code> wraps <em>every</em> request: it times the call and logs
+        <code class="tok">METHOD path -&gt; status (Nms)</code> (static-asset hits drop to DEBUG), and on any unhandled
+        exception it logs a full traceback before re-raising. It's part of the HTTP surface even though it owns no path —
+        see the observability section below.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 observability ====================== -->
+<section id="r-observability">
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — observability</div>
+      <h2>Everything that happens gets written down.</h2>
+      <p>Three pieces conspire so that when something breaks, there is a record: a middleware that logs every
+        request and every unhandled exception, a route that catches <em>browser</em> errors into the same log,
+        and a route that hands the user a downloadable bundle of it all.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">server.py</span><span>lines 67 — 84 &nbsp;(the middleware)</span></div>
+      <pre><div class="cl"><span class="ln">67</span><span class="ct">    <span class="d">@app.middleware(<span class="s">"http"</span>)</span></span></div><div class="cl"><span class="ln">68</span><span class="ct">    <span class="k">async def</span> <span class="f">log_requests</span>(request: Request, call_next):</span></div><div class="cl"><span class="ln">69</span><span class="ct">        start = time.<span class="f">perf_counter</span>()</span></div><div class="cl"><span class="ln">70</span><span class="ct">        <span class="k">try</span>:</span></div><div class="cl"><span class="ln">71</span><span class="ct">            response = <span class="k">await</span> <span class="f">call_next</span>(request)</span></div><div class="cl"><span class="ln">72</span><span class="ct">        <span class="k">except</span> Exception:</span></div><div class="cl"><span class="ln">73</span><span class="ct">            dur = (time.<span class="f">perf_counter</span>() - start) * <span class="n">1000</span></span></div><div class="cl"><span class="ln">76</span><span class="ct">            logger.<span class="f">exception</span>(<span class="s">"unhandled error %s %s after %.0fms"</span>,</span></div><div class="cl"><span class="ln">77</span><span class="ct">                             request.method, request.url.path, dur)</span></div><div class="cl"><span class="ln">78</span><span class="ct">            <span class="k">raise</span></span></div><div class="cl"><span class="ln">79</span><span class="ct">        dur = (time.<span class="f">perf_counter</span>() - start) * <span class="n">1000</span></span></div><div class="cl"><span class="ln">81</span><span class="ct">        level = logging.DEBUG <span class="k">if</span> request.url.path.<span class="f">startswith</span>(<span class="s">"/__static"</span>) <span class="k">else</span> logging.INFO</span></div><div class="cl"><span class="ln">82</span><span class="ct">        logger.<span class="f">log</span>(level, <span class="s">"%s %s -> %d (%.0fms)"</span>,</span></div><div class="cl"><span class="ln">83</span><span class="ct">                   request.method, request.url.path, response.status_code, dur)</span></div><div class="cl"><span class="ln">84</span><span class="ct">        <span class="k">return</span> response</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">69 — 84</div>
+        <div class="txt">Every request is timed with <code class="tok">perf_counter</code> and logged as
+          <code class="tok">METHOD path -&gt; status (Nms)</code>. The <b>1700+ static-asset hits</b> are noisy, so those drop to
+          <b>DEBUG</b> while real requests stay at <b>INFO</b>.</div>
+      </div>
+      <div class="row">
+        <div class="lref">72 — 78</div>
+        <div class="txt">The catch-all that earns its keep: any unhandled exception is logged with
+          <code class="tok">logger.exception</code> — a <b>full traceback</b> — before being re-raised. These would
+          otherwise scroll off the terminal and vanish.</div>
+      </div>
+    </div>
+
+    <div class="code reveal d2" style="margin-top:22px">
+      <div class="cap"><span class="fn">server.py</span><span>lines 86 — 98 &nbsp;(POST /__log)</span></div>
+      <pre><div class="cl"><span class="ln">86</span><span class="ct">    <span class="d">@app.post(<span class="s">"/__log"</span>, status_code=<span class="n">204</span>)</span></span></div><div class="cl"><span class="ln">87</span><span class="ct">    <span class="k">async def</span> <span class="f">client_log</span>(entry: dict = <span class="f">Body</span>(default={})):</span></div><div class="cl"><span class="ln">90</span><span class="ct">        msg = <span class="f">str</span>(entry.<span class="f">get</span>(<span class="s">"message"</span>, <span class="s">""</span>))[:_MAX_MSG]</span></div><div class="cl"><span class="ln">91</span><span class="ct">        stack = <span class="f">str</span>(entry.<span class="f">get</span>(<span class="s">"stack"</span>, <span class="s">""</span>))[:_MAX_STACK]</span></div><div class="cl"><span class="ln">92</span><span class="ct">        logger.<span class="f">warning</span>(</span></div><div class="cl"><span class="ln">93</span><span class="ct">            <span class="s">"client error on %s: %s (%s:%s:%s) ua=%s%s"</span>,</span></div><div class="cl"><span class="ln">94</span><span class="ct">            entry.<span class="f">get</span>(<span class="s">"page"</span>, <span class="s">"?"</span>), msg, ...</span></div><div class="cl"><span class="ln">98</span><span class="ct">        )</span></div></pre>
+    </div>
+
+    <div class="prose reveal d2">
+      <p>The front-end's <code class="tok">lp-log.js</code> posts here whenever a page throws. The message and stack are
+        capped (<code class="tok">_MAX_MSG</code>, <code class="tok">_MAX_STACK</code>) so a noisy or hostile page can't
+        bloat the log — and then they land in the <b>same file</b> as the server's own logging. Frontend and backend
+        failures end up side by side.</p>
+    </div>
+
+    <div class="code reveal d2" style="margin-top:22px">
+      <div class="cap"><span class="fn">server.py</span><span>lines 100 — 127 &nbsp;(GET /__diagnostics, condensed)</span></div>
+      <pre><div class="cl"><span class="ln">100</span><span class="ct">    <span class="d">@app.get(<span class="s">"/__diagnostics"</span>, response_class=PlainTextResponse)</span></span></div><div class="cl"><span class="ln">101</span><span class="ct">    <span class="k">async def</span> <span class="f">diagnostics</span>():</span></div><div class="cl"><span class="ln">104</span><span class="ct">        apps = <span class="f">scan</span>(symlinks_dir)</span></div><div class="cl"><span class="ln">106</span><span class="ct">        out = [<span class="s">f"localhost-pages {app_version()} — diagnostics"</span>, ...]  <span class="c"># env + inventory</span></span></div><div class="cl"><span class="ln">114</span><span class="ct">        path = <span class="f">get_log_path</span>()</span></div><div class="cl"><span class="ln">116</span><span class="ct">        <span class="k">if</span> path <span class="k">and</span> path.<span class="f">exists</span>():</span></div><div class="cl"><span class="ln">117</span><span class="ct">            data = path.<span class="f">read_text</span>(encoding=<span class="s">"utf-8"</span>, errors=<span class="s">"replace"</span>)</span></div><div class="cl"><span class="ln">118</span><span class="ct">            <span class="k">if</span> <span class="f">len</span>(data) > _MAX_LOG_CHARS:  <span class="c"># keep the tail only</span></span></div><div class="cl"><span class="ln">119</span><span class="ct">                data = <span class="s">"...[earlier log lines truncated]...\n"</span> + data[-_MAX_LOG_CHARS:]</span></div><div class="cl"><span class="ln">123</span><span class="ct">        <span class="k">return</span> <span class="f">PlainTextResponse</span>(<span class="s">"\n".join(out)</span>, headers={<span class="s">"Content-Disposition"</span>: ...})</span></div></pre>
+    </div>
+
+    <div class="note reveal d3" style="--ac:var(--mauve); margin-top:22px">
+      <h4>One click, one attachable file</h4>
+      <p>The bundle is plain text: <b>version + timestamp + Python/platform</b>, then the <b>app inventory</b> (each
+        app marked <code class="tok">ok</code> or <code class="tok">BROKEN</code>), then the <b>tail of the log file</b> —
+        bounded to <code class="tok">_MAX_LOG_CHARS</code> so it stays small enough to email. The
+        <code class="tok">Content-Disposition: attachment</code> header makes the browser download it as
+        <code class="tok">localhost-pages-diagnostics.txt</code> — exactly what to staple to a bug report.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 05 index route ====================== -->
+<section id="r-index">
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">05 — route one</div>
+      <h2><span class="rsig">GET /</span> &nbsp;the index.</h2>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">server.py</span><span>lines 129 — 131</span></div>
+      <pre><div class="cl"><span class="ln">129</span><span class="ct">    <span class="d">@app.get(<span class="s">"/"</span>, response_class=HTMLResponse)</span></span></div><div class="cl"><span class="ln">130</span><span class="ct">    <span class="k">async def</span> <span class="f">index</span>() -> HTMLResponse:</span></div><div class="cl"><span class="ln">131</span><span class="ct">        <span class="k">return</span> <span class="f">HTMLResponse</span>(<span class="f">render_index</span>(<span class="f">scan</span>(symlinks_dir)))</span></div></pre>
+    </div>
+
+    <div class="prose reveal d1">
+      <p>Two calls, read inside-out. <code class="tok">scan(symlinks_dir)</code> walks the symlinks
+        directory and returns a list of <b>App</b> records. <code class="tok">render_index(&hellip;)</code>
+        feeds that list to a Jinja2 template and returns HTML.</p>
+      <p>There is <b>no cache</b> — every hit re-scans the disk. At localhost scale that is free, and it means
+        the index always reflects the filesystem exactly as it is right now.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 06 events route ====================== -->
+<section id="r-events">
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">06 — route two</div>
+      <h2><span class="rsig">GET /__events</span> &nbsp;the reload channel.</h2>
+      <p>This is how an open tab learns a file changed. The response never ends — it's a
+        Server-Sent-Events stream the browser holds open.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">server.py</span><span>lines 133 — 150</span></div>
+      <pre><div class="cl"><span class="ln">133</span><span class="ct">    <span class="d">@app.get(<span class="s">"/__events"</span>)</span></span></div><div class="cl"><span class="ln">134</span><span class="ct">    <span class="k">async def</span> <span class="f">events</span>(app: str = <span class="f">Query</span>(default=<span class="s">""</span>)):</span></div><div class="cl"><span class="ln">135</span><span class="ct">        topic = app <span class="k">or</span> INDEX_TOPIC</span></div><div class="cl"><span class="ln">136</span><span class="ct"></span></div><div class="cl"><span class="ln">137</span><span class="ct">        <span class="k">async def</span> <span class="f">stream</span>():</span></div><div class="cl"><span class="ln">138</span><span class="ct">            q = pubsub.<span class="f">subscribe</span>(topic)</span></div><div class="cl"><span class="ln">139</span><span class="ct">            <span class="k">try</span>:</span></div><div class="cl"><span class="ln">140</span><span class="ct">                <span class="k">yield</span> <span class="s">": connected\n\n"</span></span></div><div class="cl"><span class="ln">141</span><span class="ct">                <span class="k">while True</span>:</span></div><div class="cl"><span class="ln">142</span><span class="ct">                    <span class="k">try</span>:</span></div><div class="cl"><span class="ln">143</span><span class="ct">                        msg = <span class="k">await</span> asyncio.<span class="f">wait_for</span>(q.<span class="f">get</span>(), timeout=<span class="n">15.0</span>)</span></div><div class="cl"><span class="ln">144</span><span class="ct">                        <span class="k">yield</span> <span class="s">f"event: change\ndata: {msg}\n\n"</span></span></div><div class="cl"><span class="ln">145</span><span class="ct">                    <span class="k">except</span> asyncio.TimeoutError:</span></div><div class="cl"><span class="ln">146</span><span class="ct">                        <span class="k">yield</span> <span class="s">": ping\n\n"</span></span></div><div class="cl"><span class="ln">147</span><span class="ct">            <span class="k">finally</span>:</span></div><div class="cl"><span class="ln">148</span><span class="ct">                pubsub.<span class="f">unsubscribe</span>(topic, q)</span></div><div class="cl"><span class="ln">149</span><span class="ct"></span></div><div class="cl"><span class="ln">150</span><span class="ct">        <span class="k">return</span> <span class="f">StreamingResponse</span>(<span class="f">stream</span>(), media_type=<span class="s">"text/event-stream"</span>)</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">134 — 135</div>
+        <div class="txt"><code class="tok">?app=foo</code> subscribes to that app's topic; absent, you get
+          <b>INDEX_TOPIC</b> — the channel the index page listens on.</div>
+      </div>
+      <div class="row">
+        <div class="lref">138</div>
+        <div class="txt"><code class="tok">subscribe()</code> hands back an <b>asyncio.Queue</b>. The watcher will drop the
+          topic name into it whenever a matching file changes.</div>
+      </div>
+      <div class="row">
+        <div class="lref">140</div>
+        <div class="txt">A line starting with <code class="tok">:</code> is an SSE <b>comment</b> — the browser ignores it,
+          but sending it flushes the headers so the connection is confirmed open.</div>
+      </div>
+      <div class="row">
+        <div class="lref">143 — 146</div>
+        <div class="txt">The heart. Either an event arrives within <b>15 s</b> and is forwarded as a proper
+          <code class="tok">event: change</code> frame, or the wait times out and a keep-alive <b>ping</b> is sent —
+          which stops idle proxies and browsers from dropping the connection.</div>
+      </div>
+      <div class="row">
+        <div class="lref">147 — 148</div>
+        <div class="txt"><code class="tok">finally</code> runs when the client disconnects — the queue is removed
+          from the pubsub so subscriptions never leak.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--mist)">
+      <h4>The wire format</h4>
+      <p><code class="tok" style="font-size:.82em">event: change\ndata: &lt;topic&gt;\n\n</code> is the SSE protocol.
+        The browser's <code class="tok">EventSource</code> API delivers it as a JavaScript <code class="tok">change</code> event —
+        which the injected <code class="tok">reload.js</code> listens for, then calls <code class="tok">location.reload()</code>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 07 delete routes ====================== -->
+<section id="r-delete">
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">07 — routes three &amp; four</div>
+      <h2><span class="rsig">DELETE /__apps/&hellip;</span> &nbsp;unregister.</h2>
+      <p>The "✕" button on a card. Almost the entire body is validation — deleting by a name
+        from an HTTP request is exactly where path-traversal bugs live.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">server.py</span><span>lines 152 — 171</span></div>
+      <pre><div class="cl"><span class="ln">152</span><span class="ct">    <span class="d">@app.delete(<span class="s">"/__apps/{name}"</span>, status_code=<span class="n">204</span>)</span></span></div><div class="cl"><span class="ln">153</span><span class="ct">    <span class="k">async def</span> <span class="f">delete_app</span>(name: str):</span></div><div class="cl"><span class="ln">154</span><span class="ct">        <span class="k">if not</span> name <span class="k">or</span> name.<span class="f">startswith</span>(<span class="s">"__"</span>) <span class="k">or</span> <span class="s">"/"</span> <span class="k">in</span> name <span class="k">or</span> <span class="s">".."</span> <span class="k">in</span> name:</span></div><div class="cl"><span class="ln">155</span><span class="ct">            <span class="k">raise</span> <span class="f">HTTPException</span>(status_code=<span class="n">400</span>, detail=<span class="s">"invalid app name"</span>)</span></div><div class="cl"><span class="ln">156</span><span class="ct">        path = symlinks_dir / name</span></div><div class="cl"><span class="ln">157</span><span class="ct">        <span class="k">if not</span> <span class="f">_is_within</span>(path.parent, symlinks_dir):</span></div><div class="cl"><span class="ln">158</span><span class="ct">            <span class="k">raise</span> <span class="f">HTTPException</span>(status_code=<span class="n">400</span>, detail=<span class="s">"path escapes symlinks dir"</span>)</span></div><div class="cl"><span class="ln">159</span><span class="ct">        <span class="k">if</span> path.<span class="f">is_symlink</span>():</span></div><div class="cl"><span class="ln">160</span><span class="ct">            <span class="k">try</span>:</span></div><div class="cl"><span class="ln">161</span><span class="ct">                path.<span class="f">unlink</span>()</span></div><div class="cl"><span class="ln">162</span><span class="ct">            <span class="k">except</span> OSError <span class="k">as</span> e:</span></div><div class="cl"><span class="ln">163</span><span class="ct">                logger.<span class="f">error</span>(<span class="s">"failed to delete app %r at %s: %s"</span>, name, path, e)</span></div><div class="cl"><span class="ln">164</span><span class="ct">                <span class="k">raise</span> <span class="f">HTTPException</span>(status_code=<span class="n">500</span>, detail=<span class="f">str</span>(e))</span></div><div class="cl"><span class="ln">165</span><span class="ct">            logger.<span class="f">info</span>(<span class="s">"deleted app %r"</span>, name)</span></div><div class="cl"><span class="ln">166</span><span class="ct">            <span class="k">return</span></span></div><div class="cl"><span class="ln">167</span><span class="ct">        <span class="k">raise</span> <span class="f">HTTPException</span>(status_code=<span class="n">404</span>, detail=<span class="s">"not found"</span>)</span></div><div class="cl"><span class="ln">169</span><span class="ct">    <span class="d">@app.delete(<span class="s">"/__apps/{path:path}"</span>, status_code=<span class="n">400</span>)</span></span></div><div class="cl"><span class="ln">170</span><span class="ct">    <span class="k">async def</span> <span class="f">delete_app_traversal</span>(path: str):</span></div><div class="cl"><span class="ln">171</span><span class="ct">        <span class="k">raise</span> <span class="f">HTTPException</span>(status_code=<span class="n">400</span>, detail=<span class="s">"invalid app name"</span>)</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">154</div>
+        <div class="txt">First filter — a cheap string check. Empty names, the reserved <code class="tok">__</code> prefix,
+          slashes, and <code class="tok">..</code> are all rejected before the filesystem is touched.</div>
+      </div>
+      <div class="row">
+        <div class="lref">157 — 158</div>
+        <div class="txt"><b>The load-bearing check.</b> Even after the string filter, <code class="tok">_is_within(path.parent, symlinks_dir)</code>
+          resolves the parent and asserts it is still inside <code class="tok">symlinks_dir</code>. This catches a symlinked
+          parent that could otherwise redirect the deletion elsewhere.</div>
+      </div>
+      <div class="row">
+        <div class="lref">159 — 166</div>
+        <div class="txt">Only <code class="tok">unlink()</code> if it is genuinely a <b>symlink</b> — a real directory is never deleted.
+          The unlink is wrapped: an <code class="tok">OSError</code> is <b>logged</b> (<code class="tok">logger.error</code>)
+          then surfaced as a 500, and a clean delete is <b>logged</b> (<code class="tok">logger.info</code>) before returning.</div>
+      </div>
+      <div class="row">
+        <div class="lref">169 — 171</div>
+        <div class="txt">A routing safety net. The first route matches a single path segment; anything containing a
+          slash falls through to this <code class="tok">{path:path}</code> catch-all and is rejected with 400.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 08 serve route ====================== -->
+<section id="r-serve">
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">08 — route five</div>
+      <h2><span class="rsig">GET /{app_name}/{path:path}</span></h2>
+      <p>The catch-all that serves every registered app's files. It locates a file safely, then
+        decides whether to rewrite it. This is the longest route — and the most security-critical.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">server.py</span><span>lines 173 — 203 &nbsp;(condensed)</span></div>
+      <pre><div class="cl"><span class="ln">173</span><span class="ct">    <span class="d">@app.get(<span class="s">"/{app_name}/{path:path}"</span>)</span></span></div><div class="cl"><span class="ln">174</span><span class="ct">    <span class="k">async def</span> <span class="f">serve_app</span>(app_name: str, path: str):</span></div><div class="cl"><span class="ln">175</span><span class="ct">        <span class="k">if</span> app_name.<span class="f">startswith</span>(<span class="s">"__"</span>):  <span class="c"># guard 1</span></span></div><div class="cl"><span class="ln">176</span><span class="ct">            <span class="k">raise</span> <span class="f">HTTPException</span>(status_code=<span class="n">404</span>)</span></div><div class="cl"><span class="ln">177</span><span class="ct">        link = symlinks_dir / app_name</span></div><div class="cl"><span class="ln">181</span><span class="ct">        target = link.<span class="f">resolve</span>(strict=<span class="k">True</span>)   <span class="c"># guard 2</span></span></div><div class="cl"><span class="ln">184</span><span class="ct">        <span class="k">if not</span> target.<span class="f">is_dir</span>(): <span class="k">raise</span> <span class="f">HTTPException</span>(<span class="n">404</span>)</span></div><div class="cl"><span class="ln">187</span><span class="ct">        rel = path <span class="k">or</span> <span class="s">"index.html"</span>           <span class="c"># dir-index default</span></div><div class="cl"><span class="ln">192</span><span class="ct">        requested = (target / rel).<span class="f">resolve</span>(strict=<span class="k">True</span>)  <span class="c"># guard 3</span></span></div><div class="cl"><span class="ln">195</span><span class="ct">        <span class="k">if not</span> <span class="f">_is_within</span>(requested, target): <span class="k">raise</span> <span class="f">HTTPException</span>(<span class="n">404</span>)  <span class="c"># guard 4</span></span></div><div class="cl"><span class="ln">200</span><span class="ct">        <span class="k">if</span> requested.suffix.<span class="f">lower</span>() <span class="k">in</span> HTML_SUFFIXES:</span></div><div class="cl"><span class="ln">201</span><span class="ct">            html = requested.<span class="f">read_text</span>(encoding=<span class="s">"utf-8"</span>, errors=<span class="s">"replace"</span>)</span></div><div class="cl"><span class="ln">202</span><span class="ct">            <span class="k">return</span> <span class="f">HTMLResponse</span>(<span class="f">inject_reload_script</span>(html, app_name))</span></div><div class="cl"><span class="ln">203</span><span class="ct">        <span class="k">return</span> <span class="f">FileResponse</span>(requested)</span></div></pre>
+    </div>
+
+    <div class="prose reveal d1">
+      <p>The first two-thirds of this route is four independent safety checks. Any one alone would leave a
+        directory-traversal hole; <b>stacked</b>, they hold:</p>
+    </div>
+
+    <div class="guards reveal d2">
+      <div class="guard">
+        <div class="gl">1</div>
+        <h4>Reserved prefix</h4>
+        <p>Line 175 — a name starting with <code class="tok">__</code> is refused, so user content can never
+          shadow <code class="tok">/__events</code> or <code class="tok">/__static</code>.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">2</div>
+        <h4>Strict symlink resolve</h4>
+        <p>Line 181 — <code class="tok">resolve(strict=True)</code> raises if the link or its target doesn't
+          exist. A broken symlink becomes a clean 404, never a crash.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">3</div>
+        <h4>Strict file resolve</h4>
+        <p>Line 192 — the full requested path is resolved with <code class="tok">strict=True</code>; any
+          missing component (including <code class="tok">..</code> games) raises and 404s.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">4</div>
+        <h4>Containment</h4>
+        <p>Line 195 — after all symlinks resolve, <code class="tok">_is_within(requested, target)</code> must hold.
+          If the real path escaped the app's directory, it 404s. The decisive guard.</p>
+      </div>
+    </div>
+
+    <div class="note reveal d3" style="--ac:var(--rose); margin-top:22px">
+      <h4>Lines 200 — 203 &nbsp;— the one piece of magic</h4>
+      <p>Content negotiation. If the file's suffix is in <code class="tok">HTML_SUFFIXES</code> (<code class="tok">.html</code>/<code class="tok">.htm</code>),
+        it is read as text and passed through <code class="tok">inject_reload_script()</code>, which splices the SSE client
+        in before <code class="tok">&lt;/body&gt;</code>. Anything else streams untouched via <code class="tok">FileResponse</code>.
+        <b>This is why "drop a symlink and get live reload" works</b> — the app's HTML on disk is never modified;
+        the reload script is added at serve time, on the way out.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 09 worth noticing ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">09 — step back</div>
+      <h2>Four things to take away.</h2>
+    </div>
+    <div class="notes">
+      <div class="note reveal d1">
+        <h4>The <code class="tok" style="font-size:.82em">__</code> prefix is the entire framework/user boundary</h4>
+        <p>Internal routes live under <code class="tok">__events</code>, <code class="tok">__apps</code>,
+          <code class="tok">__static</code>; <code class="tok">serve_app</code> refuses any app named <code class="tok">__&hellip;</code>.
+          That naming convention <em>is</em> the isolation — there is nothing else enforcing it.</p>
+      </div>
+      <div class="note reveal d1" style="--ac:var(--sage)">
+        <h4>Security is layered, never single-checked</h4>
+        <p>String filters, parent resolution, <code class="tok">strict=True</code> resolves, and
+          <code class="tok">relative_to</code> containment. Defense in depth — the file server assumes every
+          earlier check could be bypassed.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--mist)">
+        <h4>No caching, anywhere</h4>
+        <p>Every request re-reads the filesystem — <code class="tok">scan()</code> on the index, a fresh
+          <code class="tok">read_text()</code> per file. At localhost scale that is free, and the server always
+          mirrors disk state exactly.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--peach)">
+        <h4>The factory is what makes it testable</h4>
+        <p><code class="tok">create_app(symlinks_dir=&hellip;)</code> takes the one piece of external state as a
+          parameter. No module-level globals — so the test suite spins up isolated apps freely.</p>
+      </div>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/logconfig/">
+        <div class="lbl">&larr; PREVIOUS</div>
+        <div class="nm"><span class="mono">logconfig.py</span></div>
+      </a>
+      <a class="next" href="/technical-explanation/bootstrap/">
+        <div class="lbl">NEXT &rarr;</div>
+        <div class="nm"><span class="mono">bootstrap.py</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/server.py — 205 lines, 7 routes, 1 factory.</span>
+    <span><a href="/technical-explanation/">&larr; all twelve files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

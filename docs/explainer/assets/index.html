@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>static assets — bundled icons &amp; font</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #d4b8d0; }   /* blossom — bundled assets */
+
+  /* page-local: icon wall */
+  .iconwall {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+    gap: 10px;
+    margin: 22px 0;
+  }
+  .ic {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--panel);
+    color: var(--accent);
+    transition: background .16s ease, border-color .16s ease;
+  }
+  .ic:hover { background: var(--panel-2); border-color: var(--accent); }
+  .ic svg { width: 24px; height: 24px; flex: none; }
+  .ic .iname {
+    font-size: 10px;
+    color: var(--faint);
+    letter-spacing: 0.03em;
+    text-align: center;
+    line-height: 1.3;
+    word-break: break-all;
+  }
+
+  /* font specimen */
+  .specimen {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--bg-deep);
+    padding: 28px 32px;
+    margin: 22px 0;
+  }
+  .specimen .sp-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 18px;
+  }
+  .specimen .sp-row {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--ink);
+    line-height: 2;
+  }
+  .specimen .sp-row span { color: var(--accent); }
+  .specimen .wt-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+  .specimen .wt {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .specimen .wt b { color: var(--ink); }
+  @media (max-width: 720px) {
+    .iconwall { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); }
+  }
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">static assets</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">The files that ship with it</div>
+    <h1 class="reveal d1"><span class="mono">static/</span><br />is <em>self-contained.</em></h1>
+    <p class="lede reveal d2">
+      Everything the server needs at runtime is already on disk — <b>1703 Lucide icons</b>
+      vendored as individual SVGs, plus a single <b>variable-weight web font</b>.
+      No CDN. No build step. No network call at startup or at serve time.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">1703</div><div class="l">Lucide icons</div></div>
+      <div class="stat reveal d2"><div class="n">~6.7 MB</div><div class="l">icon bundle</div></div>
+      <div class="stat reveal d3"><div class="n">1</div><div class="l">variable font</div></div>
+      <div class="stat reveal d3"><div class="n">0</div><div class="l">CDN calls</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 what's bundled & why ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — what's bundled &amp; why</div>
+      <h2>Vendored in full, on purpose.</h2>
+      <p>An offline-first localhost tool has no business phoning home for an icon.</p>
+    </div>
+
+    <div class="prose reveal d1">
+      <p><b>Lucide</b> is an open-source icon library licensed under the <b>ISC</b> licence —
+        permissive, attribution-free in practice. The entire set ships inside
+        <code class="tok">src/localhost_pages/static/lucide/</code> as 1703 plain <code class="tok">.svg</code> files,
+        one per icon, named by slug (<code class="tok">rocket.svg</code>, <code class="tok">terminal.svg</code>, &hellip;).</p>
+      <p>Vendoring the whole library means an app's <code class="tok">meta.json</code> can name <em>any</em> icon and
+        it resolves — no network round-trip, no missing-icon surprise in a hot-spot, no version drift
+        when Lucide publishes a new release upstream.</p>
+      <p>The font, <b>JetBrains Mono</b>, follows the same principle: one <code class="tok">woff2</code> file on disk,
+        referenced by the package's own <code class="tok">index.css</code>. The browser never needs to reach out.</p>
+    </div>
+
+    <div class="notes" style="margin-top:22px">
+      <div class="note reveal d2">
+        <h4>Why not a CDN?</h4>
+        <p>localhost-pages runs on developer machines, often offline or behind strict firewalls.
+          Vendoring is the only reliable strategy — if the file is in the repo, it is always there.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--sage)">
+        <h4>No build step</h4>
+        <p>The SVGs are served raw by FastAPI's <code class="tok">StaticFiles</code> mount at <code class="tok">/__static</code>.
+          No bundler, no sprite sheet, no compile phase — just files and an HTTP server.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 a sample of the set ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — a sample of the set</div>
+      <h2>18 of 1703.</h2>
+      <p>Each cell is one file — <code class="tok">stroke="currentColor"</code> lets a single CSS
+        <code class="tok">color</code> value recolour the whole icon.</p>
+    </div>
+
+    <div class="iconwall reveal d1">
+
+      <div class="ic">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
+        <span class="iname">library</span>
+      </div>
+
+      <div class="ic">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        <span class="iname">box</span>
+      </div>
+
+      <div class="ic">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09"/><path d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05"/></svg>
+        <span class="iname">rocket</span>
+      </div>
+
+      <div class="ic">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg>
+        <span class="iname">heart</span>
+      </div>
+
+      <div class="ic">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>
+        <span class="iname">star</span>
+      </div>
+
+      <div class="ic">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
+        <span class="iname">zap</span>
+      </div>
+
+      <div class="ic">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+        <span class="iname">globe</span>
+      </div>
+
+      <div class="ic">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+        <span class="iname">folder</span>
+      </div>
+
+      <div class="ic">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19h8"/><path d="m4 17 6-6-6-6"/></svg>
+        <span class="iname">terminal</span>
+      </div>
+
+      <div class="ic">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+        <span class="iname">bell</span>
+      </div>
+
+      <div class="ic">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg>
+        <span class="iname">camera</span>
+      </div>
+
+      <div class="ic">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z"/></svg>
+        <span class="iname">compass</span>
+      </div>
+
+      <div class="ic">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg>
+        <span class="iname">code</span>
+      </div>
+
+      <div class="ic">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v2"/><path d="M12 2v2"/><path d="M17 20v2"/><path d="M17 2v2"/><path d="M2 12h2"/><path d="M2 17h2"/><path d="M2 7h2"/><path d="M20 12h2"/><path d="M20 17h2"/><path d="M20 7h2"/><path d="M7 20v2"/><path d="M7 2v2"/><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg>
+        <span class="iname">cpu</span>
+      </div>
+
+      <div class="ic">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
+        <span class="iname">layers</span>
+      </div>
+
+      <div class="ic">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><polyline points="3.29 7 12 12 20.71 7"/><path d="m7.5 4.27 9 5.15"/></svg>
+        <span class="iname">package</span>
+      </div>
+
+      <div class="ic">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+        <span class="iname">monitor</span>
+      </div>
+
+      <div class="ic">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+        <span class="iname">shield</span>
+      </div>
+
+    </div>
+
+    <div class="note reveal d2">
+      <h4>Every icon is identical in structure</h4>
+      <p>24&times;24 viewport, <code class="tok">fill="none"</code>, <code class="tok">stroke="currentColor"</code>,
+        <code class="tok">stroke-width="2"</code>, rounded caps and joins.
+        The consistency is intentional — it is part of the Lucide design contract.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 how icons.py reads them ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — icons.py</div>
+      <h2>resolve_icon() — four branches.</h2>
+      <p><code class="tok">icons.py</code> is the only code that touches the bundle.
+        It exposes one public function and keeps a private in-memory cache.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">icons.py</span><span>lines 1 — 51</span></div>
+      <pre><div class="cl"><span class="ln"> 1</span><span class="ct"><span class="k">from</span> pathlib <span class="k">import</span> Path</span></div><div class="cl"><span class="ln"> 4</span><span class="ct"><span class="k">import</span> re</span></div><div class="cl"><span class="ln"> 5</span><span class="ct"><span class="k">from</span> html <span class="k">import</span> escape</span></div><div class="cl"><span class="ln">10</span><span class="ct">LUCIDE_DIR = <span class="f">Path</span>(__file__).parent / <span class="s">"static"</span> / <span class="s">"lucide"</span></span></div><div class="cl"><span class="ln">11</span><span class="ct">_LUCIDE_NAME_RE = re.<span class="f">compile</span>(<span class="s">r"^[a-z0-9][a-z0-9-]*$"</span>)</span></div><div class="cl"><span class="ln">12</span><span class="ct">_FALLBACK_NAME = <span class="s">"box"</span></span></div><div class="cl"><span class="ln">13</span><span class="ct">_cache: dict[str, str] = {}</span></div><div class="cl"><span class="ln"> </span><span class="ct"></span></div><div class="cl"><span class="ln">27</span><span class="ct"><span class="k">def</span> <span class="f">resolve_icon</span>(value: str | <span class="k">None</span>) -&gt; str:</span></div><div class="cl"><span class="ln">36</span><span class="ct">    <span class="k">if not</span> value:</span></div><div class="cl"><span class="ln">37</span><span class="ct">        value = _FALLBACK_NAME        <span class="c"># branch 1 — empty → box.svg</span></span></div><div class="cl"><span class="ln"> </span><span class="ct"></span></div><div class="cl"><span class="ln">39</span><span class="ct">    <span class="k">if</span> value.<span class="f">startswith</span>(<span class="s">"&lt;svg"</span>):     <span class="c"># branch 2 — raw SVG, trusted verbatim</span></span></div><div class="cl"><span class="ln">40</span><span class="ct">        <span class="k">return</span> value</span></div><div class="cl"><span class="ln"> </span><span class="ct"></span></div><div class="cl"><span class="ln">42</span><span class="ct">    <span class="k">if</span> _LUCIDE_NAME_RE.<span class="f">match</span>(value):  <span class="c"># branch 3 — slug → load file</span></span></div><div class="cl"><span class="ln">43</span><span class="ct">        svg = <span class="f">_read_lucide</span>(value)</span></div><div class="cl"><span class="ln">44</span><span class="ct">        <span class="k">if</span> svg <span class="k">is None</span>:               <span class="c"># missing → fall back to box</span></span></div><div class="cl"><span class="ln">45</span><span class="ct">            svg = <span class="f">_read_lucide</span>(_FALLBACK_NAME)</span></div><div class="cl"><span class="ln">48</span><span class="ct">            <span class="k">if</span> svg <span class="k">is None</span>:           <span class="c"># box itself missing → empty span</span></span></div><div class="cl"><span class="ln">49</span><span class="ct">                <span class="k">return</span> <span class="s">'&lt;span class="icon-emoji"&gt;&lt;/span&gt;'</span></span></div><div class="cl"><span class="ln">50</span><span class="ct">        <span class="k">return</span> svg</span></div><div class="cl"><span class="ln"> </span><span class="ct"></span></div><div class="cl"><span class="ln">51</span><span class="ct">    <span class="k">return</span> <span class="s">f'&lt;span class="icon-emoji"&gt;{<span class="f">escape</span>(value)}&lt;/span&gt;'</span>  <span class="c"># branch 4 — emoji</span></span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">11</div>
+        <div class="txt"><code class="tok">^[a-z0-9][a-z0-9-]*$</code> — must start with a letter or digit,
+          then only lowercase, digits, or hyphens. No slashes, no dots, no path tricks.</div>
+      </div>
+      <div class="row">
+        <div class="lref">13</div>
+        <div class="txt"><b>_cache</b> is a module-level dict. Once a file is read it is never read again
+          for the lifetime of the process — icon resolution is effectively free after the first hit.</div>
+      </div>
+      <div class="row">
+        <div class="lref">36 — 37</div>
+        <div class="txt"><b>Branch 1.</b> <code class="tok">None</code>, empty string, or any falsy value maps to
+          <code class="tok">box.svg</code> — the visual default for apps without a declared icon.</div>
+      </div>
+      <div class="row">
+        <div class="lref">39 — 40</div>
+        <div class="txt"><b>Branch 2.</b> A value starting with <code class="tok">&lt;svg</code> is returned
+          verbatim — caller-supplied markup, trusted by the operator who wrote <code class="tok">meta.json</code>.</div>
+      </div>
+      <div class="row">
+        <div class="lref">42 — 50</div>
+        <div class="txt"><b>Branch 3.</b> A valid Lucide slug loads its file. If the named icon is absent
+          — possible if a custom Lucide build is used — the fallback chain is:
+          named icon &rarr; <code class="tok">box.svg</code> &rarr; empty <code class="tok">&lt;span&gt;</code>.</div>
+      </div>
+      <div class="row">
+        <div class="lref">51</div>
+        <div class="txt"><b>Branch 4.</b> Anything else — an emoji, a URL, arbitrary text — is HTML-escaped
+          and wrapped in a <code class="tok">.icon-emoji</code> span. Safe by default.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="margin-top:22px">
+      <h4>The regex is also a security boundary</h4>
+      <p><code class="tok">^[a-z0-9][a-z0-9-]*$</code> rejects anything that could be used to escape
+        <code class="tok">LUCIDE_DIR</code>: no <code class="tok">/</code>, no <code class="tok">..</code>,
+        no uppercase, no extension. The name is safe to concatenate with a path without further checks.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 icon file shape ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — icon file shape</div>
+      <h2>What's actually inside a <code class="tok" style="font-size:.5em">lucide/*.svg</code>.</h2>
+      <p>Every file in the bundle shares the same outer shell. Only the inner paths differ.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">lucide/library.svg</span><span>full file</span></div>
+      <pre><div class="cl"><span class="ln"> 1</span><span class="ct">&lt;svg</span></div><div class="cl"><span class="ln"> 2</span><span class="ct">  xmlns=<span class="s">"http://www.w3.org/2000/svg"</span></span></div><div class="cl"><span class="ln"> 3</span><span class="ct">  width=<span class="s">"24"</span></span></div><div class="cl"><span class="ln"> 4</span><span class="ct">  height=<span class="s">"24"</span></span></div><div class="cl"><span class="ln"> 5</span><span class="ct">  viewBox=<span class="s">"0 0 24 24"</span></span></div><div class="cl"><span class="ln"> 6</span><span class="ct">  fill=<span class="s">"none"</span></span></div><div class="cl"><span class="ln"> 7</span><span class="ct">  stroke=<span class="s">"currentColor"</span></span></div><div class="cl"><span class="ln"> 8</span><span class="ct">  stroke-width=<span class="s">"2"</span></span></div><div class="cl"><span class="ln"> 9</span><span class="ct">  stroke-linecap=<span class="s">"round"</span></span></div><div class="cl"><span class="ln">10</span><span class="ct">  stroke-linejoin=<span class="s">"round"</span></span></div><div class="cl"><span class="ln">11</span><span class="ct">&gt;</span></div><div class="cl"><span class="ln">12</span><span class="ct">  &lt;path d=<span class="s">"m16 6 4 14"</span> /&gt;</span></div><div class="cl"><span class="ln">13</span><span class="ct">  &lt;path d=<span class="s">"M12 6v14"</span> /&gt;</span></div><div class="cl"><span class="ln">14</span><span class="ct">  &lt;path d=<span class="s">"M8 8v12"</span> /&gt;</span></div><div class="cl"><span class="ln">15</span><span class="ct">  &lt;path d=<span class="s">"M4 4v16"</span> /&gt;</span></div><div class="cl"><span class="ln">16</span><span class="ct">&lt;/svg&gt;</span></div></pre>
+    </div>
+
+    <div class="prose reveal d1">
+      <p><code class="tok">fill="none"</code> — the icon is drawn entirely in stroke,
+        never filled. <code class="tok">stroke="currentColor"</code> means the icon inherits
+        whatever CSS <code class="tok">color</code> its parent sets — no inline colour, no
+        JavaScript, no filter hack needed to recolour it.</p>
+      <p>The <b>24&times;24 grid</b> and the <b>2 px stroke</b> are the Lucide design contract.
+        Every icon in the 1703-strong set obeys them, which is why they can be mixed freely
+        and still look like a single family.</p>
+    </div>
+
+    <div class="ann reveal d2">
+      <div class="row">
+        <div class="lref">stroke</div>
+        <div class="txt"><code class="tok">currentColor</code> means: whatever <code class="tok">color</code>
+          CSS property is in effect at the call site. Set <code class="tok">color: red</code> on a parent
+          <code class="tok">&lt;div&gt;</code> and the icon goes red — no additional CSS required.</div>
+      </div>
+      <div class="row">
+        <div class="lref">fill</div>
+        <div class="txt"><code class="tok">none</code> — these are <b>outline</b> icons, not filled shapes.
+          The visual weight comes entirely from the stroke, which makes them look consistent
+          at any CSS <code class="tok">font-size</code> scale.</div>
+      </div>
+      <div class="row">
+        <div class="lref">viewBox</div>
+        <div class="txt"><code class="tok">0 0 24 24</code> — scale freely with <code class="tok">width</code>
+          and <code class="tok">height</code> CSS properties; the viewport stays proportional.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 05 the font ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">05 — the font</div>
+      <h2>One file, every weight.</h2>
+      <p><b>JetBrains Mono</b> ships as a single <code class="tok">woff2</code> — a variable font
+        covering the full <code class="tok">100 900</code> weight axis.</p>
+    </div>
+
+    <div class="specimen reveal d1">
+      <div class="sp-label">JetBrains Mono — variable weight · woff2 · ~90 KB</div>
+      <div class="sp-row" style="font-weight:300">
+        <span>300</span> &nbsp;localhost-pages · index · registry · watcher · pubsub
+      </div>
+      <div class="sp-row" style="font-weight:400">
+        <span>400</span> &nbsp;scan(symlinks_dir) → render_index(apps) → HTMLResponse
+      </div>
+      <div class="sp-row" style="font-weight:500">
+        <span>500</span> &nbsp;_LUCIDE_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+      </div>
+      <div class="sp-row" style="font-weight:600">
+        <span>600</span> &nbsp;resolve_icon · inject_reload_script · create_app
+      </div>
+      <div class="sp-row" style="font-weight:700">
+        <span>700</span> &nbsp;ZERO CDN calls · ALL assets vendored · ships with the package
+      </div>
+      <div class="wt-row">
+        <span class="wt">Format: <b>woff2 (variable)</b></span>
+        <span class="wt">Axes: <b>wght 100–900</b></span>
+        <span class="wt">File size: <b>~90 KB</b></span>
+        <span class="wt">font-display: <b>swap</b></span>
+      </div>
+    </div>
+
+    <div class="prose reveal d1">
+      <p>The font is declared in the package's own <code class="tok">index.css</code> via a single
+        <code class="tok">@font-face</code> rule pointing at <code class="tok">/__static/JetBrainsMono.woff2</code>.
+        <code class="tok">font-weight: 100 900</code> tells the browser the file covers the full range;
+        <code class="tok">font-display: swap</code> ensures text is immediately visible in a fallback
+        font while the file loads — though at localhost latency, the swap is imperceptible.</p>
+      <p>A variable font replaces what used to require six or more separate files
+        (one per weight). One file, one network request, every weight available in CSS
+        with <code class="tok">font-weight</code>.</p>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--mist)">
+      <h4>Why JetBrains Mono?</h4>
+      <p>It is a programmer's monospace with generous spacing, clear disambiguation of
+        <code class="tok">0/O</code> and <code class="tok">l/I/1</code>, and an open licence (OFL).
+        The UI is built for developers reading paths, names, and code — the font fits the context.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 06 facts table + pager ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">06 — at a glance</div>
+      <h2>Everything in one place.</h2>
+    </div>
+
+    <div class="rows reveal d1">
+      <div class="drow">
+        <div class="dk">icon count</div>
+        <div class="dv"><b>1703</b> SVG files in <code class="tok">static/lucide/</code></div>
+      </div>
+      <div class="drow">
+        <div class="dk">bundle size</div>
+        <div class="dv"><b>~6.7 MB</b> — plain text, no binary payloads</div>
+      </div>
+      <div class="drow">
+        <div class="dk">icon licence</div>
+        <div class="dv"><b>ISC</b> — permissive, commercially friendly, attribution-optional</div>
+      </div>
+      <div class="drow">
+        <div class="dk">icon format</div>
+        <div class="dv">Plain SVG — <code class="tok">stroke="currentColor"</code>, 24&times;24, stroke-width 2</div>
+      </div>
+      <div class="drow">
+        <div class="dk">font file</div>
+        <div class="dv"><code class="tok">JetBrainsMono.woff2</code> — variable, wght 100–900</div>
+      </div>
+      <div class="drow">
+        <div class="dk">font size</div>
+        <div class="dv"><b>~90 KB</b> — one file replaces six or more static-weight files</div>
+      </div>
+      <div class="drow">
+        <div class="dk">font licence</div>
+        <div class="dv"><b>OFL</b> (SIL Open Font Licence) — free to bundle</div>
+      </div>
+      <div class="drow">
+        <div class="dk">CDN calls</div>
+        <div class="dv"><b>0</b> — everything is served from <code class="tok">/__static</code> at localhost</div>
+      </div>
+      <div class="drow">
+        <div class="dk">build step</div>
+        <div class="dv"><b>none</b> — files ship as-is, served by <code class="tok">StaticFiles</code></div>
+      </div>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/help/">
+        <div class="lbl">&larr; PREVIOUS</div>
+        <div class="nm"><span class="mono">help.js</span></div>
+      </a>
+      <a class="next" href="/technical-explanation/">
+        <div class="lbl">DONE &rarr;</div>
+        <div class="nm"><span class="mono">back to the hub</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/static/lucide/ — 1703 icons · JetBrainsMono.woff2 — 1 font.</span>
+    <span><a href="/technical-explanation/">&larr; all the files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

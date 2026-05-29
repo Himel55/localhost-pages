@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>logconfig.py — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>:root{ --accent: #a9c2b5; }</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">logconfig.py</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">logconfig.py</span><br />keeps the lights <em>always on.</em></h1>
+    <p class="lede reveal d2">
+      A newly added module whose single job is to make logging dependable. Logs are
+      <b>always on</b> — no environment variable required — and they land in a
+      <b>rotating file</b> at a platform-standard place plus, when you are at a terminal,
+      stderr. The idea: a user who hits a bug already has a file to send.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">98</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">5</div><div class="l">functions</div></div>
+      <div class="stat reveal d3"><div class="n">5&times;1 MB</div><div class="l">rotation</div></div>
+      <div class="stat reveal d3"><div class="n">0</div><div class="l">deps beyond stdlib</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 imports ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — top of the file</div>
+      <h2>Stdlib only, plus the package version.</h2>
+      <p>The imports declare the whole toolkit: read the platform, read the environment,
+        touch the filesystem, and rotate a file. Nothing here is a third-party dependency.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">logconfig.py</span><span>lines 8 — 21</span></div>
+      <pre><div class="cl"><span class="ln">8</span><span class="ct"><span class="k">from</span> __future__ <span class="k">import</span> annotations</span></div><div class="cl"><span class="ln">9</span><span class="ct"></span></div><div class="cl"><span class="ln">10</span><span class="ct"><span class="k">import</span> logging</span></div><div class="cl"><span class="ln">11</span><span class="ct"><span class="k">import</span> os</span></div><div class="cl"><span class="ln">12</span><span class="ct"><span class="k">import</span> platform</span></div><div class="cl"><span class="ln">13</span><span class="ct"><span class="k">import</span> sys</span></div><div class="cl"><span class="ln">14</span><span class="ct"><span class="k">from</span> logging.handlers <span class="k">import</span> RotatingFileHandler</span></div><div class="cl"><span class="ln">15</span><span class="ct"><span class="k">from</span> pathlib <span class="k">import</span> Path</span></div><div class="cl"><span class="ln">16</span><span class="ct"></span></div><div class="cl"><span class="ln">17</span><span class="ct"><span class="k">from</span> . <span class="k">import</span> __version__</span></div><div class="cl"><span class="ln">18</span><span class="ct"></span></div><div class="cl"><span class="ln">19</span><span class="ct">LOG_FORMAT = <span class="s">"%(asctime)s %(levelname)s %(name)s: %(message)s"</span></span></div><div class="cl"><span class="ln">20</span><span class="ct">_MAX_BYTES = 1_000_000  <span class="ct"># 1 MB per file</span></span></div><div class="cl"><span class="ln">21</span><span class="ct">_BACKUPS = 5            <span class="ct"># keep ~5 MB of history</span></span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">10 — 15</div>
+        <div class="txt"><b>logging</b> and <b>RotatingFileHandler</b> do the work; <b>platform</b> reads the OS,
+          version, and python release for the banner; <b>os</b> reads the environment for the override and
+          the Windows/Linux base directories; <b>sys</b> exposes <code class="tok">stderr</code>; and
+          <b>Path</b> turns everything into real filesystem objects.</div>
+      </div>
+      <div class="row">
+        <div class="lref">17</div>
+        <div class="txt">The one sibling import. <code class="tok">__version__</code> is read straight from the package
+          so the banner reports the right version even when the project is not pip-installed.</div>
+      </div>
+      <div class="row">
+        <div class="lref">19 — 21</div>
+        <div class="txt">Module-level constants. One shared <code class="tok">LOG_FORMAT</code>, then the rotation
+          policy: <code class="tok">_MAX_BYTES</code> is 1 MB per file and <code class="tok">_BACKUPS</code> is
+          5 — so the rotating handler keeps roughly 5 MB of recent history before discarding the oldest.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="margin-top:22px">
+      <h4>Why read <code class="tok" style="font-size:.82em">__version__</code> directly</h4>
+      <p>The obvious alternative, <code class="tok">importlib.metadata.version(...)</code>, only works when the
+        distribution is installed. Reading the package's own <code class="tok">__version__</code> attribute
+        needs no metadata and no extra dependency — it is correct whether the code was pip-installed or run
+        straight from a checkout.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 module-level state ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — one piece of state</div>
+      <h2>Where the log path is remembered.</h2>
+      <p>The module holds exactly one mutable value: the resolved log path, so other parts of the
+        app can ask <em>where are the logs?</em> after setup has run.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">logconfig.py</span><span>lines 23 — 25</span></div>
+      <pre><div class="cl"><span class="ln">23</span><span class="ct"><span class="ct"># Resolved at setup_logging() time so the /__diagnostics endpoint and the</span></span></div><div class="cl"><span class="ln">24</span><span class="ct"><span class="ct"># startup banner can report exactly where logs are written.</span></span></div><div class="cl"><span class="ln">25</span><span class="ct">_log_path: Path | <span class="k">None</span> = <span class="k">None</span></span></div></pre>
+    </div>
+
+    <div class="prose reveal d1">
+      <p>It starts as <code class="tok">None</code> and is filled in the moment
+        <code class="tok">setup_logging()</code> resolves the path. Two readers depend on it: the
+        <code class="tok">/__diagnostics</code> endpoint in <code class="tok">server.py</code>, which surfaces the
+        path to a user triaging a bug, and the startup banner, which logs it as the very first thing. Storing
+        it here means there is a single source of truth that does not require re-deriving the path.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 default_log_path ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — picking a place</div>
+      <h2><span class="esig">def default_log_path()</span> &nbsp;a path per platform.</h2>
+      <p>Every operating system has a conventional home for logs. This function returns the right one,
+        so files land where a user (and their OS tooling) would expect to find them.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">logconfig.py</span><span>lines 34 — 43</span></div>
+      <pre><div class="cl"><span class="ln">34</span><span class="ct"><span class="k">def</span> <span class="f">default_log_path</span>() -> Path:</span></div><div class="cl"><span class="ln">35</span><span class="ct">    <span class="s">"""Platform-standard log location."""</span></span></div><div class="cl"><span class="ln">36</span><span class="ct">    system = platform.<span class="f">system</span>()</span></div><div class="cl"><span class="ln">37</span><span class="ct">    <span class="k">if</span> system == <span class="s">"Darwin"</span>:</span></div><div class="cl"><span class="ln">38</span><span class="ct">        base = Path.<span class="f">home</span>() / <span class="s">"Library"</span> / <span class="s">"Logs"</span></span></div><div class="cl"><span class="ln">39</span><span class="ct">    <span class="k">elif</span> system == <span class="s">"Windows"</span>:</span></div><div class="cl"><span class="ln">40</span><span class="ct">        base = <span class="f">Path</span>(os.environ.<span class="f">get</span>(<span class="s">"LOCALAPPDATA"</span>, Path.<span class="f">home</span>())) / <span class="s">"localhost-pages"</span> / <span class="s">"Logs"</span></span></div><div class="cl"><span class="ln">41</span><span class="ct">    <span class="k">else</span>:  <span class="ct"># Linux / other POSIX</span></span></div><div class="cl"><span class="ln">42</span><span class="ct">        base = <span class="f">Path</span>(os.environ.<span class="f">get</span>(<span class="s">"XDG_STATE_HOME"</span>, Path.<span class="f">home</span>() / <span class="s">".local"</span> / <span class="s">"state"</span>)) / <span class="s">"localhost-pages"</span></span></div><div class="cl"><span class="ln">43</span><span class="ct">    <span class="k">return</span> base / <span class="s">"localhost-pages.log"</span></span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">37 — 38</div>
+        <div class="txt"><b>macOS.</b> <code class="tok">platform.system()</code> returns
+          <code class="tok">"Darwin"</code>, and logs go to <code class="tok">~/Library/Logs</code> — exactly
+          where Console.app and the rest of the system keep theirs.</div>
+      </div>
+      <div class="row">
+        <div class="lref">39 — 40</div>
+        <div class="txt"><b>Windows.</b> The base is <code class="tok">%LOCALAPPDATA%\localhost-pages\Logs</code>,
+          falling back to the home directory if <code class="tok">LOCALAPPDATA</code> is somehow unset.</div>
+      </div>
+      <div class="row">
+        <div class="lref">41 — 42</div>
+        <div class="txt"><b>Linux / other POSIX.</b> Honours the XDG spec:
+          <code class="tok">$XDG_STATE_HOME/localhost-pages</code>, or
+          <code class="tok">~/.local/state/localhost-pages</code> when that variable is unset.</div>
+      </div>
+      <div class="row">
+        <div class="lref">43</div>
+        <div class="txt">Whichever <code class="tok">base</code> was chosen, the file is always named
+          <code class="tok">localhost-pages.log</code> inside it.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="margin-top:22px">
+      <h4>The override still exists</h4>
+      <p>This function is the <em>default</em>. <code class="tok">setup_logging()</code> only calls it when no
+        explicit path is given — and <code class="tok">__main__.py</code> passes through
+        <code class="tok">LOCALHOST_PAGES_LOG</code> when it is set. So the platform path is what you get out of
+        the box, and the environment variable is the escape hatch when you need the file somewhere specific.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 setup_logging ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — the heart of the file</div>
+      <h2><span class="esig">def setup_logging()</span> &nbsp;wire up the root logger.</h2>
+      <p>This is the function the entrypoint calls. It resolves a path, makes sure the directory exists,
+        and attaches handlers — and it is safe to call more than once.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">logconfig.py</span><span>lines 46 — 68</span></div>
+      <pre><div class="cl"><span class="ln">46</span><span class="ct"><span class="k">def</span> <span class="f">setup_logging</span>(log_file: str | os.PathLike[str] | <span class="k">None</span> = <span class="k">None</span>) -> Path:</span></div><div class="cl"><span class="ln">52</span><span class="ct">    <span class="k">global</span> _log_path</span></div><div class="cl"><span class="ln">53</span><span class="ct">    path = <span class="f">Path</span>(log_file) <span class="k">if</span> log_file <span class="k">else</span> <span class="f">default_log_path</span>()</span></div><div class="cl"><span class="ln">54</span><span class="ct">    path.parent.<span class="f">mkdir</span>(parents=<span class="k">True</span>, exist_ok=<span class="k">True</span>)</span></div><div class="cl"><span class="ln">55</span><span class="ct"></span></div><div class="cl"><span class="ln">56</span><span class="ct">    root = logging.<span class="f">getLogger</span>()</span></div><div class="cl"><span class="ln">57</span><span class="ct">    root.<span class="f">setLevel</span>(logging.INFO)</span></div><div class="cl"><span class="ln">58</span><span class="ct">    <span class="k">for</span> handler <span class="k">in</span> <span class="f">list</span>(root.handlers):</span></div><div class="cl"><span class="ln">59</span><span class="ct">        root.<span class="f">removeHandler</span>(handler)</span></div><div class="cl"><span class="ln">60</span><span class="ct">        handler.<span class="f">close</span>()</span></div><div class="cl"><span class="ln">61</span><span class="ct"></span></div><div class="cl"><span class="ln">62</span><span class="ct">    fmt = logging.<span class="f">Formatter</span>(LOG_FORMAT)</span></div><div class="cl"><span class="ln">63</span><span class="ct"></span></div><div class="cl"><span class="ln">64</span><span class="ct">    file_handler = <span class="f">RotatingFileHandler</span>(</span></div><div class="cl"><span class="ln">65</span><span class="ct">        path, maxBytes=_MAX_BYTES, backupCount=_BACKUPS, encoding=<span class="s">"utf-8"</span></span></div><div class="cl"><span class="ln">66</span><span class="ct">    )</span></div><div class="cl"><span class="ln">67</span><span class="ct">    file_handler.<span class="f">setFormatter</span>(fmt)</span></div><div class="cl"><span class="ln">68</span><span class="ct">    root.<span class="f">addHandler</span>(file_handler)</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">53 — 54</div>
+        <div class="txt">If a <code class="tok">log_file</code> was passed it wins; otherwise
+          <code class="tok">default_log_path()</code> chooses one. Either way the parent directory is created
+          (<code class="tok">parents=True, exist_ok=True</code>), so pointing at a not-yet-existing location
+          never fails.</div>
+      </div>
+      <div class="row">
+        <div class="lref">56 — 60</div>
+        <div class="txt"><b>Idempotent.</b> The root logger is set to <code class="tok">INFO</code>, then every
+          existing handler is removed and closed first. Calling <code class="tok">setup_logging()</code> twice
+          — as the test suite does — will not stack duplicate handlers or leak open files.</div>
+      </div>
+      <div class="row">
+        <div class="lref">62 — 68</div>
+        <div class="txt">A single <code class="tok">Formatter</code> is built from <code class="tok">LOG_FORMAT</code>
+          and shared. Then the <code class="tok">RotatingFileHandler</code> is created with the 1 MB / 5-backup
+          policy and UTF-8 encoding, given the formatter, and attached. This is the canonical sink — it is
+          always present.</div>
+      </div>
+    </div>
+
+    <div class="code reveal d2" style="margin-top:22px">
+      <div class="cap"><span class="fn">logconfig.py</span><span>lines 70 — 80</span></div>
+      <pre><div class="cl"><span class="ln">70</span><span class="ct">    <span class="ct"># Mirror to stderr only when interactive. Under a daemon (launchd/systemd)</span></span></div><div class="cl"><span class="ln">71</span><span class="ct">    <span class="ct"># stderr is redirected to a file, so a stderr handler would duplicate every</span></span></div><div class="cl"><span class="ln">72</span><span class="ct">    <span class="ct"># line into that file alongside the rotating handler — the file handler</span></span></div><div class="cl"><span class="ln">73</span><span class="ct">    <span class="ct"># alone is the canonical sink there.</span></span></div><div class="cl"><span class="ln">74</span><span class="ct">    <span class="k">if</span> sys.stderr <span class="k">is not</span> <span class="k">None</span> <span class="k">and</span> sys.stderr.<span class="f">isatty</span>():</span></div><div class="cl"><span class="ln">75</span><span class="ct">        stderr_handler = logging.<span class="f">StreamHandler</span>(sys.stderr)</span></div><div class="cl"><span class="ln">76</span><span class="ct">        stderr_handler.<span class="f">setFormatter</span>(fmt)</span></div><div class="cl"><span class="ln">77</span><span class="ct">        root.<span class="f">addHandler</span>(stderr_handler)</span></div><div class="cl"><span class="ln">78</span><span class="ct"></span></div><div class="cl"><span class="ln">79</span><span class="ct">    _log_path = path</span></div><div class="cl"><span class="ln">80</span><span class="ct">    <span class="k">return</span> path</span></div></pre>
+    </div>
+
+    <div class="ann reveal d2">
+      <div class="row">
+        <div class="lref">74 — 77</div>
+        <div class="txt"><b>Conditional console output.</b> A stderr handler is added <em>only</em> when
+          <code class="tok">sys.stderr.isatty()</code> — i.e. when a human is watching a terminal. Run
+          interactively you get live console output <em>and</em> the file.</div>
+      </div>
+      <div class="row">
+        <div class="lref">79 — 80</div>
+        <div class="txt">The resolved path is stored in the module-level <code class="tok">_log_path</code> (so the
+          diagnostics endpoint and banner can find it) and also <em>returned</em>, so the caller learns the
+          path immediately.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d3" style="--ac:var(--mist); margin-top:22px">
+      <h4>Why stderr is gated on <code class="tok" style="font-size:.82em">isatty()</code></h4>
+      <p>Under a daemon manager like launchd or systemd, the process's stderr is itself redirected to a file.
+        If a stderr <code class="tok">StreamHandler</code> were always attached, every line would be written
+        <em>twice</em> into that file — once by the rotating handler and once through redirected stderr. The
+        <code class="tok">isatty()</code> check means that in the background the file handler alone is the sink,
+        with no duplication, while interactive runs still echo to the console.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 05 getters and the banner ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">05 — reporting out</div>
+      <h2>The path getter, and the startup banner.</h2>
+      <p>Two small functions expose what setup recorded: one returns the path, the other writes the
+        environment summary you reach for first when a report comes in.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">logconfig.py</span><span>lines 83 — 85</span></div>
+      <pre><div class="cl"><span class="ln">83</span><span class="ct"><span class="k">def</span> <span class="f">get_log_path</span>() -> Path | <span class="k">None</span>:</span></div><div class="cl"><span class="ln">84</span><span class="ct">    <span class="s">"""The active log file path, or None if setup_logging() hasn't run."""</span></span></div><div class="cl"><span class="ln">85</span><span class="ct">    <span class="k">return</span> _log_path</span></div></pre>
+    </div>
+
+    <div class="prose reveal d1">
+      <p><code class="tok">get_log_path()</code> is the public reader of the module's one piece of state. Before
+        <code class="tok">setup_logging()</code> runs it returns <code class="tok">None</code>; afterwards it returns
+        the resolved <code class="tok">Path</code>. This is what <code class="tok">server.py</code>'s
+        <code class="tok">/__diagnostics</code> endpoint calls to tell a user exactly which file to send.</p>
+    </div>
+
+    <div class="code reveal d2" style="margin-top:22px">
+      <div class="cap"><span class="fn">logconfig.py</span><span>lines 88 — 98</span></div>
+      <pre><div class="cl"><span class="ln">88</span><span class="ct"><span class="k">def</span> <span class="f">log_startup_banner</span>(logger: logging.Logger, *, host, port, symlinks_dir, app_count=<span class="k">None</span>) -> <span class="k">None</span>:</span></div><div class="cl"><span class="ln">89</span><span class="ct">    <span class="s">"""Log environment/config — the first thing you want when triaging a report."""</span></span></div><div class="cl"><span class="ln">90</span><span class="ct">    logger.<span class="f">info</span>(<span class="s">"="</span> * 60)</span></div><div class="cl"><span class="ln">91</span><span class="ct">    logger.<span class="f">info</span>(<span class="s">"localhost-pages %s starting"</span>, <span class="f">app_version</span>())</span></div><div class="cl"><span class="ln">92</span><span class="ct">    logger.<span class="f">info</span>(<span class="s">"python %s on %s %s"</span>, platform.<span class="f">python_version</span>(), platform.<span class="f">system</span>(), platform.<span class="f">release</span>())</span></div><div class="cl"><span class="ln">93</span><span class="ct">    logger.<span class="f">info</span>(<span class="s">"serving http://%s:%s"</span>, host, port)</span></div><div class="cl"><span class="ln">94</span><span class="ct">    logger.<span class="f">info</span>(<span class="s">"symlinks dir: %s"</span>, symlinks_dir)</span></div><div class="cl"><span class="ln">95</span><span class="ct">    logger.<span class="f">info</span>(<span class="s">"log file: %s"</span>, _log_path)</span></div><div class="cl"><span class="ln">96</span><span class="ct">    <span class="k">if</span> app_count <span class="k">is not</span> <span class="k">None</span>:</span></div><div class="cl"><span class="ln">97</span><span class="ct">        logger.<span class="f">info</span>(<span class="s">"apps registered: %d"</span>, app_count)</span></div><div class="cl"><span class="ln">98</span><span class="ct">    logger.<span class="f">info</span>(<span class="s">"="</span> * 60)</span></div></pre>
+    </div>
+
+    <div class="ann reveal d2">
+      <div class="row">
+        <div class="lref">88</div>
+        <div class="txt">Keyword-only arguments (after the <code class="tok">*</code>) make every call site spell out
+          <code class="tok">host=</code>, <code class="tok">port=</code>, and <code class="tok">symlinks_dir=</code>
+          — readable at the call in <code class="tok">__main__.py</code>. <code class="tok">app_count</code> is
+          optional.</div>
+      </div>
+      <div class="row">
+        <div class="lref">90 — 95</div>
+        <div class="txt">Framed top and bottom by a rule of <code class="tok">=</code> signs, the banner records version,
+          python and OS, the bound host/port, the symlinks directory, and the log file path itself — the exact
+          facts you ask for first when triaging a bug report.</div>
+      </div>
+      <div class="row">
+        <div class="lref">96 — 97</div>
+        <div class="txt">The app count is logged only when it was supplied, so callers that do not yet know it can
+          omit it without printing a misleading zero.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d3" style="--ac:var(--sage); margin-top:22px">
+      <h4>Where this gets called</h4>
+      <p><code class="tok">__main__.py</code> calls <code class="tok">setup_logging()</code> and then
+        <code class="tok">log_startup_banner(...)</code> at boot, so the first lines in every log already pin down
+        the environment. Pair that with <code class="tok">get_log_path()</code> feeding
+        <code class="tok">server.py</code>'s <code class="tok">/__diagnostics</code> endpoint, and the loop closes:
+        the logs are always on, and they are always discoverable.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 06 worth noticing ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">06 — step back</div>
+      <h2>Four things to take away.</h2>
+    </div>
+    <div class="notes">
+      <div class="note reveal d1">
+        <h4>Always on, no switch to flip</h4>
+        <p>There is no <em>enable logging</em> environment variable. The moment the app boots,
+          <code class="tok">setup_logging()</code> attaches a rotating file handler — so a user who hits a bug
+          already has a log file, with no restart and nothing to turn on first.</p>
+      </div>
+      <div class="note reveal d1" style="--ac:var(--sage)">
+        <h4>Bounded by design</h4>
+        <p>The 1 MB &times; 5 rotation caps the footprint at roughly 5 MB of history. Logs can run forever
+          without ever filling a disk, and the oldest lines fall off the back automatically.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--mist)">
+        <h4>One sink, or two, depending on context</h4>
+        <p>The file handler is the canonical sink everywhere. The stderr handler is conditional on
+          <code class="tok">isatty()</code> — present when a human is watching, absent under a daemon — which
+          quietly avoids the double-logging trap when stderr is redirected to a file.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--peach)">
+        <h4>Discoverable, not just written</h4>
+        <p>Recording the resolved path in <code class="tok">_log_path</code> lets the banner announce it and the
+          <code class="tok">/__diagnostics</code> endpoint surface it. Writing logs is only half the value —
+          telling the user where to find them is the other half.</p>
+      </div>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/main/"><div class="lbl">&larr; PREVIOUS</div><div class="nm"><span class="mono">__main__.py</span></div></a>
+      <a class="next" href="/technical-explanation/server/"><div class="lbl">NEXT &rarr;</div><div class="nm"><span class="mono">server.py</span></div></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/logconfig.py — 98 lines, always-on rotating logs + a startup banner.</span>
+    <span><a href="/technical-explanation/">&larr; all the files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

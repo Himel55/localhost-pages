@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>templates/index.html — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #bdd0b8; }   /* fern — index.html template */
+
+  /* page-local: jinja placeholder table */
+  .placeholders { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .ph {
+    display: grid; grid-template-columns: 220px 1fr;
+    align-items: baseline;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+    transition: background .16s ease;
+  }
+  .ph:last-child { border-bottom: none; }
+  .ph:hover { background: var(--panel-2); }
+  .ph .expr { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--sage); padding: 13px 0 13px 18px; }
+  .ph .meaning { font-size: 12px; color: var(--faint); padding: 13px 16px; line-height: 1.5; }
+  @media (max-width: 720px) {
+    .ph { grid-template-columns: 1fr; }
+    .ph .meaning { padding-top: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">templates/index.html</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">index.html</span><br />is the <em>one template.</em></h1>
+    <p class="lede reveal d2">
+      Pure structure, zero JavaScript framework. This single Jinja2 template is rendered by
+      <code class="tok">render_index()</code> in <b>index.py</b>, fed a list of <code class="tok">App</code> records,
+      and served at <b>GET /</b>. Everything the user sees on the launch page — the brand, the app list,
+      the controls — lives here. The scripts come after; the HTML works without them.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">89</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">1</div><div class="l">template</div></div>
+      <div class="stat reveal d3"><div class="n">~12</div><div class="l">Jinja2 placeholders</div></div>
+      <div class="stat reveal d3"><div class="n">11</div><div class="l">script tags</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 head ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — head</div>
+      <h2>One stylesheet. No fonts, no framework.</h2>
+      <p>The entire <code class="tok">&lt;head&gt;</code> is seven lines. No Google Fonts, no bundler output,
+        no inline styles — just a single <code class="tok">&lt;link&gt;</code> to the package's own stylesheet.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">index.html</span><span>lines 1 — 7</span></div>
+      <pre><div class="cl"><span class="ln">1</span><span class="ct"><span class="c">&lt;!doctype html&gt;</span></span></div><div class="cl"><span class="ln">2</span><span class="ct">&lt;<span class="k">html</span> <span class="s">lang="en"</span>&gt;</span></div><div class="cl"><span class="ln">3</span><span class="ct">&lt;<span class="k">head</span>&gt;</span></div><div class="cl"><span class="ln">4</span><span class="ct">  &lt;<span class="k">meta</span> <span class="s">charset="utf-8"</span>&gt;</span></div><div class="cl"><span class="ln">5</span><span class="ct">  &lt;<span class="k">title</span>&gt;localhost&lt;/<span class="k">title</span>&gt;</span></div><div class="cl"><span class="ln">6</span><span class="ct">  &lt;<span class="k">link</span> <span class="s">rel="stylesheet"</span> <span class="s">href="/__static/index.css"</span>&gt;</span></div><div class="cl"><span class="ln">7</span><span class="ct">&lt;/<span class="k">head</span>&gt;</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">5</div>
+        <div class="txt">The title is always <b>localhost</b> — static, no Jinja2. There is no per-app title injection here;
+          the browser tab simply names the host.</div>
+      </div>
+      <div class="row">
+        <div class="lref">6</div>
+        <div class="txt"><code class="tok">/__static/</code> is the package's reserved asset namespace, mounted in
+          <code class="tok">server.py</code>. The double-underscore prefix ensures no user app can shadow it.
+          <b>index.css</b> is the only dependency.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 header control cluster ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — header control cluster</div>
+      <h2>Brand, status, sort, edit, help, search.</h2>
+      <p>The header is built in plain HTML. The interactive controls — all of them
+        rendered as static markup; the scripts wire them up later.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">index.html</span><span>lines 9 — 20</span></div>
+      <pre><div class="cl"><span class="ln">9</span><span class="ct">&lt;<span class="k">header</span>&gt;</span></div><div class="cl"><span class="ln">10</span><span class="ct">  &lt;<span class="k">div</span> <span class="s">class="header-top"</span>&gt;</span></div><div class="cl"><span class="ln">11</span><span class="ct">    &lt;<span class="k">div</span> <span class="s">class="brand"</span>&gt;LOCALHOST/&lt;/<span class="k">div</span>&gt;</span></div><div class="cl"><span class="ln">12</span><span class="ct">  &lt;/<span class="k">div</span>&gt;</span></div><div class="cl"><span class="ln">13</span><span class="ct">  &lt;<span class="k">div</span> <span class="s">class="meta"</span>&gt;</span></div><div class="cl"><span class="ln">14</span><span class="ct">    [{{ count }} APPS · {{ broken }} BROKEN]</span></div><div class="cl"><span class="ln">15</span><span class="ct">    &lt;<span class="k">span</span> <span class="s">class="sep"</span>&gt;·&lt;/<span class="k">span</span>&gt;</span></div><div class="cl"><span class="ln">16</span><span class="ct">    &lt;<span class="k">span</span> <span class="s">class="sort-wrap"</span> <span class="s">aria-label="Sort apps"</span>&gt;</span></div><div class="cl"><span class="ln">17</span><span class="ct">      &lt;<span class="k">span</span> <span class="s">class="sort-prefix"</span>&gt;SORT&lt;/<span class="k">span</span>&gt;</span></div><div class="cl"><span class="ln">18</span><span class="ct">      &lt;<span class="k">button</span> <span class="s">type="button"</span> <span class="s">class="sort-toggle"</span> <span class="s">aria-haspopup="listbox"</span> <span class="s">aria-expanded="false"</span>&gt;</span></div><div class="cl"><span class="ln">19</span><span class="ct">        &lt;<span class="k">span</span> <span class="s">class="sort-current"</span>&gt;a–z&lt;/<span class="k">span</span>&gt;</span></div><div class="cl"><span class="ln">20</span><span class="ct">        &lt;<span class="k">svg</span> <span class="s">class="sort-caret"</span> …&gt;&lt;/<span class="k">svg</span>&gt;</span></div></pre>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">index.html</span><span>lines 21 — 44</span></div>
+      <pre><div class="cl"><span class="ln">21</span><span class="ct">      &lt;<span class="k">ul</span> <span class="s">class="sort-menu"</span> <span class="s">role="listbox"</span> <span class="s">hidden</span>&gt;</span></div><div class="cl"><span class="ln">22</span><span class="ct">        &lt;<span class="k">li</span> <span class="s">role="option"</span> <span class="s">data-value="alpha"</span>&gt;a–z&lt;/<span class="k">li</span>&gt;</span></div><div class="cl"><span class="ln">23</span><span class="ct">        &lt;<span class="k">li</span> <span class="s">role="option"</span> <span class="s">data-value="recently-updated"</span>&gt;recently updated&lt;/<span class="k">li</span>&gt;</span></div><div class="cl"><span class="ln">24</span><span class="ct">        &lt;<span class="k">li</span> <span class="s">role="option"</span> <span class="s">data-value="recently-visited"</span>&gt;recently visited&lt;/<span class="k">li</span>&gt;</span></div><div class="cl"><span class="ln">25</span><span class="ct">        &lt;<span class="k">li</span> <span class="s">role="option"</span> <span class="s">data-value="most-visited"</span>&gt;most visited&lt;/<span class="k">li</span>&gt;</span></div><div class="cl"><span class="ln">26</span><span class="ct">        &lt;<span class="k">li</span> <span class="s">role="option"</span> <span class="s">data-value="manual"</span>&gt;manual&lt;/<span class="k">li</span>&gt;</span></div><div class="cl"><span class="ln">27</span><span class="ct">      &lt;/<span class="k">ul</span>&gt;</span></div><div class="cl"><span class="ln">28</span><span class="ct">    &lt;/<span class="k">span</span>&gt;</span></div><div class="cl"><span class="ln">29</span><span class="ct">    &lt;<span class="k">span</span> <span class="s">class="sep"</span>&gt;·&lt;/<span class="k">span</span>&gt;</span></div><div class="cl"><span class="ln">30</span><span class="ct">    &lt;<span class="k">button</span> <span class="s">class="edit-toggle"</span> <span class="s">type="button"</span> <span class="s">aria-pressed="false"</span>&gt;EDIT&lt;/<span class="k">button</span>&gt;</span></div><div class="cl"><span class="ln">31</span><span class="ct">    &lt;<span class="k">span</span> <span class="s">class="sep"</span>&gt;·&lt;/<span class="k">span</span>&gt;</span></div><div class="cl"><span class="ln">32</span><span class="ct">    &lt;<span class="k">button</span> <span class="s">class="help-toggle"</span> <span class="s">type="button"</span> <span class="s">aria-label="Keyboard shortcuts"</span>&gt;?&lt;/<span class="k">button</span>&gt;</span></div><div class="cl"><span class="ln">33</span><span class="ct">    &lt;<span class="k">span</span> <span class="s">class="sep"</span>&gt;·&lt;/<span class="k">span</span>&gt;</span></div><div class="cl"><span class="ln">34</span><span class="ct">    &lt;<span class="k">div</span> <span class="s">class="search-wrap"</span>&gt;</span></div><div class="cl"><span class="ln">35</span><span class="ct">      &lt;<span class="k">svg</span> <span class="s">class="search-icon"</span> …&gt;&lt;/<span class="k">svg</span>&gt;</span></div><div class="cl"><span class="ln">36</span><span class="ct">      &lt;<span class="k">input</span> <span class="s">class="search"</span> <span class="s">type="search"</span> <span class="s">placeholder="filter…"</span> …&gt;</span></div><div class="cl"><span class="ln">37</span><span class="ct">      &lt;<span class="k">button</span> <span class="s">class="search-clear"</span> …&gt;×&lt;/<span class="k">button</span>&gt;</span></div><div class="cl"><span class="ln">38</span><span class="ct">    &lt;/<span class="k">div</span>&gt;</span></div><div class="cl"><span class="ln">43</span><span class="ct">  &lt;/<span class="k">div</span>&gt;</span></div><div class="cl"><span class="ln">44</span><span class="ct">&lt;/<span class="k">header</span>&gt;</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">14</div>
+        <div class="txt">The two live counters — <b>{{ count }}</b> and <b>{{ broken }}</b> — are the only Jinja2 placeholders
+          in the header. Everything else is static markup.</div>
+      </div>
+      <div class="row">
+        <div class="lref">21 — 27</div>
+        <div class="txt">The sort menu is a <code class="tok">&lt;ul role="listbox"&gt;</code> with five
+          <code class="tok">&lt;li role="option"&gt;</code> elements and a <code class="tok">hidden</code> attribute.
+          <b>sort.js</b> removes <code class="tok">hidden</code> on toggle — ARIA roles are in place from the start,
+          making the control screen-reader-ready without JS.</div>
+      </div>
+      <div class="row">
+        <div class="lref">30</div>
+        <div class="txt"><code class="tok">aria-pressed="false"</code> on the EDIT button seeds the accessible state.
+          <b>edit.js</b> flips it to <code class="tok">"true"</code> when edit mode activates.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 apps loop ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — the apps loop</div>
+      <h2>One <code class="tok" style="font-size:.72em">{% for %}</code> renders the entire list.</h2>
+      <p>Lines 46 – 72. An empty-state branch; then a Jinja2 <code class="tok">for</code> that emits one
+        <code class="tok">&lt;li&gt;</code> per <code class="tok">App</code> record — icon, number, title, description, controls.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">index.html</span><span>lines 46 — 57</span></div>
+      <pre><div class="cl"><span class="ln">46</span><span class="ct">    {% <span class="k">if not</span> apps %}</span></div><div class="cl"><span class="ln">47</span><span class="ct">      &lt;<span class="k">p</span> <span class="s">class="empty"</span>&gt;[NO APPS] drop a symlink in &lt;<span class="k">code</span>&gt;symlinks/&lt;/<span class="k">code</span>&gt;&lt;/<span class="k">p</span>&gt;</span></div><div class="cl"><span class="ln">48</span><span class="ct">    {% <span class="k">else</span> %}</span></div><div class="cl"><span class="ln">49</span><span class="ct">      &lt;<span class="k">ol</span> <span class="s">class="apps"</span>&gt;</span></div><div class="cl"><span class="ln">50</span><span class="ct">        {% <span class="k">for</span> app <span class="k">in</span> apps %}</span></div><div class="cl"><span class="ln">51</span><span class="ct">          &lt;<span class="k">li</span> <span class="s">class="row{% if app.error %} broken{% endif %}"</span></span></div><div class="cl"><span class="ln">52</span><span class="ct">              <span class="s">style="--accent: {{ app.accent }}"</span></span></div><div class="cl"><span class="ln">53</span><span class="ct">              <span class="s">data-name="{{ app.name }}"</span></span></div><div class="cl"><span class="ln">54</span><span class="ct">              <span class="s">data-mtime="{{ app.mtime_iso }}"</span>&gt;</span></div><div class="cl"><span class="ln">55</span><span class="ct">            &lt;<span class="k">span</span> <span class="s">class="drag"</span> …&gt;⋮⋮&lt;/<span class="k">span</span>&gt;</span></div><div class="cl"><span class="ln">56</span><span class="ct">            &lt;<span class="k">div</span> <span class="s">class="num"</span>&gt;{{ <span class="s">"%02d"</span>|<span class="f">format</span>(loop.index) }}&lt;/<span class="k">div</span>&gt;</span></div><div class="cl"><span class="ln">57</span><span class="ct">            &lt;<span class="k">div</span> <span class="s">class="ico"</span>&gt;{{ app.icon_svg|<span class="f">safe</span> }}&lt;/<span class="k">div</span>&gt;</span></div></pre>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">index.html</span><span>lines 58 — 71</span></div>
+      <pre><div class="cl"><span class="ln">58</span><span class="ct">            &lt;<span class="k">a</span> <span class="s">class="body"</span> <span class="s">href="/{{ app.name }}/"</span>&gt;</span></div><div class="cl"><span class="ln">59</span><span class="ct">              &lt;<span class="k">div</span> <span class="s">class="name"</span>&gt;{{ app.title }}{% <span class="k">if</span> app.error %} &lt;<span class="k">span</span> <span class="s">class="broken-tag"</span>&gt;BROKEN&lt;/<span class="k">span</span>&gt;{% <span class="k">endif</span> %}&lt;/<span class="k">div</span>&gt;</span></div><div class="cl"><span class="ln">60</span><span class="ct">              &lt;<span class="k">div</span> <span class="s">class="desc"</span>&gt;{% <span class="k">if</span> app.error %}{{ app.error }}{% <span class="k">else</span> %}{{ app.description }}{% <span class="k">endif</span> %}&lt;/<span class="k">div</span>&gt;</span></div><div class="cl"><span class="ln">61</span><span class="ct">            &lt;/<span class="k">a</span>&gt;</span></div><div class="cl"><span class="ln">62</span><span class="ct">            &lt;<span class="k">button</span> <span class="s">class="pin"</span> …&gt;&lt;<span class="k">svg</span> …&gt;&lt;/<span class="k">svg</span>&gt;&lt;/<span class="k">button</span>&gt;</span></div><div class="cl"><span class="ln">67</span><span class="ct">            &lt;<span class="k">button</span> <span class="s">class="del"</span> <span class="s">type="button"</span> <span class="s">aria-label="Delete {{ app.name }}"</span>&gt;×&lt;/<span class="k">button</span>&gt;</span></div><div class="cl"><span class="ln">68</span><span class="ct">          &lt;/<span class="k">li</span>&gt;</span></div><div class="cl"><span class="ln">69</span><span class="ct">        {% <span class="k">endfor</span> %}</span></div><div class="cl"><span class="ln">70</span><span class="ct">      &lt;/<span class="k">ol</span>&gt;</span></div><div class="cl"><span class="ln">71</span><span class="ct">    {% <span class="k">endif</span> %}</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">51 — 52</div>
+        <div class="txt"><code class="tok">style="--accent: {{ app.accent }}"</code> — each row gets its own
+          CSS custom property, set inline. The accent drives the coloured left-border and icon tint in
+          <b>index.css</b>. No inline colours anywhere else; just this one variable.</div>
+      </div>
+      <div class="row">
+        <div class="lref">53 — 54</div>
+        <div class="txt"><code class="tok">data-name</code> and <code class="tok">data-mtime</code> are the
+          <b>contract</b> between the server-rendered HTML and the client scripts.
+          <b>delete.js</b> reads <code class="tok">data-name</code> to know which symlink to remove;
+          <b>sort.js</b> reads <code class="tok">data-mtime</code> to order by modification time.</div>
+      </div>
+      <div class="row">
+        <div class="lref">56</div>
+        <div class="txt"><code class="tok">{{ "%02d"|format(loop.index) }}</code> — Jinja2's
+          <code class="tok">format</code> filter applied to Jinja's built-in <code class="tok">loop.index</code>.
+          Produces zero-padded counters: <b>01</b>, <b>02</b>, …</div>
+      </div>
+      <div class="row">
+        <div class="lref">57</div>
+        <div class="txt"><code class="tok">{{ app.icon_svg|safe }}</code> — the <code class="tok">|safe</code> filter
+          tells Jinja2 not to escape the value. The SVG string is built by <b>icons.py</b>, which sanitises it
+          before handing it to the template; trusting it here is intentional.</div>
+      </div>
+      <div class="row">
+        <div class="lref">59 — 60</div>
+        <div class="txt">When <code class="tok">app.error</code> is set, the <code class="tok">broken</code> class is added
+          to the <code class="tok">&lt;li&gt;</code>, a <b>BROKEN</b> badge appears in the title, and the description
+          slot is replaced by the error message itself. Three changes, one condition.</div>
+      </div>
+    </div>
+
+    <div class="prose reveal d2" style="margin-top:22px">
+      <p>The list is an <code class="tok">&lt;ol&gt;</code> — ordered, semantic. The visible two-digit numbers
+        are <em>decorative</em>; the browser's own list count is the structural truth. <b>pin.js</b> and
+        <b>sort.js</b> reorder DOM nodes but leave the <code class="tok">&lt;ol&gt;</code> intact.</p>
+    </div>
+
+    <div class="prose reveal d2">
+      <p><b>Jinja2 placeholders in this file</b> — every dynamic value and what it renders:</p>
+    </div>
+
+    <div class="placeholders reveal d2">
+      <div class="ph">
+        <div class="expr">{{ count }}</div>
+        <div class="meaning">Total number of registered apps — from <code class="tok">len(apps)</code> in index.py</div>
+      </div>
+      <div class="ph">
+        <div class="expr">{{ broken }}</div>
+        <div class="meaning">Count of apps where <code class="tok">app.error</code> is set</div>
+      </div>
+      <div class="ph">
+        <div class="expr">{{ app.accent }}</div>
+        <div class="meaning">A CSS colour string, e.g. <code class="tok">#bdd0b8</code> — set as a CSS custom property on the row</div>
+      </div>
+      <div class="ph">
+        <div class="expr">{{ app.name }}</div>
+        <div class="meaning">The symlink filename — used in the href and the delete button's aria-label</div>
+      </div>
+      <div class="ph">
+        <div class="expr">{{ app.mtime_iso }}</div>
+        <div class="meaning">ISO-8601 modification timestamp on the symlink — read by sort.js for "recently updated" order</div>
+      </div>
+      <div class="ph">
+        <div class="expr">{{ "%02d"|format(loop.index) }}</div>
+        <div class="meaning">Zero-padded loop counter — the visible two-digit number on each row</div>
+      </div>
+      <div class="ph">
+        <div class="expr">{{ app.icon_svg|safe }}</div>
+        <div class="meaning">Pre-built SVG string from icons.py — rendered unescaped into the icon slot</div>
+      </div>
+      <div class="ph">
+        <div class="expr">{{ app.title }}</div>
+        <div class="meaning">Display name — the app directory name, title-cased</div>
+      </div>
+      <div class="ph">
+        <div class="expr">{{ app.description }}</div>
+        <div class="meaning">One-line description read from the app's metadata, or a default</div>
+      </div>
+      <div class="ph">
+        <div class="expr">{{ app.error }}</div>
+        <div class="meaning">Error message string when the app's target is missing or broken; absent when healthy</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 script tags ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — script tags</div>
+      <h2>Eleven scripts. Load order is execution order.</h2>
+      <p><b>reload.js</b> loads first and is marked with a sentinel attribute. <b>lp-log.js</b> is the first
+        of the UI scripts so it can capture errors thrown by every module after it. The remaining
+        modules load in DOM order — and several expose hooks that later ones consume.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">index.html</span><span>lines 73 — 83</span></div>
+      <pre><div class="cl"><span class="ln">73</span><span class="ct">  &lt;<span class="k">script</span> <span class="s">data-localhost-pages-reload</span> <span class="s">src="/__static/reload.js"</span> <span class="s">data-app="__index"</span>&gt;&lt;/<span class="k">script</span>&gt;</span></div><div class="cl"><span class="ln">74</span><span class="ct">  &lt;<span class="k">script</span> <span class="s">src="/__static/lp-log.js"</span>&gt;&lt;/<span class="k">script</span>&gt;</span></div><div class="cl"><span class="ln">75</span><span class="ct">  &lt;<span class="k">script</span> <span class="s">src="/__static/delete.js"</span>&gt;&lt;/<span class="k">script</span>&gt;</span></div><div class="cl"><span class="ln">75</span><span class="ct">  &lt;<span class="k">script</span> <span class="s">src="/__static/visited.js"</span>&gt;&lt;/<span class="k">script</span>&gt;</span></div><div class="cl"><span class="ln">76</span><span class="ct">  &lt;<span class="k">script</span> <span class="s">src="/__static/pin.js"</span>&gt;&lt;/<span class="k">script</span>&gt;</span></div><div class="cl"><span class="ln">77</span><span class="ct">  &lt;<span class="k">script</span> <span class="s">src="/__static/sort.js"</span>&gt;&lt;/<span class="k">script</span>&gt;</span></div><div class="cl"><span class="cl"><span class="ln">78</span><span class="ct">  &lt;<span class="k">script</span> <span class="s">src="/__static/edit.js"</span>&gt;&lt;/<span class="k">script</span>&gt;</span></div></span></div><div class="cl"><span class="ln">79</span><span class="ct">  &lt;<span class="k">script</span> <span class="s">src="/__static/keys.js"</span>&gt;&lt;/<span class="k">script</span>&gt;</span></div><div class="cl"><span class="ln">80</span><span class="ct">  &lt;<span class="k">script</span> <span class="s">src="/__static/peek.js"</span>&gt;&lt;/<span class="k">script</span>&gt;</span></div><div class="cl"><span class="ln">81</span><span class="ct">  &lt;<span class="k">script</span> <span class="s">src="/__static/search.js"</span>&gt;&lt;/<span class="k">script</span>&gt;</span></div><div class="cl"><span class="ln">82</span><span class="ct">  &lt;<span class="k">script</span> <span class="s">src="/__static/help.js"</span>&gt;&lt;/<span class="k">script</span>&gt;</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">73</div>
+        <div class="txt"><code class="tok">data-localhost-pages-reload</code> is the sentinel. <b>inject.py</b>
+          searches for this attribute before splicing the reload script into any served HTML —
+          so the index page is never double-injected. <code class="tok">data-app="__index"</code> tells
+          <b>reload.js</b> to subscribe to the <b>INDEX_TOPIC</b> SSE channel.</div>
+      </div>
+      <div class="row">
+        <div class="lref">74 — 82</div>
+        <div class="txt">Nine interaction modules, each owning one feature. <b>visited.js</b> records clicks
+          before <b>sort.js</b> loads — so "recently visited" sort is available on first render.
+          <b>keys.js</b> loads after <b>edit.js</b>, <b>peek.js</b>, and <b>search.js</b> so it can
+          bind keyboard shortcuts to functions those modules expose.</div>
+      </div>
+    </div>
+
+    <div class="rows reveal d2">
+      <div class="drow">
+        <div>reload.js</div>
+        <div>Opens the SSE connection; calls <code class="tok">location.reload()</code> on a <code class="tok">change</code> event</div>
+      </div>
+      <div class="drow">
+        <div>lp-log.js</div>
+        <div>Captures browser errors and POSTs them to <code class="tok">/__log</code>; loads first so it sees failures in the modules below</div>
+      </div>
+      <div class="drow">
+        <div>delete.js</div>
+        <div>Sends <code class="tok">DELETE /__apps/{name}</code> on ✕ click; removes the row on 204</div>
+      </div>
+      <div class="drow">
+        <div>visited.js</div>
+        <div>Persists click timestamps in <code class="tok">localStorage</code> for visit-based sorting</div>
+      </div>
+      <div class="drow">
+        <div>pin.js</div>
+        <div>Persists pinned apps; reorders the <code class="tok">&lt;ol&gt;</code> to float them to the top</div>
+      </div>
+      <div class="drow">
+        <div>sort.js</div>
+        <div>Wires the sort dropdown; reorders rows by alpha, mtime, visit frequency, or manual drag</div>
+      </div>
+      <div class="drow">
+        <div>edit.js</div>
+        <div>Toggles edit mode — shows delete and drag handles, enables drag-to-reorder</div>
+      </div>
+      <div class="drow">
+        <div>keys.js</div>
+        <div>Global keyboard shortcuts — <code class="tok">/</code> focuses search, <code class="tok">?</code> opens help, etc.</div>
+      </div>
+      <div class="drow">
+        <div>peek.js</div>
+        <div>Preview modal — hovering or selecting an app shows a live iframe thumbnail</div>
+      </div>
+      <div class="drow">
+        <div>search.js</div>
+        <div>Filters rows in real time by <code class="tok">data-name</code> against the search input</div>
+      </div>
+      <div class="drow">
+        <div>help.js</div>
+        <div>Builds and toggles the keyboard-shortcut overlay triggered by the <b>?</b> button</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 05 step back ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">05 — step back</div>
+      <h2>Three things to take away.</h2>
+    </div>
+    <div class="notes">
+      <div class="note reveal d1">
+        <h4>Progressive enhancement — the page works with zero JS</h4>
+        <p>The app list is plain <code class="tok">&lt;ol&gt;</code>/<code class="tok">&lt;li&gt;</code>
+          with real <code class="tok">&lt;a href&gt;</code> links. Every control is a native
+          <code class="tok">&lt;button&gt;</code>. The scripts <em>enhance</em> — they do not build the page.
+          Disable JavaScript and the list still renders and links still work.</p>
+      </div>
+      <div class="note reveal d1" style="--ac:var(--sage)">
+        <h4>The <code class="tok" style="font-size:.82em">data-*</code> attributes are the server–client contract</h4>
+        <p><code class="tok">data-name</code> and <code class="tok">data-mtime</code> on each row are how
+          the server communicates app identity and freshness to the scripts — no JSON endpoint, no hydration,
+          no framework. The contract is readable in View Source.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--mist)">
+        <h4>Every dynamic value is a Jinja2 placeholder — nothing else</h4>
+        <p>The template contains no Python logic, no filters beyond <code class="tok">|safe</code> and
+          <code class="tok">|format</code>, and no macros. <b>index.py</b> does all the work before handing
+          data to the template. The template just interpolates — exactly as a template should.</p>
+      </div>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/init/">
+        <div class="lbl">&larr; PREVIOUS</div>
+        <div class="nm"><span class="mono">__init__.py</span></div>
+      </a>
+      <a class="next" href="/technical-explanation/styles/">
+        <div class="lbl">NEXT &rarr;</div>
+        <div class="nm"><span class="mono">index.css</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/templates/index.html — 89 lines, 1 Jinja2 template.</span>
+    <span><a href="/technical-explanation/">&larr; all the files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

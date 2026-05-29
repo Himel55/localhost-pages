@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 1920px; height: 1080px; overflow: hidden;
+        background: #1a1822; color: #ede7dc;
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+      }
+      /* ── palette (mirrors the real app) ───────────────────────── */
+      :root {
+        --bg:#1a1822; --surface:#221f2c; --fg:#ede7dc; --muted:#9b948a;
+        --rule:#2e2a38; --hover:#262332; --broken:#d6928f;
+      }
+      #root { position: relative; width: 1920px; height: 1080px; }
+      .layer { position: absolute; inset: 0; }
+
+      /* ── background ───────────────────────────────────────────── */
+      #bg { background:
+              radial-gradient(1200px 700px at 50% 38%, #211d2c 0%, #1a1822 70%); }
+
+      /* ── scattered "lone output" windows (intro) ─────────────── */
+      #mess { z-index: 5; }
+      .mwin {
+        position: absolute; width: 380px; height: 244px;
+        background: var(--surface); border: 1px solid var(--rule);
+        box-shadow: 0 18px 50px rgba(0,0,0,.45); border-radius: 2px;
+        overflow: hidden;
+      }
+      .mwin .bar {
+        height: 30px; display: flex; align-items: center; gap: 7px;
+        padding: 0 12px; border-bottom: 1px solid var(--rule);
+      }
+      .mwin .dot { width: 9px; height: 9px; border-radius: 50%; background: #3a3547; }
+      .mwin .mbody { padding: 22px; height: calc(100% - 30px); }
+      .mwin svg { width: 100%; height: 100%; }
+      .term-line { color: var(--muted); font-size: 14px; line-height: 1.9; white-space: nowrap; }
+      .term-line b { color: var(--fg); font-weight: 500; }
+
+      /* ── browser chrome + app panel ──────────────────────────── */
+      #app { z-index: 10; display: flex; align-items: center; justify-content: center; }
+      .frame { width: 1800px; }
+      .chrome {
+        height: 66px; background: #15131c; border: 1px solid var(--rule);
+        border-bottom: 0; border-radius: 8px 8px 0 0;
+        display: flex; align-items: center; gap: 12px; padding: 0 24px;
+      }
+      .chrome .dot { width: 14px; height: 14px; border-radius: 50%; background: #3a3547; }
+      .url {
+        margin-left: 18px; flex: 1; height: 40px; background: #221f2c;
+        border: 1px solid var(--rule); border-radius: 20px;
+        display: flex; align-items: center; padding: 0 22px; overflow: hidden;
+      }
+      .url .txt { color: var(--muted); font-size: 21px; letter-spacing: .04em;
+        white-space: nowrap; overflow: hidden; }
+      .url .txt b { color: var(--fg); font-weight: 500; }
+
+      .panel {
+        background: var(--bg); border: 1px solid var(--rule); border-top: 0;
+        border-radius: 0 0 8px 8px; padding: 38px 64px 44px;
+      }
+      /* header */
+      header { border-bottom: 1px solid var(--fg); padding-bottom: 22px; }
+      .brand { font-weight: 700; font-size: 50px; letter-spacing: -.02em; line-height: 1.25; }
+      .meta {
+        margin-top: 18px; font-size: 20px; color: var(--muted);
+        letter-spacing: .1em; text-transform: uppercase;
+        display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      }
+      .meta .sep { opacity: .4; }
+      .cnt { position: relative; display: inline-block; }
+      .cnt span { position: absolute; left: 0; top: 0; }
+      .cnt .ghost { position: static; visibility: hidden; }
+      .sortwrap { display: inline-flex; align-items: center; gap: 8px; position: relative; }
+      .sortcur { color: var(--fg); position: relative; }
+      .sortcur .opt { position: absolute; left: 0; top: 0; }
+      .sortcur .ghost { position: static; visibility: hidden; }
+      .caret { width: 14px; height: 14px; }
+      .editlbl { position: relative; display: inline-block; }
+      .editlbl span { position: absolute; left: 0; top: 0; }
+      .editlbl .ghost { position: static; visibility: hidden; }
+      .searchbox {
+        display: inline-flex; align-items: center; gap: 11px; flex: 1; min-width: 0;
+        height: 42px; padding: 0 14px; border: 1px solid transparent;
+      }
+      .searchbox svg { width: 21px; height: 21px; color: var(--muted);
+        stroke: currentColor; stroke-width: 1.6; fill: none; flex: 0 0 21px; }
+      .searchbox .qwrap { position: relative; }
+      .searchbox .q { color: var(--fg); font-size: 20px; letter-spacing: .1em;
+        white-space: nowrap; position: absolute; left: 0; top: 0; }
+      .searchbox .ph { color: var(--muted); font-size: 20px; letter-spacing: .1em; }
+
+      /* sort menu */
+      .sortmenu {
+        position: absolute; top: 38px; left: -8px; z-index: 30;
+        background: var(--surface); border: 1px solid var(--fg);
+        padding: 7px 0; min-width: 280px; box-shadow: 0 14px 40px rgba(0,0,0,.5);
+        text-transform: lowercase;
+      }
+      .sortmenu li { list-style: none; padding: 11px 22px; font-size: 20px;
+        color: var(--muted); letter-spacing: .06em; }
+
+      /* rows */
+      .apps { list-style: none; margin-top: 26px; min-height: 720px; }
+      .row {
+        position: relative; display: flex; align-items: center; gap: 26px;
+        height: 104px; padding: 0 34px; margin-bottom: 16px;
+        background: var(--surface); border: 1px solid var(--rule);
+        overflow: hidden;
+      }
+      .row .drag { width: 0; overflow: hidden; color: var(--muted);
+        font-size: 24px; flex: 0 0 auto; white-space: nowrap; }
+      .row .num { font-weight: 700; font-size: 27px; color: var(--muted);
+        width: 36px; flex: 0 0 36px; }
+      .row .num.dual { position: relative; }
+      .row .num.dual .ghostn { visibility: hidden; }
+      .row .num.dual .na, .row .num.dual .nb { position: absolute; left: 0; top: 0; }
+      .row .ico { width: 38px; height: 38px; flex: 0 0 38px; color: var(--accent);
+        display: flex; align-items: center; justify-content: center; }
+      .row .ico svg { width: 100%; height: 100%; stroke: currentColor;
+        stroke-width: 1.7; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .row .ibody { flex: 1; min-width: 0; }
+      .row .name { font-weight: 600; font-size: 33px; line-height: 1.15; }
+      .row .desc { font-size: 19px; color: var(--muted); margin-top: 6px;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .row .pin, .row .del { position: absolute; top: 36px; background: transparent;
+        border: 0; color: var(--fg); opacity: 0; }
+      .row .pin { right: 80px; }
+      .row .pin svg { width: 23px; height: 23px; stroke: currentColor; stroke-width: 1.7;
+        fill: none; stroke-linecap: round; stroke-linejoin: round; display: block; }
+      .row .del { right: 32px; font-weight: 600; font-size: 29px; line-height: 1; white-space: nowrap; }
+      .row .del .confirm { position: absolute; right: 0; top: 2px; font-size: 19px;
+        letter-spacing: .06em; opacity: 0; white-space: nowrap; }
+      .row.pinned .pin { opacity: 1; color: var(--accent); }
+      .row.pinned .pin svg { fill: var(--accent); }
+
+      .pindiv { height: 0; margin: -2px 0 14px; border-top: 1px dashed var(--rule); opacity: 0; }
+
+      /* ── floating helpers (agent chat, reload pill, palette) ──── */
+      .chip {
+        position: absolute; background: var(--surface); border: 1px solid var(--fg);
+        box-shadow: 0 16px 44px rgba(0,0,0,.5); opacity: 0; z-index: 14;
+      }
+      /* agent chat */
+      #agent { left: 120px; top: 656px; width: 780px; padding: 22px 26px; border-radius: 10px; }
+      #agent .lbl { color: var(--muted); font-size: 15px; letter-spacing: .14em;
+        text-transform: uppercase; margin-bottom: 14px; }
+      #agent .msg { font-size: 22px; line-height: 1.5; margin-top: 12px;
+        padding: 13px 18px; border-radius: 8px; white-space: nowrap; }
+      #agent .you { background: #2b2740; color: var(--fg); }
+      #agent .you b { color: #b8a3d6; font-weight: 600; }
+      #agent .bot { background: #1c2620; color: #a8c8a3; }
+      #agent .bot b { color: var(--fg); font-weight: 500; }
+      /* reload pill */
+      #reload { left: 1430px; top: 250px; padding: 12px 20px; border-radius: 999px;
+        border-color: #d6c4a3; display: flex; align-items: center; gap: 11px; }
+      #reload .ld { width: 13px; height: 13px; border-radius: 50%; background: #a8c8a3; }
+      #reload .rt { font-size: 20px; color: var(--fg); letter-spacing: .04em; }
+      /* palette */
+      #palette { left: 1470px; top: 560px; width: 300px; padding: 20px 24px; }
+      #palette .lbl { color: var(--muted); font-size: 15px; letter-spacing: .12em;
+        text-transform: uppercase; margin-bottom: 12px; }
+      #palette .sw { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+      #palette .sw i { display: block; height: 20px; border-radius: 2px; }
+
+      /* ── cheatsheet overlay ───────────────────────────────────── */
+      #dim { position: absolute; inset: 0; background: rgba(0,0,0,.6); z-index: 38; opacity: 0; }
+      #cheatsheet {
+        position: absolute; z-index: 40; left: 600px; top: 270px;
+        width: 720px; background: var(--surface); border: 1px solid var(--fg);
+        box-shadow: 0 24px 70px rgba(0,0,0,.6); padding: 40px 48px; opacity: 0;
+      }
+      #cheatsheet h3 { font-size: 20px; letter-spacing: .14em; text-transform: uppercase;
+        color: var(--muted); border-bottom: 1px solid var(--rule); padding-bottom: 14px; }
+      #cheatsheet .sub { color: var(--muted); font-size: 15px; margin-top: 12px; letter-spacing: .04em; }
+      #cheatsheet .grid { margin-top: 18px; display: grid; grid-template-columns: 1fr 1fr;
+        gap: 16px 48px; }
+      #cheatsheet .kv { display: flex; align-items: center; gap: 16px; }
+      #cheatsheet .kk { font-weight: 700; color: var(--fg); background: var(--bg);
+        border: 1px solid var(--rule); border-radius: 5px; padding: 5px 11px; font-size: 17px;
+        min-width: 40px; text-align: center; }
+      #cheatsheet .kd { color: var(--muted); font-size: 18px; }
+
+      /* ── preview modal (peek) ─────────────────────────────────── */
+      #peek { position: absolute; inset: 0; z-index: 50; display: flex;
+        align-items: center; justify-content: center;
+        background: rgba(0,0,0,.6); opacity: 0; }
+      .peekmodal { width: 1320px; height: 800px; background: var(--surface);
+        border: 1px solid var(--fg); box-shadow: 0 24px 80px rgba(0,0,0,.6);
+        position: relative; overflow: hidden; }
+      .peekmodal .phead { height: 60px; border-bottom: 1px solid var(--rule);
+        display: flex; align-items: center; padding: 0 28px; gap: 14px; }
+      .peekmodal .ttl { font-size: 22px; font-weight: 600; color: var(--fg); }
+      .peekmodal .pacc { width: 24px; height: 24px; color: #d6a3a3;
+        display: flex; align-items: center; }
+      .peekmodal .pacc svg { width: 100%; height: 100%; stroke: currentColor;
+        stroke-width: 1.7; fill: none; }
+      .peekmodal .pbody { padding: 34px 40px; }
+      .peekmodal .pbody h2 { font-size: 30px; color: var(--fg); font-weight: 600; }
+      .peekmodal .pbody .sub { color: var(--muted); font-size: 16px; margin-top: 6px; }
+      .pbtn { position: absolute; top: 0; right: 0; width: 40px; height: 40px;
+        border: 1px solid var(--fg); background: var(--surface); color: var(--fg);
+        display: flex; align-items: center; justify-content: center; font-size: 20px; }
+
+      /* ── captions ─────────────────────────────────────────────── */
+      #captions { z-index: 60; }
+      .cap { position: absolute; left: 0; right: 0; bottom: 88px; text-align: center; opacity: 0; }
+      .cap span { display: inline-block; background: rgba(21,19,28,.82);
+        border: 1px solid var(--rule); border-radius: 8px;
+        padding: 16px 30px; color: var(--fg); font-size: 34px; letter-spacing: .01em;
+        font-weight: 500; max-width: 1300px; }
+      .cap code { color: #d6c4a3; }
+
+      /* ── key-cap HUD ──────────────────────────────────────────── */
+      #keyhud { z-index: 60; }
+      .keycap { position: absolute; right: 96px; bottom: 96px; opacity: 0;
+        min-width: 92px; height: 92px; padding: 0 22px;
+        background: var(--surface); border: 2px solid var(--fg); border-radius: 14px;
+        box-shadow: 0 12px 34px rgba(0,0,0,.5);
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 46px; color: var(--fg); }
+
+      /* ── wrap / end card ──────────────────────────────────────── */
+      #wrap { z-index: 70; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; opacity: 0; }
+      #wrap .word { font-weight: 700; font-size: 92px; letter-spacing: -.02em; color: var(--fg); }
+      #wrap .word .cur { color: #a8c8a3; }
+      #wrap .tag { margin-top: 24px; font-size: 28px; color: var(--muted);
+        max-width: 1100px; text-align: center; line-height: 1.4; }
+      #wrap .cta { margin-top: 40px; font-size: 26px; color: var(--fg); text-align: center;
+        line-height: 1.4; }
+      #wrap .cta b { color: #b8a3d6; font-weight: 600; }
+      #wrap .repo { margin-top: 18px; font-size: 24px; color: var(--fg);
+        letter-spacing: .04em; border: 1px solid #a8c8a3; border-radius: 8px;
+        padding: 13px 24px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="46"
+         data-width="1920" data-height="1080">
+
+      <!-- background -->
+      <div id="bg" class="layer clip" data-start="0" data-duration="46" data-track-index="0"></div>
+
+      <!-- intro: scattered lone outputs -->
+      <div id="mess" class="layer clip" data-start="0" data-duration="6" data-track-index="5">
+        <div class="mwin" style="left:150px;top:150px;transform:rotate(-6deg)">
+          <div class="bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+          <div class="mbody"><svg viewBox="0 0 200 110" preserveAspectRatio="none">
+            <rect x="8" y="60" width="22" height="50" fill="#d6c4a3"/>
+            <rect x="44" y="38" width="22" height="72" fill="#d6c4a3"/>
+            <rect x="80" y="20" width="22" height="90" fill="#d6c4a3"/>
+            <rect x="116" y="50" width="22" height="60" fill="#d6c4a3"/>
+            <rect x="152" y="30" width="22" height="80" fill="#d6c4a3"/></svg></div>
+        </div>
+        <div class="mwin" style="left:1370px;top:120px;transform:rotate(5deg)">
+          <div class="bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+          <div class="mbody"><svg viewBox="0 0 200 110" preserveAspectRatio="none">
+            <path d="M0 90 L40 60 L80 74 L120 34 L160 50 L200 22 L200 110 L0 110 Z" fill="#d6a3a3" opacity=".6"/>
+            <path d="M0 90 L40 60 L80 74 L120 34 L160 50 L200 22" stroke="#d6a3a3" stroke-width="3" fill="none"/></svg></div>
+        </div>
+        <div class="mwin" style="left:90px;top:600px;transform:rotate(3deg)">
+          <div class="bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+          <div class="mbody"><svg viewBox="0 0 200 110">
+            <g stroke="#a3b8d6" stroke-width="2">
+              <line x1="0" y1="28" x2="200" y2="28"/><line x1="0" y1="56" x2="200" y2="56"/>
+              <line x1="0" y1="84" x2="200" y2="84"/><line x1="66" y1="0" x2="66" y2="110"/>
+              <line x1="133" y1="0" x2="133" y2="110"/></g></svg></div>
+        </div>
+        <div class="mwin" style="left:1340px;top:660px;transform:rotate(-4deg)">
+          <div class="bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+          <div class="mbody">
+            <div class="term-line">$ <b>agent run</b></div>
+            <div class="term-line">→ tool: search</div>
+            <div class="term-line">→ tool: write</div>
+            <div class="term-line">✓ done</div></div>
+        </div>
+        <div class="mwin" style="left:760px;top:720px;transform:rotate(2deg)">
+          <div class="bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+          <div class="mbody"><svg viewBox="0 0 200 110">
+            <path d="M0 70 L36 70 L52 30 L74 96 L96 16 L116 70 L200 70" stroke="#c8a3c4"
+              stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        </div>
+      </div>
+
+      <!-- the app -->
+      <div id="app" class="layer clip" data-start="4" data-duration="42" data-track-index="10">
+        <div class="frame">
+          <div class="chrome">
+            <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+            <div class="url"><span class="txt">http://<b>localhost</b>/</span></div>
+          </div>
+          <div class="panel">
+            <header>
+              <div class="brand">LOCALHOST/</div>
+              <div class="meta">
+                [<span class="cnt"><span class="ghost">6</span><span id="cnt5">5</span><span id="cnt6" style="opacity:0">6</span></span> APPS · 0 BROKEN]
+                <span class="sep">·</span>
+                <span class="sortwrap">
+                  SORT
+                  <span class="sortcur">
+                    <span class="ghost">recently updated</span>
+                    <span class="opt" id="sortAlpha">a–z</span>
+                    <span class="opt" id="sortRecent" style="opacity:0">recently updated</span>
+                  </span>
+                  <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                  <ul class="sortmenu" id="sortmenu" style="opacity:0">
+                    <li id="sm1">a–z</li>
+                    <li id="sm2">recently updated</li>
+                    <li id="sm3">recently visited</li>
+                    <li id="sm4">most visited</li>
+                    <li id="sm5">manual</li>
+                  </ul>
+                </span>
+                <span class="sep">·</span>
+                <span class="editlbl"><span class="ghost">EDIT</span><span id="editEdit">EDIT</span><span id="editDone" style="opacity:0">DONE</span></span>
+                <span class="sep">·</span>
+                <span>?</span>
+                <span class="sep">·</span>
+                <span>LOGS</span>
+                <span class="sep">·</span>
+                <span class="searchbox" id="searchbox">
+                  <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                  <span class="qwrap"><span class="ph" id="searchPh">filter…</span><span class="q" id="searchQ" style="opacity:0">report</span></span>
+                </span>
+              </div>
+            </header>
+
+            <ol class="apps">
+              <li class="row" id="r1" style="--accent:#d6c4a3">
+                <span class="drag">⋮⋮</span><div class="num">01</div>
+                <div class="ico"><svg viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></div>
+                <div class="ibody"><div class="name">revenue-dashboard</div><div class="desc">daily revenue &amp; MRR rollups</div></div>
+                <button class="pin"><svg viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg></button>
+                <button class="del">×<span class="confirm">× CONFIRM</span></button>
+              </li>
+              <li class="row" id="r2" style="--accent:#d6a3a3">
+                <span class="drag">⋮⋮</span><div class="num">02</div>
+                <div class="ico"><svg viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 11.207a.5.5 0 0 1 .146-.353l2-2a.5.5 0 0 1 .708 0l3.292 3.292a.5.5 0 0 0 .708 0l4.292-4.292a.5.5 0 0 1 .854.353V16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1z"/></svg></div>
+                <div class="ibody"><div class="name">churn-report</div><div class="desc">weekly cohort churn breakdown</div></div>
+                <button class="pin"><svg viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg></button>
+                <button class="del">×<span class="confirm">× CONFIRM</span></button>
+              </li>
+              <li class="row" id="r6" style="--accent:#b8a3d6;height:0;margin-bottom:0;opacity:0">
+                <span class="drag">⋮⋮</span><div class="num">03</div>
+                <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></div>
+                <div class="ibody"><div class="name">embeddings-viz</div><div class="desc">2D projection of the vector store</div></div>
+                <button class="pin"><svg viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg></button>
+                <button class="del">×<span class="confirm">× CONFIRM</span></button>
+              </li>
+              <li class="row" id="r3" style="--accent:#a3b8d6">
+                <span class="drag">⋮⋮</span><div class="num dual"><span class="ghostn">04</span><span class="na">03</span><span class="nb" style="opacity:0">04</span></div>
+                <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></svg></div>
+                <div class="ibody"><div class="name">data-explorer</div><div class="desc">ad-hoc SQL results browser</div></div>
+                <button class="pin"><svg viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg></button>
+                <button class="del">×<span class="confirm">× CONFIRM</span></button>
+              </li>
+              <li class="row" id="r4" style="--accent:#a8c8a3">
+                <span class="drag">⋮⋮</span><div class="num dual"><span class="ghostn">05</span><span class="na">04</span><span class="nb" style="opacity:0">05</span></div>
+                <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 19h8"/><path d="m4 17 6-6-6-6"/></svg></div>
+                <div class="ibody"><div class="name">agent-logs</div><div class="desc">live tool-call trace viewer</div></div>
+                <button class="pin"><svg viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg></button>
+                <button class="del">×<span class="confirm">× CONFIRM</span></button>
+              </li>
+              <li class="row" id="r5" style="--accent:#c8a3c4">
+                <span class="drag">⋮⋮</span><div class="num dual"><span class="ghostn">06</span><span class="na">05</span><span class="nb" style="opacity:0">06</span></div>
+                <div class="ico"><svg viewBox="0 0 24 24"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg></div>
+                <div class="ibody"><div class="name">cohort-analysis</div><div class="desc">retention curves by signup week</div></div>
+                <button class="pin"><svg viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg></button>
+                <button class="del">×<span class="confirm">× CONFIRM</span></button>
+              </li>
+            </ol>
+            <div class="pindiv" id="pindiv"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- register: point an agent at AGENTS.md -->
+      <div id="agent" class="chip clip" data-start="9" data-duration="7" data-track-index="14">
+        <div class="lbl">your coding agent</div>
+        <div class="msg you">→ Read <b>AGENTS.md</b>, then register this app's output</div>
+        <div class="msg bot" id="agentok" style="opacity:0">✓ symlinked → symlinks/<b>embeddings-viz</b></div>
+      </div>
+
+      <!-- live-reload pill -->
+      <div id="reload" class="chip clip" data-start="16" data-duration="4.5" data-track-index="15">
+        <span class="ld"></span><span class="rt">files changed · reloaded</span>
+      </div>
+
+      <!-- accent auto-assign palette -->
+      <div id="palette" class="chip clip" data-start="12" data-duration="3.5" data-track-index="16">
+        <div class="lbl">accent · auto</div>
+        <div class="sw">
+          <i style="background:#a8c8a3"></i><i style="background:#c8a3c4"></i><i style="background:#d6a3a3"></i><i style="background:#a3b8d6"></i>
+          <i style="background:#c4b8a3"></i><i style="background:#a3c4c4"></i><i style="background:#d6c4a3"></i><i style="background:#b8a3d6"></i>
+        </div>
+      </div>
+
+      <!-- cheatsheet -->
+      <div id="dim" class="clip" data-start="20" data-duration="4" data-track-index="38"></div>
+      <div id="cheatsheet" class="clip" data-start="20" data-duration="4" data-track-index="40">
+        <h3>Mouse or keyboard</h3>
+        <div class="sub">click anything — or use the Vim-inspired keys:</div>
+        <div class="grid">
+          <div class="kv"><span class="kk">j / k</span><span class="kd">move between rows</span></div>
+          <div class="kv"><span class="kk">↵</span><span class="kd">open preview</span></div>
+          <div class="kv"><span class="kk">f</span><span class="kd">full page</span></div>
+          <div class="kv"><span class="kk">/</span><span class="kd">search</span></div>
+          <div class="kv"><span class="kk">p</span><span class="kd">pin to top</span></div>
+          <div class="kv"><span class="kk">e</span><span class="kd">edit / reorder</span></div>
+          <div class="kv"><span class="kk">x</span><span class="kd">delete (×2)</span></div>
+          <div class="kv"><span class="kk">esc</span><span class="kd">back out</span></div>
+        </div>
+      </div>
+
+      <!-- preview modal -->
+      <div id="peek" class="clip" data-start="25" data-duration="5" data-track-index="50">
+        <div class="peekmodal" id="peekmodal">
+          <div class="phead">
+            <span class="pacc"><svg viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 11.207a.5.5 0 0 1 .146-.353l2-2a.5.5 0 0 1 .708 0l3.292 3.292a.5.5 0 0 0 .708 0l4.292-4.292a.5.5 0 0 1 .854.353V16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1z"/></svg></span>
+            <span class="ttl">churn-report</span>
+            <span class="pbtn">×</span>
+          </div>
+          <div class="pbody">
+            <h2>Weekly cohort churn</h2>
+            <div class="sub">last 12 weeks · updated just now</div>
+            <svg viewBox="0 0 1000 380" style="width:100%;height:380px;margin-top:24px">
+              <g stroke="#2e2a38" stroke-width="1">
+                <line x1="0" y1="80" x2="1000" y2="80"/><line x1="0" y1="170" x2="1000" y2="170"/>
+                <line x1="0" y1="260" x2="1000" y2="260"/><line x1="0" y1="350" x2="1000" y2="350"/></g>
+              <path d="M0 320 L140 280 L280 300 L420 220 L560 250 L700 160 L840 190 L1000 120 L1000 380 L0 380 Z"
+                fill="#d6a3a3" opacity=".22"/>
+              <path d="M0 320 L140 280 L280 300 L420 220 L560 250 L700 160 L840 190 L1000 120"
+                stroke="#d6a3a3" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- captions -->
+      <div id="captions" class="layer clip" data-start="0" data-duration="46" data-track-index="60">
+        <div class="cap" id="c1"><span>Your AI tools each spit out HTML — everywhere.</span></div>
+        <div class="cap" id="c2"><span>localhost-pages puts them all in one place.</span></div>
+        <div class="cap" id="c3"><span>Point your agent at <code>AGENTS.md</code> — it registers itself.</span></div>
+        <div class="cap" id="c4"><span>Files change → open tabs reload live.</span></div>
+        <div class="cap" id="c5"><span>Drive it by mouse — or keyboard, Vim-style.</span></div>
+        <div class="cap" id="c6"><span><code>j</code> <code>k</code> to move · <code>↵</code> open · <code>f</code> full page</span></div>
+        <div class="cap" id="c7"><span>Type to filter, instantly.</span></div>
+        <div class="cap" id="c8"><span>Five ways to sort.</span></div>
+        <div class="cap" id="c9"><span><code>p</code> to pin · <code>e</code> to drag-reorder</span></div>
+        <div class="cap" id="c10"><span>Press <code>x</code> twice to remove.</span></div>
+      </div>
+
+      <!-- key-cap HUD -->
+      <div id="keyhud" class="layer clip" data-start="0" data-duration="46" data-track-index="61">
+        <div class="keycap" id="kj1">j</div>
+        <div class="keycap" id="kj2">j</div>
+        <div class="keycap" id="kent">↵</div>
+        <div class="keycap" id="kf">f</div>
+        <div class="keycap" id="kesc">esc</div>
+        <div class="keycap" id="kslash">/</div>
+        <div class="keycap" id="kp">p</div>
+        <div class="keycap" id="ke">e</div>
+        <div class="keycap" id="kx1">x</div>
+        <div class="keycap" id="kx2">x</div>
+      </div>
+
+      <!-- wrap -->
+      <div id="wrap" class="layer clip" data-start="43" data-duration="3" data-track-index="70">
+        <div class="word">LOCALHOST<span class="cur">/</span></div>
+        <div class="tag">Your local workbench for everything your AI tools build.</div>
+        <div class="cta">Get your agent to clone &amp; install it to try it out:</div>
+        <div class="repo">github.com/Himel55/localhost-pages</div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      const ROWH = 120; // row height (104) + margin (16)
+
+      // helpers ------------------------------------------------------
+      function cap(id, tin, tout) {
+        tl.fromTo(id, { opacity: 0, y: 16 },
+          { opacity: 1, y: 0, duration: .35, ease: "power2.out" }, tin);
+        tl.to(id, { opacity: 0, y: -10, duration: .3, ease: "power2.in" }, tout);
+      }
+      function key(id, t, hold) {
+        tl.fromTo(id, { opacity: 0, scale: .7 },
+          { opacity: 1, scale: 1, duration: .14, ease: "back.out(2)" }, t);
+        tl.to(id, { opacity: 0, duration: .22, ease: "power2.in" }, t + (hold || .55));
+      }
+      function focusRow(id, t) {
+        tl.set(id, { backgroundColor: "#262332", borderColor: "#b8a3d6" }, t);
+      }
+      function blurRow(id, t) {
+        tl.set(id, { backgroundColor: "#221f2c", borderColor: "#2e2a38" }, t);
+      }
+
+      // ── initial states ──────────────────────────────────────────
+      tl.set("#app", { opacity: 0, y: 30 }, 0);
+      tl.set(".url .txt", { width: 0 }, 0);
+      tl.set(["#r1","#r2","#r3","#r4","#r5"], { opacity: 0, y: 18 }, 0);
+
+      // ── 1 · the mess (0–4.6) ────────────────────────────────────
+      tl.from(".mwin", { opacity: 0, scale: .9, duration: .4,
+        stagger: .16, ease: "power2.out" }, .15);
+      cap("#c1", .6, 4.0);
+
+      // ── 2 · one home (4.6–9.5) ──────────────────────────────────
+      tl.to(".mwin", { opacity: 0, scale: .55, y: -50, duration: .55,
+        stagger: .04, ease: "power2.in" }, 4.5);
+      tl.to("#app", { opacity: 1, y: 0, duration: .55, ease: "power3.out" }, 5.0);
+      tl.to(".url .txt", { width: 252, duration: .6, ease: "power2.inOut" }, 5.5);
+      tl.to(["#r1","#r2","#r3","#r4","#r5"],
+        { opacity: 1, y: 0, duration: .4, stagger: .09, ease: "power2.out" }, 5.6);
+      cap("#c2", 5.1, 9.0);
+
+      // ── 3 · register via agent + AGENTS.md (9.5–16) ─────────────
+      tl.fromTo("#agent", { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: .4, ease: "power2.out" }, 9.6);
+      tl.to("#agentok", { opacity: 1, duration: .3 }, 11.2);
+      tl.to("#r6", { height: 104, marginBottom: 16, opacity: 1, duration: .5,
+        ease: "back.out(1.6)" }, 11.7);
+      tl.fromTo("#r6 .ico", { scale: .4 }, { scale: 1, duration: .35, ease: "back.out(2)" }, 11.9);
+      // rows below the insertion renumber 03→04, 04→05, 05→06
+      tl.to(["#r3 .na","#r4 .na","#r5 .na"], { opacity: 0, duration: .25 }, 11.95);
+      tl.to(["#r3 .nb","#r4 .nb","#r5 .nb"], { opacity: 1, duration: .25 }, 11.95);
+      tl.to("#cnt5", { opacity: 0, duration: .25 }, 12.0);
+      tl.to("#cnt6", { opacity: 1, duration: .25 }, 12.0);
+      tl.fromTo("#palette", { opacity: 0, x: 12 },
+        { opacity: 1, x: 0, duration: .4, ease: "power2.out" }, 12.1);
+      tl.to("#palette", { opacity: 0, duration: .35 }, 14.4);
+      tl.to("#agent", { opacity: 0, duration: .4 }, 15.3);
+      cap("#c3", 9.8, 15.3);
+
+      // ── 4 · live reload (16–20) ─────────────────────────────────
+      tl.fromTo("#reload", { opacity: 0, scale: .8 },
+        { opacity: 1, scale: 1, duration: .3, ease: "back.out(2)" }, 16.3);
+      tl.to("#reload .ld", { opacity: .25, duration: .3, yoyo: true, repeat: 3 }, 16.4);
+      tl.to("#r1", { backgroundColor: "#262332", duration: .2, yoyo: true, repeat: 1 }, 16.6);
+      tl.set("#r1", { borderLeftWidth: 5, borderLeftColor: "#d6c4a3", paddingLeft: 29 }, 17.0);
+      tl.to("#reload", { opacity: 0, duration: .35 }, 19.4);
+      cap("#c4", 16.3, 19.7);
+
+      // ── 5 · mouse-or-keyboard cheatsheet (20–24) ────────────────
+      tl.to("#dim", { opacity: 1, duration: .35 }, 20.1);
+      tl.fromTo("#cheatsheet", { opacity: 0, y: 24, scale: .98 },
+        { opacity: 1, y: 0, scale: 1, duration: .45, ease: "power3.out" }, 20.3);
+      tl.to(["#cheatsheet","#dim"], { opacity: 0, duration: .4, ease: "power2.in" }, 23.5);
+      cap("#c5", 20.5, 23.6);
+
+      // ── 6 · navigate + open preview (24–29.7) ───────────────────
+      focusRow("#r1", 24.3); key("#kj1", 24.2, .4);
+      blurRow("#r1", 24.8); focusRow("#r2", 24.8); key("#kj2", 24.8, .4);
+      key("#kent", 25.25, .4);
+      blurRow("#r2", 25.4);
+      tl.fromTo("#peek", { opacity: 0 }, { opacity: 1, duration: .3 }, 25.4);
+      tl.fromTo("#peekmodal", { scale: .96, opacity: 0 },
+        { scale: 1, opacity: 1, duration: .35, ease: "power3.out" }, 25.4);
+      key("#kf", 26.7, .4);
+      tl.to("#peekmodal", { width: 1920, height: 1080, duration: .45, ease: "power3.inOut" }, 26.9);
+      key("#kesc", 27.9, .4);
+      tl.to("#peek", { opacity: 0, duration: .35, ease: "power2.in" }, 28.1);
+      tl.set("#peekmodal", { width: 1320, height: 800 }, 28.6);
+      cap("#c6", 24.3, 29.3);
+
+      // ── 7 · search / filter (29.7–33.2) ─────────────────────────
+      key("#kslash", 29.9, .4);
+      tl.set("#searchbox", { borderColor: "#ede7dc" }, 30.0);
+      tl.to("#searchPh", { opacity: 0, duration: .15 }, 30.1);
+      tl.to("#searchQ", { opacity: 1, duration: .15 }, 30.2);
+      tl.to(["#r1","#r3","#r4","#r5","#r6"],
+        { height: 0, marginBottom: 0, opacity: 0, duration: .4, ease: "power2.inOut" }, 30.6);
+      tl.to(["#r1","#r3","#r4","#r5","#r6"],
+        { height: 104, marginBottom: 16, opacity: 1, duration: .4, ease: "power2.out" }, 32.2);
+      tl.to("#searchQ", { opacity: 0, duration: .15 }, 32.3);
+      tl.to("#searchPh", { opacity: 1, duration: .15 }, 32.45);
+      tl.set("#searchbox", { borderColor: "transparent" }, 32.6);
+      cap("#c7", 29.9, 32.9);
+
+      // ── 8 · sort (33.2–36.7) ────────────────────────────────────
+      tl.fromTo("#sortmenu", { opacity: 0, y: -8 },
+        { opacity: 1, y: 0, duration: .25, ease: "power2.out" }, 33.4);
+      tl.set("#sm2", { backgroundColor: "#262332", color: "#ede7dc" }, 34.0);
+      tl.to("#sortAlpha", { opacity: 0, duration: .2 }, 34.1);
+      tl.to("#sortRecent", { opacity: 1, duration: .2 }, 34.1);
+      tl.to("#r1", { y: ROWH, duration: .5, ease: "power2.inOut" }, 34.4);
+      tl.to("#r2", { y: -ROWH, duration: .5, ease: "power2.inOut" }, 34.4);
+      tl.to("#r4", { y: ROWH, duration: .5, ease: "power2.inOut" }, 34.4);
+      tl.to("#r5", { y: -ROWH, duration: .5, ease: "power2.inOut" }, 34.4);
+      tl.fromTo(["#r6","#r3"], { y: 10 }, { y: 0, duration: .35,
+        stagger: .05, ease: "power2.out" }, 34.5);
+      tl.to("#sortmenu", { opacity: 0, duration: .25 }, 36.2);
+      cap("#c8", 33.4, 36.3);
+
+      // ── 9 · pin + reorder (36.7–41) ─────────────────────────────
+      tl.set(["#r1","#r2","#r3","#r4","#r5","#r6"], { y: 0 }, 36.5);
+      key("#kp", 36.9, .4);
+      tl.set("#r3", { attr: { class: "row pinned" } }, 37.0);
+      tl.to("#r3", { y: -3 * ROWH, duration: .5, ease: "power3.inOut" }, 37.0);
+      tl.to(["#r1","#r2","#r6"], { y: ROWH, duration: .5, ease: "power3.inOut" }, 37.0);
+      tl.fromTo("#pindiv", { opacity: 0 }, { opacity: 1, duration: .3 }, 37.4);
+      key("#ke", 38.4, .4);
+      tl.to("#editEdit", { opacity: 0, duration: .2 }, 38.5);
+      tl.to("#editDone", { opacity: 1, duration: .2 }, 38.5);
+      tl.to(".row .drag", { width: 22, paddingRight: 10, duration: .3, ease: "power2.out" }, 38.6);
+      tl.to("#r5", { y: -ROWH, duration: .5, ease: "power2.inOut" }, 39.1);
+      tl.to("#r4", { y: ROWH, duration: .5, ease: "power2.inOut" }, 39.1);
+      tl.to(".row .drag", { width: 0, paddingRight: 0, duration: .25 }, 40.2);
+      tl.to("#editDone", { opacity: 0, duration: .2 }, 40.3);
+      tl.to("#editEdit", { opacity: 1, duration: .2 }, 40.4);
+      cap("#c9", 36.9, 40.6);
+
+      // ── 10 · remove (41–44) ─────────────────────────────────────
+      tl.set(["#r1","#r2","#r4","#r5","#r6"], { y: 0 }, 40.9);
+      tl.set("#r3", { y: 0, attr: { class: "row" } }, 40.9);
+      tl.set("#pindiv", { opacity: 0 }, 40.9);
+      key("#kx1", 41.2, .4);
+      focusRow("#r6", 41.2);
+      tl.to("#r6", { backgroundColor: "#d6928f", borderColor: "#d6928f", duration: .25 }, 41.4);
+      tl.to("#r6 .name, #r6 .num, #r6 .desc, #r6 .ico", { color: "#1a1822", duration: .25 }, 41.4);
+      tl.set("#r6 .del", { color: "#1a1822" }, 41.4);
+      tl.to("#r6 .del", { opacity: 1, duration: .2 }, 41.4);
+      tl.to("#r6 .del .confirm", { opacity: 1, duration: .2 }, 41.5);
+      key("#kx2", 42.4, .4);
+      tl.to("#r6", { height: 0, marginBottom: 0, opacity: 0, duration: .45, ease: "power2.inOut" }, 42.7);
+      tl.to("#cnt6", { opacity: 0, duration: .25 }, 42.8);
+      tl.to("#cnt5", { opacity: 1, duration: .25 }, 42.8);
+      // rows below revert 04→03, 05→04, 06→05 as the card is removed
+      tl.to(["#r3 .nb","#r4 .nb","#r5 .nb"], { opacity: 0, duration: .25 }, 42.85);
+      tl.to(["#r3 .na","#r4 .na","#r5 .na"], { opacity: 1, duration: .25 }, 42.85);
+      cap("#c10", 41.2, 43.5);
+
+      // ── 11 · wrap (43.5–46) ─────────────────────────────────────
+      tl.to("#app", { opacity: .12, scale: .98, duration: .5, ease: "power2.in" }, 43.5);
+      tl.fromTo("#wrap", { opacity: 0, y: 22 },
+        { opacity: 1, y: 0, duration: .55, ease: "power3.out" }, 43.9);
+      tl.to("#wrap .cur", { opacity: 0, duration: .4, yoyo: true, repeat: 3 }, 44.6);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

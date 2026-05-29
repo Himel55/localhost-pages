@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>__LABEL__</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>__UV_PATH__</string>
+        <string>run</string>
+        <string>--directory</string>
+        <string>__PROJECT_DIR__</string>
+        <string>python</string>
+        <string>-m</string>
+        <string>localhost_pages</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <!-- The app owns __LOG_PATH__ via its own rotating handler (set below).
+         launchd's stdout/stderr go to a separate boot log so the two don't
+         fight over the same file (which would break rotation); the boot log
+         only matters for crashes before logging initializes. -->
+    <key>StandardOutPath</key>
+    <string>__BOOT_LOG_PATH__</string>
+    <key>StandardErrorPath</key>
+    <string>__BOOT_LOG_PATH__</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>__PATH_ENV__</string>
+        <key>LOCALHOST_PAGES_LOG</key>
+        <string>__LOG_PATH__</string>
+    </dict>
+</dict>
+</plist>

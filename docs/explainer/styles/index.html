@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>index.css — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #c8b5e0; }   /* lilac — index.css */
+
+  /* page-local: colour-swatch strip */
+  .swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .swatch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+  .swatch-chip {
+    width: 44px;
+    height: 28px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .swatch-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--faint);
+    letter-spacing: 0.04em;
+    text-align: center;
+  }
+  .swatch-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    color: var(--ink);
+    letter-spacing: 0.04em;
+    text-align: center;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">static/index.css</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">index.css</span><br />is the <em>whole look.</em></h1>
+    <p class="lede reveal d2">
+      At 552 lines, this is the largest single file in the project — bigger than any Python module.
+      It styles the index page with <b>zero framework</b>, zero build step, and zero compiled output.
+      One CSS file, loaded directly, does everything: tokens, layout, overlays, animations, states.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">552</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">7</div><div class="l">design tokens</div></div>
+      <div class="stat reveal d3"><div class="n">0</div><div class="l">frameworks</div></div>
+      <div class="stat reveal d3"><div class="n">1</div><div class="l">web font</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 font + tokens ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — font &amp; design tokens</div>
+      <h2>One font. Seven custom properties.</h2>
+      <p>The first 22 lines are the entire design system — a variable-weight font declaration,
+        seven <code class="tok">--custom-properties</code>, and a single <code class="tok">font-size</code> on <code class="tok">html</code>
+        that scales everything else.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">index.css</span><span>lines 1 — 22</span></div>
+      <pre><div class="cl"><span class="ln">1</span><span class="ct"><span class="k">@font-face</span> {</span></div><div class="cl"><span class="ln">2</span><span class="ct">  <span class="k">font-family</span>: <span class="s">'JetBrains Mono'</span>;</span></div><div class="cl"><span class="ln">3</span><span class="ct">  <span class="k">src</span>: <span class="s">url('/__static/JetBrainsMono.woff2') format('woff2')</span>;</span></div><div class="cl"><span class="ln">4</span><span class="ct">  <span class="k">font-weight</span>: <span class="n">100 900</span>;</span></div><div class="cl"><span class="ln">5</span><span class="ct">  <span class="k">font-display</span>: <span class="s">swap</span>;</span></div><div class="cl"><span class="ln">6</span><span class="ct">}</span></div><div class="cl"><span class="ln">7</span><span class="ct"></span></div><div class="cl"><span class="ln">8</span><span class="ct"><span class="k">:root</span> {</span></div><div class="cl"><span class="ln">9</span><span class="ct">  <span class="k">--bg</span>: <span class="s">#1a1822</span>;        <span class="c">/* deep warm neutral, slight purple cast */</span></span></div><div class="cl"><span class="ln">10</span><span class="ct">  <span class="k">--surface</span>: <span class="s">#221f2c</span>;   <span class="c">/* card body */</span></span></div><div class="cl"><span class="ln">11</span><span class="ct">  <span class="k">--fg</span>: <span class="s">#ede7dc</span>;        <span class="c">/* warm off-white */</span></span></div><div class="cl"><span class="ln">12</span><span class="ct">  <span class="k">--muted</span>: <span class="s">#9b948a</span>;     <span class="c">/* dusty mid-tone */</span></span></div><div class="cl"><span class="ln">13</span><span class="ct">  <span class="k">--rule</span>: <span class="s">#2e2a38</span>;      <span class="c">/* card border */</span></span></div><div class="cl"><span class="ln">14</span><span class="ct">  <span class="k">--hover</span>: <span class="s">#262332</span>;    <span class="c">/* slight lift on hover */</span></span></div><div class="cl"><span class="ln">15</span><span class="ct">  <span class="k">--broken</span>: <span class="s">#d6928f</span>;   <span class="c">/* dusty rose for broken state */</span></span></div><div class="cl"><span class="ln">16</span><span class="ct">  <span class="k">--mono</span>: <span class="s">'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace</span>;</span></div><div class="cl"><span class="ln">17</span><span class="ct">}</span></div><div class="cl"><span class="ln">18</span><span class="ct"></span></div><div class="cl"><span class="ln">19</span><span class="ct"><span class="c">/* Base font-size sets the rem unit. 120% = 1rem ≈ 19.2px on a default</span></span></div><div class="cl"><span class="ln">20</span><span class="ct"><span class="c">   16px UA, giving everything a 20% size bump while remaining responsive</span></span></div><div class="cl"><span class="ln">21</span><span class="ct"><span class="c">   to the user's browser zoom and font-size preferences. */</span></span></div><div class="cl"><span class="ln">22</span><span class="ct"><span class="k">html</span> { <span class="k">font-size</span>: <span class="n">120%</span>; <span class="k">scrollbar-gutter</span>: <span class="s">stable</span>; }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">1 — 6</div>
+        <div class="txt"><code class="tok">font-weight: 100 900</code> declares a <b>variable font range</b> — a single
+          <code class="tok">.woff2</code> file covers the entire weight axis. The UI uses weights 400, 500, 600, and 700
+          from that one file.</div>
+      </div>
+      <div class="row">
+        <div class="lref">8 — 17</div>
+        <div class="txt">Seven tokens cover every colour decision. <b>No grays generated by a tool</b> — each value
+          is hand-picked with a comment explaining its role in the UI hierarchy.</div>
+      </div>
+      <div class="row">
+        <div class="lref">22</div>
+        <div class="txt"><code class="tok">font-size: 120%</code> on <code class="tok">html</code> sets the rem anchor.
+          At 120% of a browser default of 16 px, <b>1 rem ≈ 19.2 px</b>. The percentage form respects the
+          user's system font-size preference — a hard pixel value would ignore it.</div>
+      </div>
+    </div>
+
+    <div class="prose reveal d2">
+      <p>The seven <code class="tok">:root</code> tokens as actual swatches — these are the only colours in the whole UI:</p>
+    </div>
+
+    <div class="swatches reveal d2">
+      <div class="swatch">
+        <div class="swatch-chip" style="background:#1a1822;"></div>
+        <div class="swatch-name">--bg</div>
+        <div class="swatch-label">#1a1822</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-chip" style="background:#221f2c;"></div>
+        <div class="swatch-name">--surface</div>
+        <div class="swatch-label">#221f2c</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-chip" style="background:#ede7dc;"></div>
+        <div class="swatch-name">--fg</div>
+        <div class="swatch-label">#ede7dc</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-chip" style="background:#9b948a;"></div>
+        <div class="swatch-name">--muted</div>
+        <div class="swatch-label">#9b948a</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-chip" style="background:#2e2a38;"></div>
+        <div class="swatch-name">--rule</div>
+        <div class="swatch-label">#2e2a38</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-chip" style="background:#262332;"></div>
+        <div class="swatch-name">--hover</div>
+        <div class="swatch-label">#262332</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-chip" style="background:#d6928f;"></div>
+        <div class="swatch-name">--broken</div>
+        <div class="swatch-label">#d6928f</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="margin-top:22px">
+      <h4>Where does <code class="tok" style="font-size:.82em">--accent</code> come from?</h4>
+      <p>It isn't in <code class="tok">:root</code>. Each <code class="tok">.row</code> element carries its own
+        <code class="tok">--accent</code> CSS variable injected by the server, derived from the app name —
+        giving every row a unique hue for its icon and hover border without any static definition here.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 header controls ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — header controls</div>
+      <h2>Search, sort, edit, help — four controls in 180 lines.</h2>
+      <p>The header area is the densest part of the stylesheet. Each control is a small
+        compound component with its own focus, hover, and active states — all keyed to
+        <b>body class toggles</b> rather than JavaScript style mutations.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">index.css</span><span>lines 46 — 58 &nbsp;(search-wrap)</span></div>
+      <pre><div class="cl"><span class="ln">46</span><span class="ct"><span class="k">.search-wrap</span> {</span></div><div class="cl"><span class="ln">47</span><span class="ct">  <span class="k">display</span>: <span class="s">inline-flex</span>;</span></div><div class="cl"><span class="ln">48</span><span class="ct">  <span class="k">align-items</span>: <span class="s">center</span>;</span></div><div class="cl"><span class="ln">49</span><span class="ct">  <span class="k">gap</span>: <span class="s">0.375rem</span>;</span></div><div class="cl"><span class="ln">50</span><span class="ct">  <span class="k">border</span>: <span class="n">1px</span> <span class="s">solid transparent</span>;</span></div><div class="cl"><span class="ln">51</span><span class="ct">  <span class="k">transition</span>: <span class="s">border-color 0.15s</span>;</span></div><div class="cl"><span class="ln">52</span><span class="ct">}</span></div><div class="cl"><span class="ln">53</span><span class="ct"><span class="k">.search-wrap:focus-within</span> { <span class="k">border-color</span>: <span class="s">var(--fg)</span>; }</span></div><div class="cl"><span class="ln">54</span><span class="ct"></span></div><div class="cl"><span class="ln">55</span><span class="ct"><span class="c">/* clear button: shown only when the input has content */</span></span></div><div class="cl"><span class="ln">96</span><span class="ct"><span class="k">.search:not(:placeholder-shown) ~ .search-clear</span> { <span class="k">display</span>: <span class="s">block</span>; }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">50 — 53</div>
+        <div class="txt">The border is always there — set to <b>transparent</b> — so focus doesn't shift layout.
+          <code class="tok">:focus-within</code> turns it visible when any child has focus. No JavaScript, no class toggle.</div>
+      </div>
+      <div class="row">
+        <div class="lref">96</div>
+        <div class="txt">The ✕ clear button is hidden via <code class="tok">display: none</code> by default.
+          <code class="tok">:not(:placeholder-shown)</code> detects a non-empty input — the sibling combinator <code class="tok">~</code>
+          then reveals the adjacent button. Pure CSS, no input event listener needed.</div>
+      </div>
+    </div>
+
+    <div class="code reveal d2">
+      <div class="cap"><span class="fn">index.css</span><span>lines 125 — 154 &nbsp;(sort dropdown)</span></div>
+      <pre><div class="cl"><span class="ln">125</span><span class="ct"><span class="k">.sort-toggle</span> {</span></div><div class="cl"><span class="ln">126</span><span class="ct">  <span class="k">background</span>: <span class="s">transparent</span>;</span></div><div class="cl"><span class="ln">127</span><span class="ct">  <span class="k">border</span>: <span class="n">1px</span> <span class="s">solid transparent</span>;</span></div><div class="cl"><span class="ln">128</span><span class="ct">  <span class="k">font</span>: <span class="n">500</span> <span class="s">0.6875rem/1 var(--mono)</span>;</span></div><div class="cl"><span class="ln">129</span><span class="ct">}</span></div><div class="cl"><span class="ln">130</span><span class="ct"><span class="k">.sort-toggle[aria-expanded="true"]</span> { <span class="k">border-color</span>: <span class="s">var(--fg)</span>; <span class="k">background</span>: <span class="s">var(--surface)</span>; }</span></div><div class="cl"><span class="ln">131</span><span class="ct"><span class="k">.sort-caret</span> { <span class="k">transition</span>: <span class="s">transform 0.15s</span>; }</span></div><div class="cl"><span class="ln">132</span><span class="ct"><span class="k">.sort-toggle[aria-expanded="true"] .sort-caret</span> { <span class="k">transform</span>: <span class="s">rotate(180deg)</span>; }</span></div><div class="cl"><span class="ln">133</span><span class="ct"></span></div><div class="cl"><span class="ln">189</span><span class="ct"><span class="k">.edit-toggle</span>:hover { <span class="k">border-color</span>: <span class="s">var(--rule)</span>; }</span></div><div class="cl"><span class="ln">190</span><span class="ct"><span class="k">body.editing .edit-toggle</span> { <span class="k">border-color</span>: <span class="s">var(--fg)</span>; <span class="k">background</span>: <span class="s">var(--surface)</span>; }</span></div><div class="cl"><span class="ln">191</span><span class="ct"></span></div><div class="cl"><span class="ln">202</span><span class="ct"><span class="k">body.help-open .help-toggle</span> { <span class="k">border-color</span>: <span class="s">var(--fg)</span>; <span class="k">background</span>: <span class="s">var(--surface)</span>; }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d2">
+      <div class="row">
+        <div class="lref">130</div>
+        <div class="txt">Open state is styled via an <b>ARIA attribute selector</b> — <code class="tok">[aria-expanded="true"]</code>.
+          The ARIA state that screen readers need is the same state CSS reads. One source of truth.</div>
+      </div>
+      <div class="row">
+        <div class="lref">132</div>
+        <div class="txt">The caret SVG rotates 180° when the dropdown opens — a pure CSS transition driven by the same
+          attribute, no JavaScript required.</div>
+      </div>
+      <div class="row">
+        <div class="lref">190 &amp; 202</div>
+        <div class="txt">Edit and help button active states are driven by <b>body class selectors</b> —
+          <code class="tok">body.editing</code> and <code class="tok">body.help-open</code>. JavaScript adds or removes
+          the class; CSS does all visual work from there.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 the row ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — the row</div>
+      <h2>The stretched-anchor trick and the <code class="tok" style="font-size:.65em">:has()</code> suppressor.</h2>
+      <p>Each app row is a flex container with a <b>clickable area spanning the entire card</b>, while
+        the delete and pin buttons float above it. Two patterns worth studying closely.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">index.css</span><span>lines 403 — 430</span></div>
+      <pre><div class="cl"><span class="ln">403</span><span class="ct"><span class="k">.row</span> {</span></div><div class="cl"><span class="ln">404</span><span class="ct">  <span class="k">position</span>: <span class="s">relative</span>;</span></div><div class="cl"><span class="ln">405</span><span class="ct">  <span class="k">display</span>: <span class="s">flex</span>;</span></div><div class="cl"><span class="ln">406</span><span class="ct">  <span class="k">align-items</span>: <span class="s">center</span>;</span></div><div class="cl"><span class="ln">407</span><span class="ct">  <span class="k">gap</span>: <span class="s">0.875rem</span>;</span></div><div class="cl"><span class="ln">408</span><span class="ct">  <span class="k">background</span>: <span class="s">var(--surface)</span>;</span></div><div class="cl"><span class="ln">409</span><span class="ct">  <span class="k">border</span>: <span class="n">1px</span> <span class="s">solid var(--rule)</span>;</span></div><div class="cl"><span class="ln">410</span><span class="ct">}</span></div><div class="cl"><span class="ln">411</span><span class="ct"></span></div><div class="cl"><span class="ln">412</span><span class="ct"><span class="c">/* Stretched anchor: clicking anywhere on the row navigates via .body's</span></span></div><div class="cl"><span class="ln">413</span><span class="ct"><span class="c">   pseudo-overlay. The × button sits at a higher z-index so it isn't covered. */</span></span></div><div class="cl"><span class="ln">414</span><span class="ct"><span class="k">.row .body::after</span> {</span></div><div class="cl"><span class="ln">415</span><span class="ct">  <span class="k">content</span>: <span class="s">""</span>;</span></div><div class="cl"><span class="ln">416</span><span class="ct">  <span class="k">position</span>: <span class="s">absolute</span>;</span></div><div class="cl"><span class="ln">417</span><span class="ct">  <span class="k">inset</span>: <span class="n">0</span>;</span></div><div class="cl"><span class="ln">418</span><span class="ct">  <span class="k">z-index</span>: <span class="n">1</span>;</span></div><div class="cl"><span class="ln">419</span><span class="ct">}</span></div><div class="cl"><span class="ln">420</span><span class="ct"><span class="k">.row .del</span>,</span></div><div class="cl"><span class="ln">421</span><span class="ct"><span class="k">.row .pin</span> { <span class="k">z-index</span>: <span class="n">2</span>; }</span></div><div class="cl"><span class="ln">422</span><span class="ct"></span></div><div class="cl"><span class="ln">423</span><span class="ct"><span class="c">/* Hover suppressed while keyboard nav owns the focus */</span></span></div><div class="cl"><span class="ln">424</span><span class="ct"><span class="k">body:not(:has(.row.kbd-focus)) .row:hover:not([data-confirming])</span> {</span></div><div class="cl"><span class="ln">425</span><span class="ct">  <span class="k">background</span>: <span class="s">var(--hover)</span>;</span></div><div class="cl"><span class="ln">426</span><span class="ct">  <span class="k">border-color</span>: <span class="s">var(--accent)</span>;</span></div><div class="cl"><span class="ln">427</span><span class="ct">}</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">414 — 419</div>
+        <div class="txt">The <code class="tok">.body</code> element is the anchor tag. Its <code class="tok">::after</code>
+          pseudo-element is stretched with <code class="tok">inset: 0</code> to cover the whole row at
+          <b>z-index 1</b> — making the anchor's click target as large as the row without wrapping every child in it.</div>
+      </div>
+      <div class="row">
+        <div class="lref">420 — 421</div>
+        <div class="txt"><code class="tok">.del</code> and <code class="tok">.pin</code> sit at <b>z-index 2</b>,
+          one layer above the pseudo-overlay. They remain interactive even though the overlay fills the card.</div>
+      </div>
+      <div class="row">
+        <div class="lref">424 — 427</div>
+        <div class="txt">The <b>hover suppressor</b>. <code class="tok">body:not(:has(.row.kbd-focus))</code> reads:
+          "if no row currently has keyboard focus, allow hover". When keyboard navigation is active, the cursor's
+          hover highlight would visually compete — this selector eliminates it without any JavaScript.</div>
+      </div>
+    </div>
+
+    <div class="code reveal d2">
+      <div class="cap"><span class="fn">index.css</span><span>lines 490 — 553 &nbsp;(row states)</span></div>
+      <pre><div class="cl"><span class="ln">490</span><span class="ct"><span class="k">.row.has-update</span> {</span></div><div class="cl"><span class="ln">491</span><span class="ct">  <span class="k">border-left</span>: <span class="n">0.25rem</span> <span class="s">solid var(--accent)</span>;</span></div><div class="cl"><span class="ln">492</span><span class="ct">  <span class="k">padding-left</span>: <span class="s">calc(1.125rem - 0.1875rem)</span>;</span></div><div class="cl"><span class="ln">493</span><span class="ct">}</span></div><div class="cl"><span class="ln">494</span><span class="ct"></span></div><div class="cl"><span class="ln">535</span><span class="ct"><span class="k">.row.broken</span> { <span class="k">--accent</span>: <span class="s">var(--broken)</span>; }</span></div><div class="cl"><span class="ln">536</span><span class="ct"></span></div><div class="cl"><span class="ln">537</span><span class="ct"><span class="k">.row[data-confirming]</span> {</span></div><div class="cl"><span class="ln">538</span><span class="ct">  <span class="k">--accent</span>: <span class="s">var(--broken)</span>;</span></div><div class="cl"><span class="ln">539</span><span class="ct">  <span class="k">background</span>: <span class="s">var(--broken)</span>;</span></div><div class="cl"><span class="ln">540</span><span class="ct">  <span class="k">border-color</span>: <span class="s">var(--broken)</span>;</span></div><div class="cl"><span class="ln">541</span><span class="ct">}</span></div><div class="cl"><span class="ln">542</span><span class="ct"><span class="k">.row[data-confirming] .name</span>,</span></div><div class="cl"><span class="ln">543</span><span class="ct"><span class="k">.row[data-confirming] .del</span>,</span></div><div class="cl"><span class="ln">544</span><span class="ct"><span class="k">.row[data-confirming] .ico</span> { <span class="k">color</span>: <span class="s">var(--bg)</span>; }</span></div><div class="cl"><span class="ln">545</span><span class="ct"><span class="k">.row[data-confirming] .del</span> {</span></div><div class="cl"><span class="ln">546</span><span class="ct">  <span class="k">opacity</span>: <span class="n">1</span>;</span></div><div class="cl"><span class="ln">547</span><span class="ct">  <span class="k">font-size</span>: <span class="s">0.6875rem</span>;</span></div><div class="cl"><span class="ln">548</span><span class="ct">  <span class="k">letter-spacing</span>: <span class="s">0.05em</span>;</span></div><div class="cl"><span class="ln">549</span><span class="ct">}</span></div></pre>
+    </div>
+
+    <div class="ann reveal d2">
+      <div class="row">
+        <div class="lref">491 — 492</div>
+        <div class="txt">The left accent bar is a <code class="tok">border-left</code> that adds 0.25 rem of width.
+          The <code class="tok">padding-left</code> is reduced by exactly that amount — <b>content doesn't shift</b>
+          when the bar appears.</div>
+      </div>
+      <div class="row">
+        <div class="lref">535</div>
+        <div class="txt">A broken symlink redefines <code class="tok">--accent</code> at the row level to
+          <code class="tok">--broken</code> (dusty rose). Every descendant that uses <code class="tok">var(--accent)</code>
+          — icon, border — inherits the error colour. One declaration, cascades everywhere.</div>
+      </div>
+      <div class="row">
+        <div class="lref">537 — 548</div>
+        <div class="txt">The delete-confirm state — triggered by <code class="tok">data-confirming</code> attribute —
+          floods the row background with <code class="tok">--broken</code> and inverts text to <code class="tok">--bg</code>.
+          The <code class="tok">.del</code> button also changes size and letter-spacing to show "CONFIRM?" text,
+          all via CSS alone.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 overlays ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — overlays</div>
+      <h2>Two modals and an animated drag handle.</h2>
+      <p>The help panel, the preview modal, and the drag handle for reordering all share the same
+        pattern: <b>hidden by default</b>, made visible by a class or body-state toggle.
+        No JavaScript writes inline styles — CSS does all the visual lifting.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">index.css</span><span>lines 215 — 236 &nbsp;(help overlay)</span></div>
+      <pre><div class="cl"><span class="ln">215</span><span class="ct"><span class="k">.help-backdrop</span> {</span></div><div class="cl"><span class="ln">216</span><span class="ct">  <span class="k">position</span>: <span class="s">fixed</span>;</span></div><div class="cl"><span class="ln">217</span><span class="ct">  <span class="k">inset</span>: <span class="n">0</span>;</span></div><div class="cl"><span class="ln">218</span><span class="ct">  <span class="k">background</span>: <span class="s">rgba(0, 0, 0, 0.6)</span>;</span></div><div class="cl"><span class="ln">219</span><span class="ct">  <span class="k">z-index</span>: <span class="n">110</span>;</span></div><div class="cl"><span class="ln">220</span><span class="ct">  <span class="k">display</span>: <span class="s">none</span>;</span></div><div class="cl"><span class="ln">221</span><span class="ct">  <span class="k">align-items</span>: <span class="s">center</span>;</span></div><div class="cl"><span class="ln">222</span><span class="ct">  <span class="k">justify-content</span>: <span class="s">center</span>;</span></div><div class="cl"><span class="ln">223</span><span class="ct">}</span></div><div class="cl"><span class="ln">224</span><span class="ct"><span class="k">.help-backdrop.open</span> { <span class="k">display</span>: <span class="s">flex</span>; }</span></div><div class="cl"><span class="ln">225</span><span class="ct"></span></div><div class="cl"><span class="ln">226</span><span class="ct"><span class="k">.help-panel</span> {</span></div><div class="cl"><span class="ln">227</span><span class="ct">  <span class="k">background</span>: <span class="s">var(--surface)</span>;</span></div><div class="cl"><span class="ln">228</span><span class="ct">  <span class="k">border</span>: <span class="n">1px</span> <span class="s">solid var(--fg)</span>;</span></div><div class="cl"><span class="ln">229</span><span class="ct">  <span class="k">padding</span>: <span class="s">1.75rem 2rem</span>;</span></div><div class="cl"><span class="ln">230</span><span class="ct">  <span class="k">max-width</span>: <span class="s">51.25rem</span>;</span></div><div class="cl"><span class="ln">231</span><span class="ct">  <span class="k">width</span>: <span class="s">90vw</span>;</span></div><div class="cl"><span class="ln">232</span><span class="ct">  <span class="k">max-height</span>: <span class="s">80vh</span>;</span></div><div class="cl"><span class="ln">233</span><span class="ct">  <span class="k">overflow-y</span>: <span class="s">auto</span>;</span></div><div class="cl"><span class="ln">234</span><span class="ct">}</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">220 — 224</div>
+        <div class="txt"><b>display: none → display: flex</b>. The flex children (alignment, centering) are
+          defined on the hidden element — they activate the moment <code class="tok">.open</code> is added.
+          No need for a second rule to re-declare centering.</div>
+      </div>
+      <div class="row">
+        <div class="lref">219</div>
+        <div class="txt">The help panel is at <b>z-index 110</b>; the preview modal (below) is at
+          <b>z-index 100</b>. They cannot both be open at once in the UI, but the explicit stacking
+          order ensures correctness if they ever are.</div>
+      </div>
+    </div>
+
+    <div class="code reveal d2">
+      <div class="cap"><span class="fn">index.css</span><span>lines 287 — 308 &nbsp;(drag handle)</span></div>
+      <pre><div class="cl"><span class="ln">287</span><span class="ct"><span class="k">.row .drag</span> {</span></div><div class="cl"><span class="ln">288</span><span class="ct">  <span class="k">width</span>: <span class="n">0</span>;</span></div><div class="cl"><span class="ln">289</span><span class="ct">  <span class="k">overflow</span>: <span class="s">hidden</span>;</span></div><div class="cl"><span class="ln">290</span><span class="ct">  <span class="k">transition</span>: <span class="s">width 0.1s, padding 0.1s</span>;</span></div><div class="cl"><span class="ln">291</span><span class="ct">}</span></div><div class="cl"><span class="ln">292</span><span class="ct"><span class="k">body.editing .row .drag</span> {</span></div><div class="cl"><span class="ln">293</span><span class="ct">  <span class="k">width</span>: <span class="s">0.875rem</span>;</span></div><div class="cl"><span class="ln">294</span><span class="ct">  <span class="k">padding-right</span>: <span class="s">0.25rem</span>;</span></div><div class="cl"><span class="ln">295</span><span class="ct">}</span></div><div class="cl"><span class="ln">296</span><span class="ct"><span class="k">body.editing .row .body::after</span> { <span class="k">display</span>: <span class="s">none</span>; } <span class="c">/* disable click while editing */</span></span></div><div class="cl"><span class="ln">297</span><span class="ct"><span class="k">body.editing .row .del</span> { <span class="k">display</span>: <span class="s">none</span>; }</span></div><div class="cl"><span class="ln">298</span><span class="ct"><span class="k">body.editing .row .pin</span> { <span class="k">opacity</span>: <span class="n">1</span>; }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d2">
+      <div class="row">
+        <div class="lref">288 — 290</div>
+        <div class="txt">The drag handle has <code class="tok">width: 0</code> and <code class="tok">overflow: hidden</code>
+          by default. It <b>animates open</b> when editing mode activates — the transition on
+          <code class="tok">width</code> and <code class="tok">padding</code> gives it a sliding reveal without
+          touching <code class="tok">display</code>, which can't transition.</div>
+      </div>
+      <div class="row">
+        <div class="lref">296 — 298</div>
+        <div class="txt">Editing mode makes three simultaneous changes across every row: the stretched-anchor
+          overlay is <b>disabled</b> (rows are no longer clickable), the delete button is <b>hidden</b>,
+          and the pin button is always <b>visible</b>. One class on body, three cascading effects.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 05 patterns worth noticing ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">05 — step back</div>
+      <h2>Four patterns worth noticing.</h2>
+    </div>
+
+    <div class="notes">
+      <div class="note reveal d1">
+        <h4>rem-based sizing respects browser zoom and accessibility preferences</h4>
+        <p>Every measurement in this file is in <code class="tok">rem</code> — not <code class="tok">px</code>.
+          Because <code class="tok">html { font-size: 120% }</code> uses a percentage, a user who sets their browser
+          font size to Large gets a proportionally larger UI. A hard pixel anchor would defeat that.</p>
+      </div>
+      <div class="note reveal d1" style="--ac:var(--sage)">
+        <h4><code class="tok" style="font-size:.82em">:has()</code> used as a state sensor, not a style parent</h4>
+        <p><code class="tok">body:not(:has(.row.kbd-focus))</code> queries whether any descendant has a particular
+          class, then changes a sibling selector's behaviour. This is <b>upward querying</b> — traditionally
+          impossible in CSS without JavaScript. It eliminates an entire category of
+          <code class="tok">mouseover</code>/<code class="tok">keydown</code> event coordination.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--mist)">
+        <h4>Per-row <code class="tok" style="font-size:.82em">--accent</code> from the server</h4>
+        <p>The stylesheet never defines <code class="tok">--accent</code> globally. Each row element carries its own value
+          injected by <code class="tok">render_index()</code> via an inline <code class="tok">style</code> attribute.
+          CSS inheritance does the rest — the icon colour, hover border, update bar, and pin colour all
+          resolve to that one per-row value.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--peach)">
+        <h4>No framework, no build step</h4>
+        <p>This file is loaded as-is by the browser. There is no Tailwind, no PostCSS, no SCSS —
+          no generated output. What you read is exactly what the browser parses. That is a deliberate
+          constraint: <b>the whole look of the app is auditable in one linear read.</b></p>
+      </div>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/template/">
+        <div class="lbl">&larr; PREVIOUS</div>
+        <div class="nm"><span class="mono">index.html</span></div>
+      </a>
+      <a class="next" href="/technical-explanation/reload/">
+        <div class="lbl">NEXT &rarr;</div>
+        <div class="nm"><span class="mono">reload.js</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/static/index.css — 552 lines, the index page's entire look.</span>
+    <span><a href="/technical-explanation/">&larr; all the files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

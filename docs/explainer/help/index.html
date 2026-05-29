@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>help.js — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #c8b496; }   /* ochre — help.js */
+
+  /* page-local: shortcut group table */
+  .shortcut-groups {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 22px 0;
+  }
+  .sg-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+    font-size: 11px; color: var(--faint);
+    letter-spacing: 0.04em;
+  }
+  .sg-head .fn { color: var(--accent); }
+  .sg-group { border-bottom: 1px solid var(--line); }
+  .sg-group:last-child { border-bottom: none; }
+  .sg-label {
+    padding: 8px 16px 6px;
+    font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  .sg-row {
+    display: grid; grid-template-columns: 220px 1fr;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+  }
+  .sg-row:last-child { border-bottom: none; }
+  .sg-row .sk {
+    padding: 10px 16px; font-size: 12px; color: var(--sand);
+    border-right: 1px solid var(--line);
+  }
+  .sg-row .sv { padding: 10px 16px; font-size: 12px; color: var(--muted); }
+
+  @media (max-width: 720px) {
+    .sg-row { grid-template-columns: 1fr; }
+    .sg-row .sk { border-right: none; border-bottom: 1px solid var(--line); }
+  }
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">static/help.js</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">help.js</span><br />the overlay that <em>documents</em><br />the rest.</h1>
+    <p class="lede reveal d2">
+      <code class="tok">help.js</code> builds the <b>?&nbsp;overlay</b> — a modal panel listing every keyboard shortcut
+      and mouse interaction on the index. It is created <b>lazily</b>, only on first open, from a
+      single template-literal HTML string. One file summarises the entire user interface of
+      <b>keys.js</b>, <b>peek.js</b>, <b>delete.js</b>, <b>pin.js</b>, <b>edit.js</b>, and <b>search.js</b>.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">98</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">built lazily</div><div class="l">first open only</div></div>
+      <div class="stat reveal d2"><div class="n">?</div><div class="l">to toggle</div></div>
+      <div class="stat reveal d3"><div class="n">6</div><div class="l">panel sections</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 the template string ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — the reference content</div>
+      <h2>One string. Six panel sections.</h2>
+      <p>Lines 5–45 are almost entirely a single template-literal HTML string — the
+        <b>user-facing manual</b> for everything the other static modules do. It compiles
+        to a <code class="tok">.help-panel</code> dialog containing six <code class="tok">&lt;dl&gt;</code>
+        definition lists. No logic, no conditionals — just markup.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">help.js</span><span>lines 5 — 45 &nbsp;(abbreviated)</span></div>
+      <pre><div class="cl"><span class="ln">5</span><span class="ct">  <span class="k">const</span> HTML = <span class="s">`</span></span></div><div class="cl"><span class="ln">6</span><span class="ct">    <span class="s">&lt;div class="help-panel" role="dialog" aria-label="Keyboard shortcuts"&gt;</span></span></div><div class="cl"><span class="ln">7</span><span class="ct">      <span class="s">&lt;button class="help-close" type="button" aria-label="Close help"&gt;×&lt;/button&gt;</span></span></div><div class="cl"><span class="ln">8</span><span class="ct">      <span class="s">&lt;h2&gt;Navigation&lt;/h2&gt;</span></span></div><div class="cl"><span class="ln">9</span><span class="ct">      <span class="s">&lt;dl&gt;</span></span></div><div class="cl"><span class="ln">10</span><span class="ct">        <span class="s">&lt;dt&gt;&lt;kbd&gt;j&lt;/kbd&gt; / &lt;kbd&gt;↓&lt;/kbd&gt;&lt;/dt&gt;&lt;dd&gt;focus next row&lt;/dd&gt;</span></span></div><div class="cl"><span class="ln">11</span><span class="ct">        <span class="s">&lt;dt&gt;&lt;kbd&gt;k&lt;/kbd&gt; / &lt;kbd&gt;↑&lt;/kbd&gt;&lt;/dt&gt;&lt;dd&gt;focus previous row&lt;/dd&gt;</span></span></div><div class="cl"><span class="ln">12</span><span class="ct">        <span class="s">&lt;dt&gt;&lt;kbd&gt;/&lt;/kbd&gt;&lt;/dt&gt;&lt;dd&gt;focus search&lt;/dd&gt;</span></span></div><div class="cl"><span class="ln">13</span><span class="ct">        <span class="s">&lt;dt&gt;&lt;kbd&gt;Esc&lt;/kbd&gt;&lt;/dt&gt;&lt;dd&gt;clear focus · clear search · close preview · leave edit mode&lt;/dd&gt;</span></span></div><div class="cl"><span class="ln">14</span><span class="ct">      <span class="s">&lt;/dl&gt;</span></span></div><div class="cl"><span class="ln">15</span><span class="ct">      <span class="s">&lt;h2&gt;On the focused row&lt;/h2&gt;</span></span></div><div class="cl"><span class="ln">16</span><span class="ct">      <span class="s">&lt;dl&gt; … &lt;/dl&gt;</span></span></div><div class="cl"><span class="ln">21</span><span class="ct">      <span class="s">&lt;h2&gt;In the preview&lt;/h2&gt;</span></span></div><div class="cl"><span class="ln">22</span><span class="ct">      <span class="s">&lt;dl&gt; … &lt;/dl&gt;</span></span></div><div class="cl"><span class="ln">26</span><span class="ct">      <span class="s">&lt;h2&gt;Modes&lt;/h2&gt;</span></span></div><div class="cl"><span class="ln">27</span><span class="ct">      <span class="s">&lt;dl&gt; … &lt;/dl&gt;</span></span></div><div class="cl"><span class="ln">31</span><span class="ct">      <span class="s">&lt;h2&gt;Mouse&lt;/h2&gt;</span></span></div><div class="cl"><span class="ln">32</span><span class="ct">      <span class="s">&lt;dl&gt; … &lt;/dl&gt;</span></span></div><div class="cl"><span class="ln">39</span><span class="ct">      <span class="s">&lt;h2&gt;Troubleshooting&lt;/h2&gt;</span></span></div><div class="cl"><span class="ln">40</span><span class="ct">      <span class="s">&lt;dl&gt; … &lt;/dl&gt;</span></span></div><div class="cl"><span class="ln">44</span><span class="ct">    <span class="s">&lt;/div&gt;</span></span></div><div class="cl"><span class="ln">45</span><span class="ct">  <span class="s">`</span>;</span></div></pre>
+    </div>
+
+    <div class="prose reveal d2">
+      <p>This single string is the only place in the entire codebase that answers the question
+        <em>"what can the user actually do?"</em> It must be updated by hand whenever
+        <b>keys.js</b>, <b>peek.js</b>, <b>delete.js</b>, <b>pin.js</b>, <b>edit.js</b>,
+        or <b>search.js</b> gains or loses a shortcut. There is no code generation — the help
+        text is authoritative only because a developer keeps it that way.</p>
+    </div>
+
+    <div class="shortcut-groups reveal d2">
+      <div class="sg-head"><span class="fn">help.js</span><span>the six &lt;dl&gt; groups</span></div>
+      <div class="sg-group">
+        <div class="sg-label">Navigation</div>
+        <div class="sg-row"><div class="sk"><code class="tok">j</code> / <code class="tok">↓</code> &nbsp; <code class="tok">k</code> / <code class="tok">↑</code> &nbsp; <code class="tok">/</code> &nbsp; <code class="tok">Esc</code></div><div class="sv">row focus, search focus, clear — defined in <b>keys.js</b> and <b>search.js</b></div></div>
+      </div>
+      <div class="sg-group">
+        <div class="sg-label">On the focused row</div>
+        <div class="sg-row"><div class="sk"><code class="tok">Enter</code> &nbsp; <code class="tok">p</code> &nbsp; <code class="tok">x</code></div><div class="sv">preview open, pin toggle, delete-with-confirm — defined in <b>peek.js</b>, <b>pin.js</b>, <b>delete.js</b></div></div>
+      </div>
+      <div class="sg-group">
+        <div class="sg-label">In the preview</div>
+        <div class="sg-row"><div class="sk"><code class="tok">f</code> &nbsp; <code class="tok">Esc</code></div><div class="sv">open full page, close — defined in <b>peek.js</b></div></div>
+      </div>
+      <div class="sg-group">
+        <div class="sg-label">Modes</div>
+        <div class="sg-row"><div class="sk"><code class="tok">e</code> &nbsp; <code class="tok">?</code></div><div class="sv">edit mode drag-to-reorder, this overlay — defined in <b>edit.js</b> and <b>help.js</b> itself</div></div>
+      </div>
+      <div class="sg-group">
+        <div class="sg-label">Mouse</div>
+        <div class="sg-row"><div class="sk">click / ⌘-click / hover / backdrop</div><div class="sv">preview open, new tab, button reveal, close — all handled in <b>peek.js</b> and <b>keys.js</b></div></div>
+      </div>
+      <div class="sg-group">
+        <div class="sg-label">Troubleshooting</div>
+        <div class="sg-row"><div class="sk">Download logs</div><div class="sv">save a diagnostics bundle from <b>/__diagnostics</b> to attach to a bug report — the one break-glass action, not a shortcut</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 lazy build ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — lazy build</div>
+      <h2><span class="mono">build()</span> runs at most once.</h2>
+      <p>The DOM node is never created at parse time. <code class="tok">build()</code> is called
+        inside <code class="tok">open()</code> and guards itself with an early return — so the first
+        call injects the panel; every subsequent call is a no-op.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">help.js</span><span>lines 42 — 55</span></div>
+      <pre><div class="cl"><span class="ln">42</span><span class="ct">  <span class="k">let</span> backdrop = <span class="k">null</span>;</span></div><div class="cl"><span class="ln">43</span><span class="ct">  <span class="k">const</span> toggleBtn = document.<span class="f">querySelector</span>(<span class="s">'.help-toggle'</span>);</span></div><div class="cl"><span class="ln">44</span><span class="ct"></span></div><div class="cl"><span class="ln">45</span><span class="ct">  <span class="k">function</span> <span class="f">build</span>() {</span></div><div class="cl"><span class="ln">46</span><span class="ct">    <span class="k">if</span> (backdrop) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">47</span><span class="ct">    backdrop = document.<span class="f">createElement</span>(<span class="s">'div'</span>);</span></div><div class="cl"><span class="ln">48</span><span class="ct">    backdrop.className = <span class="s">'help-backdrop'</span>;</span></div><div class="cl"><span class="ln">49</span><span class="ct">    backdrop.innerHTML = HTML;</span></div><div class="cl"><span class="ln">50</span><span class="ct">    document.body.<span class="f">appendChild</span>(backdrop);</span></div><div class="cl"><span class="ln">51</span><span class="ct">    backdrop.<span class="f">addEventListener</span>(<span class="s">'click'</span>, (e) =&gt; {</span></div><div class="cl"><span class="ln">52</span><span class="ct">      <span class="k">if</span> (e.target === backdrop) <span class="f">close</span>();</span></div><div class="cl"><span class="ln">53</span><span class="ct">    });</span></div><div class="cl"><span class="ln">54</span><span class="ct">    backdrop.<span class="f">querySelector</span>(<span class="s">'.help-close'</span>).<span class="f">addEventListener</span>(<span class="s">'click'</span>, close);</span></div><div class="cl"><span class="ln">55</span><span class="ct">  }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">42</div>
+        <div class="txt"><b>backdrop</b> starts as <code class="tok">null</code>. Its truthiness is the only
+          state flag the module needs — no <code class="tok">built</code> boolean, no separate flag.</div>
+      </div>
+      <div class="row">
+        <div class="lref">46</div>
+        <div class="txt">The guard. If <code class="tok">backdrop</code> is already a DOM node, return immediately.
+          This makes <code class="tok">build()</code> idempotent — <code class="tok">open()</code> can call it
+          unconditionally.</div>
+      </div>
+      <div class="row">
+        <div class="lref">47 — 50</div>
+        <div class="txt">The element is created, the <code class="tok">HTML</code> template string is
+          set as <code class="tok">innerHTML</code>, and the node is appended to <code class="tok">body</code>.
+          After this line <code class="tok">backdrop</code> is truthy — the guard will block all future calls.</div>
+      </div>
+      <div class="row">
+        <div class="lref">51 — 54</div>
+        <div class="txt">Two close handlers wired once, at build time. <b>Backdrop-click</b> checks
+          <code class="tok">e.target === backdrop</code> so clicking <em>inside</em> the panel does not close
+          it — only a click on the darkened overlay itself does. The <b>×&nbsp;button</b> always closes.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 open / close / toggle ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — open / close / toggle</div>
+      <h2>Three functions, two CSS classes.</h2>
+      <p>Visibility is CSS-driven — the JS only adds and removes <code class="tok">.open</code>
+        on the backdrop and <code class="tok">.help-open</code> on <code class="tok">body</code>.
+        The stylesheet does the rest: transitions, z-index, pointer-events, and the
+        pressed state of the header button.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">help.js</span><span>lines 57 — 92</span></div>
+      <pre><div class="cl"><span class="ln">57</span><span class="ct">  <span class="k">function</span> <span class="f">isOpen</span>() {</span></div><div class="cl"><span class="ln">58</span><span class="ct">    <span class="k">return</span> backdrop?.classList.<span class="f">contains</span>(<span class="s">'open'</span>);</span></div><div class="cl"><span class="ln">59</span><span class="ct">  }</span></div><div class="cl"><span class="ln">60</span><span class="ct"></span></div><div class="cl"><span class="ln">61</span><span class="ct">  <span class="k">function</span> <span class="f">open</span>() {</span></div><div class="cl"><span class="ln">62</span><span class="ct">    <span class="f">build</span>();</span></div><div class="cl"><span class="ln">63</span><span class="ct">    backdrop.classList.<span class="f">add</span>(<span class="s">'open'</span>);</span></div><div class="cl"><span class="ln">64</span><span class="ct">    document.body.classList.<span class="f">add</span>(<span class="s">'help-open'</span>);</span></div><div class="cl"><span class="ln">65</span><span class="ct">    toggleBtn?.<span class="f">setAttribute</span>(<span class="s">'aria-pressed'</span>, <span class="s">'true'</span>);</span></div><div class="cl"><span class="ln">66</span><span class="ct">  }</span></div><div class="cl"><span class="ln">67</span><span class="ct"></span></div><div class="cl"><span class="ln">68</span><span class="ct">  <span class="k">function</span> <span class="f">close</span>() {</span></div><div class="cl"><span class="ln">69</span><span class="ct">    backdrop?.<span class="f">classList.remove</span>(<span class="s">'open'</span>);</span></div><div class="cl"><span class="ln">70</span><span class="ct">    document.body.classList.<span class="f">remove</span>(<span class="s">'help-open'</span>);</span></div><div class="cl"><span class="ln">71</span><span class="ct">    toggleBtn?.<span class="f">setAttribute</span>(<span class="s">'aria-pressed'</span>, <span class="s">'false'</span>);</span></div><div class="cl"><span class="ln">72</span><span class="ct">  }</span></div><div class="cl"><span class="ln">73</span><span class="ct"></span></div><div class="cl"><span class="ln">74</span><span class="ct">  <span class="k">function</span> <span class="f">toggle</span>() {</span></div><div class="cl"><span class="ln">75</span><span class="ct">    <span class="k">if</span> (<span class="f">isOpen</span>()) <span class="f">close</span>(); <span class="k">else</span> <span class="f">open</span>();</span></div><div class="cl"><span class="ln">76</span><span class="ct">  }</span></div><div class="cl"><span class="ln">77</span><span class="ct"></span></div><div class="cl"><span class="ln">78</span><span class="ct">  toggleBtn?.<span class="f">addEventListener</span>(<span class="s">'click'</span>, toggle);</span></div><div class="cl"><span class="ln">79</span><span class="ct"></span></div><div class="cl"><span class="ln">80</span><span class="ct">  document.<span class="f">addEventListener</span>(<span class="s">'keydown'</span>, (e) =&gt; {</span></div><div class="cl"><span class="ln">81</span><span class="ct">    <span class="k">if</span> (e.key === <span class="s">'Escape'</span> &amp;&amp; <span class="f">isOpen</span>()) {</span></div><div class="cl"><span class="ln">82</span><span class="ct">      e.<span class="f">stopImmediatePropagation</span>();</span></div><div class="cl"><span class="ln">83</span><span class="ct">      <span class="f">close</span>();</span></div><div class="cl"><span class="ln">84</span><span class="ct">      <span class="k">return</span>;</span></div><div class="cl"><span class="ln">85</span><span class="ct">    }</span></div><div class="cl"><span class="ln">86</span><span class="ct">    <span class="k">if</span> (e.key === <span class="s">'?'</span>) {</span></div><div class="cl"><span class="ln">87</span><span class="ct">      <span class="k">const</span> tag = e.target.tagName;</span></div><div class="cl"><span class="ln">88</span><span class="ct">      <span class="k">if</span> (tag === <span class="s">'INPUT'</span> || tag === <span class="s">'TEXTAREA'</span> || tag === <span class="s">'SELECT'</span>) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">89</span><span class="ct">      e.<span class="f">preventDefault</span>();</span></div><div class="cl"><span class="ln">90</span><span class="ct">      <span class="f">toggle</span>();</span></div><div class="cl"><span class="ln">91</span><span class="ct">    }</span></div><div class="cl"><span class="ln">92</span><span class="ct">  });</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">57 — 59</div>
+        <div class="txt"><code class="tok">isOpen()</code> uses optional chaining. Before <code class="tok">build()</code>
+          has run, <code class="tok">backdrop</code> is <code class="tok">null</code> — the <code class="tok">?.</code>
+          short-circuits to <code class="tok">undefined</code>, which is falsy. No null-check needed in callers.</div>
+      </div>
+      <div class="row">
+        <div class="lref">64 — 65</div>
+        <div class="txt"><b>Two class additions, not one.</b> <code class="tok">.open</code> on the backdrop
+          makes the overlay visible. <code class="tok">.help-open</code> on <code class="tok">body</code>
+          lets the stylesheet highlight the header <code class="tok">?</code>&nbsp;button — a purely visual
+          signal that the panel is active. The <code class="tok">aria-pressed</code> attribute carries the same
+          signal to assistive technology.</div>
+      </div>
+      <div class="row">
+        <div class="lref">82</div>
+        <div class="txt"><code class="tok">stopImmediatePropagation()</code> — not just <code class="tok">stopPropagation()</code>.
+          <b>keys.js</b> also listens for <code class="tok">Escape</code> on <code class="tok">document</code>;
+          this call prevents that second handler from firing and performing a redundant action
+          while the help overlay is consuming the keystroke.</div>
+      </div>
+      <div class="row">
+        <div class="lref">87 — 88</div>
+        <div class="txt">The typing-guard. <code class="tok">?</code> is a valid character in
+          <code class="tok">INPUT</code>, <code class="tok">TEXTAREA</code>, and <code class="tok">SELECT</code> fields —
+          if focus is in any of those, the keydown falls through unchanged. Only when focus is on
+          the page or a non-text element does <code class="tok">?</code> toggle the overlay.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="margin-top: 22px;">
+      <h4>The IIFE wrapper</h4>
+      <p>The entire module is wrapped in an immediately-invoked function expression —
+        <code class="tok">(function () { &hellip; })()</code>. <code class="tok">HTML</code>, <code class="tok">backdrop</code>,
+        and the four functions are private to the closure. Nothing leaks onto <code class="tok">window</code>.</p>
+    </div>
+
+    <div class="notes" style="margin-top: 14px;">
+      <div class="note reveal d2" style="--ac: var(--mist);">
+        <h4>The help overlay is documentation that ships inside the product</h4>
+        <p>It is the single canonical answer to "what does this UI do?" — but it is authored by hand
+          and must be kept in sync with <b>keys.js</b>, <b>peek.js</b>, <b>delete.js</b>,
+          <b>pin.js</b>, <b>edit.js</b>, and <b>search.js</b>. If any of those modules adds
+          a shortcut, the <code class="tok">HTML</code> string on line 5 is the only thing that needs
+          updating. There is no automated check that it is correct.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== pager ====================== -->
+<section>
+  <div class="wrap">
+    <div class="pager reveal d3">
+      <a class="prev" href="/technical-explanation/search/">
+        <div class="lbl">&larr; PREVIOUS</div>
+        <div class="nm"><span class="mono">search.js</span></div>
+      </a>
+      <a class="next" href="/technical-explanation/assets/">
+        <div class="lbl">NEXT &rarr;</div>
+        <div class="nm"><span class="mono">static assets</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/static/help.js — 98 lines, the keyboard-shortcut overlay.</span>
+    <span><a href="/technical-explanation/">&larr; all the files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

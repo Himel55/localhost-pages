@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>pubsub.py — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #a3c4c4; }   /* mist — pubsub.py */
+
+  /* page-local: the fan-out diagram */
+  .fan {
+    display: grid; grid-template-columns: 1fr; gap: 0;
+    border: 1px solid var(--line); border-radius: 4px;
+    background: var(--panel); overflow: hidden; margin-top: 22px;
+  }
+  .fan .frow {
+    display: grid; grid-template-columns: 150px 1fr;
+    border-bottom: 1px solid var(--line);
+    align-items: center;
+  }
+  .fan .frow:last-child { border-bottom: none; }
+  .fan .fk {
+    padding: 14px 16px; font-size: 12px; color: var(--accent);
+    border-right: 1px solid var(--line); align-self: stretch;
+    display: flex; align-items: center;
+  }
+  .fan .fv { padding: 13px 16px; font-size: 12.5px; color: var(--muted); }
+  .fan .fv b { color: var(--ink); font-weight: 500; }
+  .fan .fv code.tok { white-space: normal; }
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">pubsub.py</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">pubsub.py</span><br />is the <em>switchboard.</em></h1>
+    <p class="lede reveal d2">
+      The watcher notices a file changed. An open browser tab is waiting on the other side.
+      <b>pubsub.py</b> is the 26-line broker that connects them — no Redis, no message bus,
+      just one <code class="tok">defaultdict</code> of <code class="tok">asyncio.Queue</code>s.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">26</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">1</div><div class="l">class</div></div>
+      <div class="stat reveal d3"><div class="n">3</div><div class="l">methods</div></div>
+      <div class="stat reveal d3"><div class="n">2</div><div class="l">stdlib imports</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 purpose ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — what it is for</div>
+      <h2>A topic broker, in-process.</h2>
+      <p>Publish/subscribe in its smallest honest form: producers name a <em>topic</em>,
+        consumers ask for a <em>queue</em>, and a publish drops the topic name into every
+        queue listening on it.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">pubsub.py</span><span>lines 1 — 9</span></div>
+      <pre><div class="cl"><span class="ln">1</span><span class="ct"><span class="k">from</span> __future__ <span class="k">import</span> annotations</span></div><div class="cl"><span class="ln">2</span><span class="ct"></span></div><div class="cl"><span class="ln">3</span><span class="ct"><span class="k">import</span> asyncio</span></div><div class="cl"><span class="ln">4</span><span class="ct"><span class="k">from</span> collections <span class="k">import</span> defaultdict</span></div><div class="cl"><span class="ln">5</span><span class="ct"></span></div><div class="cl"><span class="ln">6</span><span class="ct"></span></div><div class="cl"><span class="ln">7</span><span class="ct"><span class="k">class</span> <span class="f">PubSub</span>:</span></div><div class="cl"><span class="ln">8</span><span class="ct">    <span class="s">"""Async fan-out: publish a topic name; each subscriber to that topic</span></span></div><div class="cl"><span class="ln">9</span><span class="ct">    <span class="s">gets the topic name dropped into its asyncio.Queue."""</span></span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">1</div>
+        <div class="txt"><code class="tok">from __future__ import annotations</code> makes every type annotation
+          a lazily-evaluated string. That is what lets line 12 write
+          <code class="tok">asyncio.Queue[str]</code> as a subscript without Python evaluating it at
+          class-definition time.</div>
+      </div>
+      <div class="row">
+        <div class="lref">3 — 4</div>
+        <div class="txt">The entire dependency list. <b>asyncio</b> supplies the queue primitive;
+          <b>defaultdict</b> supplies the auto-vivifying topic map. No third-party package — the
+          broker is pure standard library.</div>
+      </div>
+      <div class="row">
+        <div class="lref">8 — 9</div>
+        <div class="txt">The docstring states the contract precisely: the payload <em>is</em> the topic name.
+          A subscriber to <code class="tok">"myapp"</code> that receives a message receives the string
+          <code class="tok">"myapp"</code> — there is no separate event body.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>Why a 26-line broker is enough — no Redis</h4>
+      <p>A real message bus exists to cross <em>process</em> and <em>machine</em> boundaries and to
+        survive restarts. localhost-pages does neither: publisher (the watcher) and subscribers
+        (SSE handlers) live in the <b>same event loop, same process</b>. Messages need only travel
+        between coroutines, and a lost message on restart is irrelevant — the page just reloads.
+        An <code class="tok">asyncio.Queue</code> already <em>is</em> a single-process channel; PubSub
+        only adds topic routing on top.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 __init__ ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — construction</div>
+      <h2><span class="mono">__init__</span> &nbsp;one field, auto-vivifying.</h2>
+      <p>All the broker's state is a single dictionary mapping topic name to a set of queues.
+        The choice of <code class="tok">defaultdict(set)</code> erases every "does this key exist
+        yet?" branch from the methods below.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">pubsub.py</span><span>lines 11 — 12</span></div>
+      <pre><div class="cl"><span class="ln">11</span><span class="ct">    <span class="k">def</span> <span class="f">__init__</span>(self) -> <span class="k">None</span>:</span></div><div class="cl"><span class="ln">12</span><span class="ct">        self._subs: dict[str, set[asyncio.Queue[str]]] = <span class="f">defaultdict</span>(set)</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">12</div>
+        <div class="txt">The type reads as the data model: <b>topic name &rarr; set of queues</b>. Each queue
+          carries <code class="tok">str</code> messages — the topic names from the docstring.</div>
+      </div>
+      <div class="row">
+        <div class="lref">12</div>
+        <div class="txt">A <b>set</b>, not a list: subscribers are unordered and each must appear at most once.
+          It also makes <code class="tok">discard</code> in <code class="tok">unsubscribe</code> an
+          O(1) operation rather than a linear scan.</div>
+      </div>
+      <div class="row">
+        <div class="lref">12</div>
+        <div class="txt"><code class="tok">defaultdict(set)</code> means reading a never-seen topic returns a
+          fresh empty set instead of raising <code class="tok">KeyError</code>. <code class="tok">subscribe</code>
+          relies on this — <code class="tok">self._subs[topic].add(q)</code> works even on the first
+          subscriber to a brand-new topic.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--peach)">
+      <h4>The leading underscore is a deliberate boundary</h4>
+      <p><code class="tok">_subs</code> is private by convention. Callers never reach into the dict;
+        they only ever go through the three methods. That keeps the auto-vivification quirk —
+        reading a topic mutates the dict — contained inside this file, where line 21 is written to
+        account for it.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 subscribe ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — method one</div>
+      <h2><span class="mono">subscribe</span> &nbsp;hand out a queue.</h2>
+      <p>A consumer calls this to join a topic. It gets back its own private
+        <code class="tok">asyncio.Queue</code> — the receiving end of the channel.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">pubsub.py</span><span>lines 14 — 17</span></div>
+      <pre><div class="cl"><span class="ln">14</span><span class="ct">    <span class="k">def</span> <span class="f">subscribe</span>(self, topic: str) -> asyncio.Queue[str]:</span></div><div class="cl"><span class="ln">15</span><span class="ct">        q: asyncio.Queue[str] = asyncio.<span class="f">Queue</span>()</span></div><div class="cl"><span class="ln">16</span><span class="ct">        self._subs[topic].<span class="f">add</span>(q)</span></div><div class="cl"><span class="ln">17</span><span class="ct">        <span class="k">return</span> q</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">15</div>
+        <div class="txt">A brand-new, unbounded queue per call. Two subscribers to the same topic each get a
+          <b>distinct</b> queue object — fan-out, not a shared work queue.</div>
+      </div>
+      <div class="row">
+        <div class="lref">16</div>
+        <div class="txt">Register the queue under the topic. If the topic has never been seen,
+          <code class="tok">defaultdict</code> creates the empty set first; <code class="tok">.add</code>
+          then inserts the queue. No branch, no <code class="tok">setdefault</code>.</div>
+      </div>
+      <div class="row">
+        <div class="lref">17</div>
+        <div class="txt">The queue is returned to the caller. From here the broker and the caller hold the
+          <em>same</em> object — the broker writes one end, the caller reads the other.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--mist)">
+      <h4>Where this call comes from</h4>
+      <p>It is <code class="tok">server.py</code>'s <code class="tok">/__events</code> route. When a browser
+        opens the SSE stream, the handler calls <code class="tok">pubsub.subscribe(topic)</code> and
+        then loops <code class="tok">await q.get()</code> — every message it pulls becomes a
+        <code class="tok">change</code> event written down the wire. The returned queue <em>is</em> that
+        tab's live-reload mailbox.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 unsubscribe ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — method two</div>
+      <h2><span class="mono">unsubscribe</span> &nbsp;leave, and clean up.</h2>
+      <p>The mirror of <code class="tok">subscribe</code>. It removes one queue from a topic — and,
+        crucially, removes the topic itself once the last subscriber is gone.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">pubsub.py</span><span>lines 19 — 22</span></div>
+      <pre><div class="cl"><span class="ln">19</span><span class="ct">    <span class="k">def</span> <span class="f">unsubscribe</span>(self, topic: str, q: asyncio.Queue[str]) -> <span class="k">None</span>:</span></div><div class="cl"><span class="ln">20</span><span class="ct">        self._subs[topic].<span class="f">discard</span>(q)</span></div><div class="cl"><span class="ln">21</span><span class="ct">        <span class="k">if not</span> self._subs[topic]:</span></div><div class="cl"><span class="ln">22</span><span class="ct">            self._subs.<span class="f">pop</span>(topic, <span class="k">None</span>)</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">20</div>
+        <div class="txt"><code class="tok">discard</code>, not <code class="tok">remove</code>: it silently does nothing if
+          the queue is already absent. Calling <code class="tok">unsubscribe</code> twice — or with a
+          stale queue — is harmless rather than a <code class="tok">KeyError</code>.</div>
+      </div>
+      <div class="row">
+        <div class="lref">21</div>
+        <div class="txt">An empty set is falsy. After the <code class="tok">discard</code>, if no queues remain on
+          this topic the branch fires. <b>Subtle:</b> reading <code class="tok">self._subs[topic]</code>
+          here would itself re-create the topic via <code class="tok">defaultdict</code> if line 20 had
+          deleted it — but line 20 only empties the set, never deletes the key, so the read is safe.</div>
+      </div>
+      <div class="row">
+        <div class="lref">22</div>
+        <div class="txt"><code class="tok">pop(topic, None)</code> deletes the now-empty topic. The
+          <code class="tok">None</code> default makes the delete idempotent. This is the only line that
+          shrinks <code class="tok">_subs</code> — without it, every app ever watched would leave a
+          permanent empty-set entry behind.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--rose)">
+      <h4>Why the cleanup matters</h4>
+      <p>The <code class="tok">/__events</code> handler calls <code class="tok">unsubscribe</code> from a
+        <code class="tok">finally</code> block — it runs the moment a browser tab disconnects. Without
+        line 21–22, a long-running server that has served hundreds of short-lived tabs would
+        accumulate hundreds of dead topic keys. Pruning empty topics keeps <code class="tok">_subs</code>
+        proportional to <em>currently open</em> connections, not lifetime traffic.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 05 publish ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">05 — method three</div>
+      <h2><span class="mono">publish</span> &nbsp;the fan-out.</h2>
+      <p>The only <code class="tok">async</code> method, and the one the watcher calls. It drops the
+        topic name into every queue currently subscribed to that topic.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">pubsub.py</span><span>lines 24 — 26</span></div>
+      <pre><div class="cl"><span class="ln">24</span><span class="ct">    <span class="k">async def</span> <span class="f">publish</span>(self, topic: str) -> <span class="k">None</span>:</span></div><div class="cl"><span class="ln">25</span><span class="ct">        <span class="k">for</span> q <span class="k">in</span> <span class="f">list</span>(self._subs.<span class="f">get</span>(topic, ())):</span></div><div class="cl"><span class="ln">26</span><span class="ct">            <span class="k">await</span> q.<span class="f">put</span>(topic)</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">25</div>
+        <div class="txt"><code class="tok">.get(topic, ())</code> — not <code class="tok">self._subs[topic]</code>.
+          The empty-tuple default looks the topic up <b>without</b> mutating the dict. A publish to a
+          topic nobody is listening on must not create a topic entry that <code class="tok">unsubscribe</code>
+          would then never get the chance to clean up.</div>
+      </div>
+      <div class="row">
+        <div class="lref">25</div>
+        <div class="txt"><b>Why <code class="tok">list(...)</code> wraps the set.</b> The loop iterates a
+          <em>snapshot</em>. The very next line awaits — yielding control back to the event loop —
+          and a subscriber waking up may call <code class="tok">unsubscribe</code>, mutating
+          <code class="tok">_subs[topic]</code>. Iterating the live set across an
+          <code class="tok">await</code> would risk a "set changed size during iteration"
+          <code class="tok">RuntimeError</code>. The copy makes the recipient list immune to that.</div>
+      </div>
+      <div class="row">
+        <div class="lref">26</div>
+        <div class="txt"><code class="tok">await q.put(topic)</code> appends the topic name to each queue.
+          The queues are unbounded, so <code class="tok">put</code> never actually blocks — but it is
+          still <code class="tok">await</code>ed because <code class="tok">Queue.put</code> is a coroutine.
+          Every subscribed tab now has a message waiting.</div>
+      </div>
+    </div>
+
+    <div class="fan reveal d2">
+      <div class="frow">
+        <div class="fk">producer</div>
+        <div class="fv"><b>Watcher</b> sees a file change &rarr; <code class="tok">await pubsub.publish("myapp")</code></div>
+      </div>
+      <div class="frow">
+        <div class="fk">routing</div>
+        <div class="fv"><code class="tok">publish</code> looks up <code class="tok">_subs["myapp"]</code> &rarr; a set of N queues</div>
+      </div>
+      <div class="frow">
+        <div class="fk">fan-out</div>
+        <div class="fv">the string <code class="tok">"myapp"</code> is <code class="tok">put</code> into all N queues</div>
+      </div>
+      <div class="frow">
+        <div class="fk">consumers</div>
+        <div class="fv">N waiting <code class="tok">/__events</code> handlers wake from <code class="tok">q.get()</code> &rarr; each writes an SSE <code class="tok">change</code> frame &rarr; N browser tabs reload</div>
+      </div>
+    </div>
+
+    <div class="note reveal d3" style="--ac:var(--mist)">
+      <h4>How this closes the live-reload loop</h4>
+      <p><code class="tok">watcher.py</code> publishes two kinds of topic: an <b>app name</b> when that
+        app's files change, and <code class="tok">INDEX_TOPIC</code> (<code class="tok">"__index"</code>)
+        when the symlinks directory itself changes. <code class="tok">server.py</code> subscribes a tab
+        to one of those topics depending on the <code class="tok">?app=</code> query parameter. PubSub
+        is the seam in the middle — the watcher and the HTTP layer never reference each other, only
+        this broker. Swap the watcher out and PubSub would not notice.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 06 takeaways ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">06 — step back</div>
+      <h2>Four things to take away.</h2>
+    </div>
+    <div class="notes">
+      <div class="note reveal d1">
+        <h4>The payload is the topic name</h4>
+        <p>There is no event object, no JSON. A subscriber receiving <code class="tok">"myapp"</code>
+          knows only "<em>something under myapp changed</em>" — which is exactly enough to trigger a
+          <code class="tok">location.reload()</code>. Minimal protocol, minimal coupling.</p>
+      </div>
+      <div class="note reveal d1" style="--ac:var(--sage)">
+        <h4><code class="tok" style="font-size:.82em">defaultdict</code> removes every existence check</h4>
+        <p><code class="tok">subscribe</code> can <code class="tok">.add</code> blind; <code class="tok">unsubscribe</code>
+          can <code class="tok">.discard</code> blind. The one place auto-vivification would bite —
+          <code class="tok">publish</code> — sidesteps it with <code class="tok">.get(topic, ())</code>.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--mist)">
+        <h4>Snapshot before you await</h4>
+        <p><code class="tok">list(...)</code> on line 25 is the one non-obvious line in the file. It is
+          the discipline of never iterating a mutable collection across an
+          <code class="tok">await</code> point in async code — concurrent mutation is otherwise a real
+          possibility, not a theoretical one.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--peach)">
+        <h4>It cleans up after itself</h4>
+        <p><code class="tok">_subs</code> only ever holds topics with live subscribers. The broker has
+          no background task, no expiry timer — just the discipline that <code class="tok">unsubscribe</code>
+          prunes empty topics the instant they empty.</p>
+      </div>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/bootstrap/"><div class="lbl">&larr; PREVIOUS</div><div class="nm"><span class="mono">bootstrap.py</span></div></a>
+      <a class="next" href="/technical-explanation/inject/"><div class="lbl">NEXT &rarr;</div><div class="nm"><span class="mono">inject.py</span></div></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/pubsub.py — 26 lines, 1 class, 3 methods.</span>
+    <span><a href="/technical-explanation/">&larr; all twelve files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

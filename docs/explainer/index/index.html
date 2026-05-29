@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>index.py — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>:root{ --accent: #c8a3c4; }</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">index.py</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">index.py</span><br />only <em>renders.</em></h1>
+    <p class="lede reveal d2">
+      Twenty-nine lines, one public function. <b>index.py</b> takes the list of <b>App</b>
+      records that <code class="tok">registry.py</code> already discovered and turns it into the HTML
+      of the landing page. It finds nothing and decides nothing — it is a pure
+      <b>data &rarr; document</b> step built on a single Jinja2 environment.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">29</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">1</div><div class="l">public fn</div></div>
+      <div class="stat reveal d3"><div class="n">1</div><div class="l">Jinja2 env</div></div>
+      <div class="stat reveal d3"><div class="n">8</div><div class="l">fields per card</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 imports ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — top of the file</div>
+      <h2>Imports and the template path.</h2>
+      <p>Four lines of imports name the whole job: a <code class="tok">Path</code> to the
+        templates, the three pieces of Jinja2 needed to render them, and the <code class="tok">App</code>
+        type this module consumes but never produces.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">index.py</span><span>lines 1 — 9</span></div>
+      <pre><div class="cl"><span class="ln">1</span><span class="ct"><span class="k">from</span> __future__ <span class="k">import</span> annotations</span></div><div class="cl"><span class="ln">2</span><span class="ct"></span></div><div class="cl"><span class="ln">3</span><span class="ct"><span class="k">from</span> pathlib <span class="k">import</span> Path</span></div><div class="cl"><span class="ln">4</span><span class="ct"></span></div><div class="cl"><span class="ln">5</span><span class="ct"><span class="k">from</span> jinja2 <span class="k">import</span> Environment, FileSystemLoader, select_autoescape</span></div><div class="cl"><span class="ln">6</span><span class="ct"></span></div><div class="cl"><span class="ln">7</span><span class="ct"><span class="k">from</span> .registry <span class="k">import</span> App</span></div><div class="cl"><span class="ln">8</span><span class="ct"></span></div><div class="cl"><span class="ln">9</span><span class="ct">_TEMPLATES = Path(__file__).parent / <span class="s">"templates"</span></span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">1</div>
+        <div class="txt"><code class="tok">from __future__ import annotations</code> defers evaluation of type
+          hints, so the modern <code class="tok">list[App]</code> syntax on line 16 costs nothing at runtime.</div>
+      </div>
+      <div class="row">
+        <div class="lref">5</div>
+        <div class="txt">The three Jinja2 names used below: <b>Environment</b> is the renderer,
+          <b>FileSystemLoader</b> reads templates off disk, and <b>select_autoescape</b> builds the
+          escaping policy.</div>
+      </div>
+      <div class="row">
+        <div class="lref">7</div>
+        <div class="txt"><code class="tok">App</code> is imported from <code class="tok">registry.py</code> — the typed,
+          frozen dataclass that <code class="tok">scan()</code> returns. This module reads its fields; it never
+          constructs one.</div>
+      </div>
+      <div class="row">
+        <div class="lref">9</div>
+        <div class="txt"><b>_TEMPLATES</b> resolves to <code class="tok">templates/</code> beside this file,
+          regardless of the process's working directory. <code class="tok">__file__</code> is the absolute path of
+          <code class="tok">index.py</code>, so <code class="tok">.parent / "templates"</code> is stable.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--peach)">
+      <h4>Why <code class="tok" style="font-size:.82em">_TEMPLATES</code> and <code class="tok" style="font-size:.82em">_env</code> are underscore-prefixed</h4>
+      <p>The leading underscore marks them as module-private. The only name this module exposes is
+        <code class="tok">render_index</code> — the environment and its template directory are implementation
+        detail that callers never touch.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 the environment ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — module-level state</div>
+      <h2>One <span class="mono">Environment</span>, built once.</h2>
+      <p>The Jinja2 environment is created at import time, not inside the function. It is the only
+        piece of state in the file — and the only place security is configured.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">index.py</span><span>lines 10 — 13</span></div>
+      <pre><div class="cl"><span class="ln">10</span><span class="ct">_env = <span class="f">Environment</span>(</span></div><div class="cl"><span class="ln">11</span><span class="ct">    loader=<span class="f">FileSystemLoader</span>(_TEMPLATES),</span></div><div class="cl"><span class="ln">12</span><span class="ct">    autoescape=<span class="f">select_autoescape</span>([<span class="s">"html"</span>]),</span></div><div class="cl"><span class="ln">13</span><span class="ct">)</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">10</div>
+        <div class="txt">The <b>Environment</b> is the compiled, cached renderer. Assigning it to a module-level
+          name means it is constructed exactly once — the first time <code class="tok">index.py</code> is imported.</div>
+      </div>
+      <div class="row">
+        <div class="lref">11</div>
+        <div class="txt"><b>FileSystemLoader</b> points Jinja2 at <code class="tok">_TEMPLATES</code>. When
+          <code class="tok">get_template("index.html")</code> is called later, the loader reads that directory to
+          find the file and the environment caches the compiled result.</div>
+      </div>
+      <div class="row">
+        <div class="lref">12</div>
+        <div class="txt"><b>select_autoescape(["html"])</b> turns on autoescaping for templates whose name ends in
+          <code class="tok">.html</code> — so every value interpolated into the page is HTML-escaped by default.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>Why autoescaping is on</h4>
+      <p>The template renders app-supplied <code class="tok">title</code> and <code class="tok">description</code>
+        strings — values that ultimately come from a <code class="tok">meta.json</code> file inside whatever
+        directory a user symlinked in. Those are untrusted. With autoescaping on, a title containing
+        <code class="tok">&lt;script&gt;</code> is emitted as inert text, not executed. It is the one line in this
+        file standing between the registry and a stored-XSS hole.</p>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--mist)">
+      <h4>Why built once at module level, not per request</h4>
+      <p>A Jinja2 <code class="tok">Environment</code> compiles and caches templates. Rebuilding it on every
+        call to <code class="tok">render_index</code> would re-parse <code class="tok">index.html</code> on every
+        page load and throw the cache away each time. Defining <code class="tok">_env</code> at module scope
+        means the template is compiled once and reused for the life of the process — the function below just
+        feeds it data.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 render_index ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — the only function</div>
+      <h2><span class="mono">render_index()</span> — data into a page.</h2>
+      <p>One signature, three moves: flatten each <code class="tok">App</code> into a plain dict, count the
+        broken ones, hand the lot to the template. Called by <code class="tok">server.py</code>'s
+        <code class="tok">GET /</code> route on every hit.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">index.py</span><span>lines 16 — 29</span></div>
+      <pre><div class="cl"><span class="ln">16</span><span class="ct"><span class="k">def</span> <span class="f">render_index</span>(apps: list[App]) -> str:</span></div><div class="cl"><span class="ln">17</span><span class="ct">    enriched = [</span></div><div class="cl"><span class="ln">18</span><span class="ct">        {</span></div><div class="cl"><span class="ln">19</span><span class="ct">            <span class="s">"name"</span>: a.name, <span class="s">"title"</span>: a.title, <span class="s">"description"</span>: a.description,</span></div><div class="cl"><span class="ln">20</span><span class="ct">            <span class="s">"icon"</span>: a.icon, <span class="s">"icon_svg"</span>: a.icon_svg, <span class="s">"accent"</span>: a.accent,</span></div><div class="cl"><span class="ln">21</span><span class="ct">            <span class="s">"error"</span>: a.error,</span></div><div class="cl"><span class="ln">22</span><span class="ct">            <span class="s">"mtime_iso"</span>: a.last_modified.<span class="f">isoformat</span>() <span class="k">if</span> a.last_modified <span class="k">else</span> <span class="s">""</span>,</span></div><div class="cl"><span class="ln">23</span><span class="ct">        }</span></div><div class="cl"><span class="ln">24</span><span class="ct">        <span class="k">for</span> a <span class="k">in</span> apps</span></div><div class="cl"><span class="ln">25</span><span class="ct">    ]</span></div><div class="cl"><span class="ln">26</span><span class="ct">    broken = <span class="f">sum</span>(<span class="n">1</span> <span class="k">for</span> a <span class="k">in</span> apps <span class="k">if</span> a.error)</span></div><div class="cl"><span class="ln">27</span><span class="ct">    <span class="k">return</span> _env.<span class="f">get_template</span>(<span class="s">"index.html"</span>).<span class="f">render</span>(</span></div><div class="cl"><span class="ln">28</span><span class="ct">        apps=enriched, count=<span class="f">len</span>(apps), broken=broken,</span></div><div class="cl"><span class="ln">29</span><span class="ct">    )</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">16</div>
+        <div class="txt">Takes a <code class="tok">list[App]</code> — the exact return type of
+          <code class="tok">registry.scan()</code> — and promises a <code class="tok">str</code> of HTML. The whole
+          contract is in the signature.</div>
+      </div>
+      <div class="row">
+        <div class="lref">17 — 25</div>
+        <div class="txt">A list comprehension that <b>flattens each frozen <code class="tok">App</code> dataclass into a
+          plain <code class="tok">dict</code></b>. The template receives ordinary dicts, not custom objects —
+          nothing in the template needs to know the <code class="tok">App</code> type exists.</div>
+      </div>
+      <div class="row">
+        <div class="lref">19 — 21</div>
+        <div class="txt">Seven fields copied straight across: <code class="tok">name</code>, <code class="tok">title</code>,
+          <code class="tok">description</code>, <code class="tok">icon</code>, <code class="tok">icon_svg</code>,
+          <code class="tok">accent</code>, <code class="tok">error</code>. The dict deliberately drops
+          <code class="tok">App.target</code> — the resolved filesystem path is server-side detail the page never
+          shows.</div>
+      </div>
+      <div class="row">
+        <div class="lref">22</div>
+        <div class="txt">The one transformed field. <code class="tok">App.last_modified</code> is a
+          <code class="tok">datetime | None</code>; this turns it into an ISO-8601 string, or
+          <code class="tok">""</code> when the app is broken and has no timestamp. The
+          <code class="tok">if &hellip; else</code> guards the <code class="tok">None</code> case so
+          <code class="tok">.isoformat()</code> is never called on nothing.</div>
+      </div>
+      <div class="row">
+        <div class="lref">26</div>
+        <div class="txt"><code class="tok">broken</code> counts apps whose <code class="tok">error</code> field is set.
+          A generator feeds <code class="tok">sum</code> a <code class="tok">1</code> per failing app — the template
+          uses this for a header summary without having to scan the list itself.</div>
+      </div>
+      <div class="row">
+        <div class="lref">27 — 29</div>
+        <div class="txt"><code class="tok">get_template("index.html")</code> fetches the compiled template from the
+          environment's cache, then <code class="tok">.render()</code> binds three names into it:
+          <code class="tok">apps</code> (the dict list), <code class="tok">count</code> (total), and
+          <code class="tok">broken</code>. The rendered HTML string is returned.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--sage)">
+      <h4>Why <code class="tok" style="font-size:.82em">mtime_iso</code> is pre-formatted here</h4>
+      <p>Line 22 does the <code class="tok">None</code>-check and the <code class="tok">.isoformat()</code> call
+        in Python, before the template ever runs. The template receives a finished string and can interpolate it
+        directly — no date logic, no conditional, no formatting filter in the markup. Keeping that work in
+        <code class="tok">index.py</code> leaves <code class="tok">index.html</code> a logic-free document of
+        slots.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 separation of concerns ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — the shape of it</div>
+      <h2>Find, render, display — three jobs, three files.</h2>
+      <p>The reason this file is only 29 lines is that it does exactly one of those jobs. The other two
+        live elsewhere, and the boundaries between them are sharp.</p>
+    </div>
+
+    <div class="rows reveal d1">
+      <div class="drow">
+        <div class="dk">registry.py</div>
+        <div class="dv"><b>Finds the facts.</b> <code class="tok">scan()</code> walks the symlinks directory,
+          reads each <code class="tok">meta.json</code>, resolves icons and accents, and returns typed,
+          frozen <code class="tok">App</code> objects — including <code class="tok">App</code>s that carry an
+          <code class="tok">error</code>.</div>
+      </div>
+      <div class="drow">
+        <div class="dk">index.py</div>
+        <div class="dv"><b>Renders the facts.</b> Takes those <code class="tok">App</code> objects, converts
+          them to plain dicts, counts the broken ones, and asks Jinja2 for HTML. It performs no
+          filesystem access and makes no decisions about <em>what</em> an app is.</div>
+      </div>
+      <div class="drow">
+        <div class="dk">templates/index.html</div>
+        <div class="dv"><b>Displays the facts.</b> A logic-free Jinja2 template that lays the dicts out as
+          cards. Every value it shows arrives pre-computed.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>The typed-object &rarr; plain-dict handoff</h4>
+      <p>The <code class="tok">App</code> dataclass is the right shape for Python code: frozen, typed,
+        attribute access, easy to test. A Jinja2 template wants something simpler. Line 17's comprehension is the
+        deliberate seam between the two worlds — typed objects on the registry side, plain dicts on the template
+        side. That conversion is most of what <code class="tok">render_index</code> exists to do.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 05 worth noticing ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">05 — step back</div>
+      <h2>Four things to take away.</h2>
+    </div>
+    <div class="notes">
+      <div class="note reveal d1">
+        <h4>This file finds nothing</h4>
+        <p>There is not one filesystem call inside <code class="tok">render_index</code>. It receives a
+          ready-made <code class="tok">list[App]</code> and only reshapes it. All discovery — symlinks,
+          <code class="tok">meta.json</code>, broken-link detection — happened earlier, in
+          <code class="tok">registry.py</code>.</p>
+      </div>
+      <div class="note reveal d1" style="--ac:var(--sage)">
+        <h4>Autoescaping is the security boundary</h4>
+        <p>App titles and descriptions are untrusted, user-supplied strings.
+          <code class="tok">select_autoescape(["html"])</code> on line 12 is what makes interpolating them into
+          the page safe — the single configuration choice that matters most in this file.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--mist)">
+        <h4>The environment is built once</h4>
+        <p><code class="tok">_env</code> lives at module scope, so the template is compiled and cached on
+          first import and reused for every request. <code class="tok">render_index</code> stays a thin,
+          stateless function over that shared, warm environment.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--peach)">
+        <h4>The template stays logic-free</h4>
+        <p>Dropping <code class="tok">target</code>, pre-formatting <code class="tok">mtime_iso</code>, and
+          pre-counting <code class="tok">broken</code> all push computation into Python. By the time
+          <code class="tok">index.html</code> runs, it has nothing left to decide — just slots to fill.</p>
+      </div>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/registry/"><div class="lbl">&larr; PREVIOUS</div><div class="nm"><span class="mono">registry.py</span></div></a>
+      <a class="next" href="/technical-explanation/icons/"><div class="lbl">NEXT &rarr;</div><div class="nm"><span class="mono">icons.py</span></div></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/index.py — 29 lines, 1 public function, 1 Jinja2 environment.</span>
+    <span><a href="/technical-explanation/">&larr; all twelve files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

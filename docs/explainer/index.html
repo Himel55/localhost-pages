@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>localhost-pages — the source, explained</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  /* home-only: the architecture diagram */
+  .diagram {
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, var(--panel) 0%, var(--bg-deep) 100%);
+    border-radius: 4px;
+    padding: 30px 28px 22px;
+    overflow-x: auto;
+  }
+  .diagram svg {
+    display: block;
+    width: 100%;
+    min-width: 760px;
+    height: auto;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 22px;
+    margin-top: 20px; padding-top: 18px;
+    border-top: 1px solid var(--line);
+    font-size: 12px; color: var(--muted);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 9px; }
+  .legend i { width: 22px; height: 0; border-top-width: 2px; border-top-style: solid; }
+  .legend .l-req { border-top-color: var(--faint); }
+  .legend .l-loop { border-top-color: var(--mist); }
+  .legend b { color: var(--ink); font-weight: 500; }
+
+  /* home-only: the mental-model panel */
+  .idea {
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    background: linear-gradient(180deg, var(--panel) 0%, var(--bg-deep) 100%);
+    padding: 44px 48px;
+    border-radius: 4px;
+    position: relative;
+  }
+  .idea .mark {
+    font-family: 'Instrument Serif', serif;
+    font-size: 110px; line-height: 0;
+    color: var(--line);
+    position: absolute; top: 52px; left: 22px;
+    user-select: none;
+  }
+  .idea blockquote {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(24px, 3.4vw, 38px);
+    line-height: 1.3;
+    color: var(--ink);
+  }
+  .idea blockquote em { font-style: italic; color: var(--sage); }
+  .idea .src { margin-top: 22px; font-size: 13px; color: var(--faint); }
+  @media (max-width: 720px) {
+    .idea { padding: 34px 26px; }
+    .idea .mark { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><span class="here">technical-explanation</span></span>
+    <span class="live"><span class="dot"></span> served &amp; auto-reloading via the app itself</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">A guided source tour</div>
+    <h1 class="reveal d1">The source,<br />read <em>line by line.</em></h1>
+    <p class="lede reveal d2">
+      <b>localhost-pages</b> is an always-on local web server that gathers the HTML output of many
+      small tools into one place — drop a symlink, get a card at <code class="tok">localhost/</code>,
+      with live reload. Its entire source is twelve Python files and roughly 820 lines — plus the
+      front-end it serves: a Jinja2 template, a stylesheet, eleven little scripts and a bundle of icons.
+      This site gives <b>each file its own page</b>. And it is itself one of the registered apps —
+      you are reading the docs <em>through</em> the machine they describe.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">12</div><div class="l">source files</div></div>
+      <div class="stat reveal d2"><div class="n">~820</div><div class="l">lines of Python</div></div>
+      <div class="stat reveal d3"><div class="n">7</div><div class="l">HTTP routes</div></div>
+      <div class="stat reveal d3"><div class="n">0</div><div class="l">databases</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 mental model ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — before you read anything</div>
+      <h2>Hold one sentence in your head.</h2>
+    </div>
+    <div class="idea reveal d1">
+      <div class="mark">&ldquo;</div>
+      <blockquote>
+        The server is a <em>thin shell</em> over the filesystem.
+        <code class="tok" style="font-size:.62em;color:var(--sage)">symlinks/</code>
+        is the only source of truth — the registry just <em>lists</em> it,
+        the server just <em>serves</em> it, the watcher just <em>watches</em> it,
+        and SSE just <em>tells browsers</em> when to reload.
+      </blockquote>
+      <div class="src">Every file below is one verb in that sentence. No hidden state, no cache, no database.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 the shape of it ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — the shape of it</div>
+      <h2>How the pieces fit.</h2>
+      <p>Three layers. On top, the world outside the process — the operating system, whose
+        <code class="tok">pf</code> packet filter redirects <code class="tok">:80</code> to the server's
+        <code class="tok">127.0.0.1:8080</code> (so it never needs root), and the <code class="tok">symlinks/</code>
+        directory on disk. In the middle, the twelve-file Python server. Underneath, the front-end it renders and
+        streams to your browser. Grey is the request&ndash;response path; the
+        <span style="color:var(--mist)">teal loop</span> is live-reload.</p>
+    </div>
+
+    <div class="diagram reveal d1">
+      <svg viewBox="0 0 920 880" role="img"
+           aria-label="Architecture of localhost-pages: uvicorn binds the server to 127.0.0.1:8080 and the operating system's pf packet filter redirects port 80 to it; the symlinks directory on disk holds the apps; a twelve-file Python server reads them, renders an index, and streams a live-reload loop over server-sent events to the front-end running in the browser.">
+        <defs>
+          <marker id="arF" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+            <path d="M0,0 L7,3 L0,6 z" fill="#7a7290" />
+          </marker>
+          <marker id="arL" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+            <path d="M0,0 L7,3 L0,6 z" fill="#a3c4c4" />
+          </marker>
+        </defs>
+
+        <!-- ===== band ① external systems ===== -->
+        <text x="30" y="40" fill="var(--faint)" font-size="11.5" letter-spacing="2.6" font-weight="600">① OUTSIDE THE PROCESS</text>
+
+        <!-- OS -->
+        <rect x="30" y="54" width="300" height="78" rx="5" fill="var(--panel)" stroke="var(--line)" />
+        <rect x="30" y="60" width="3" height="66" fill="var(--peach)" />
+        <text x="50" y="88" fill="var(--ink)" font-size="14" font-weight="600">Operating system &#183; pf</text>
+        <text x="50" y="110" fill="var(--muted)" font-size="11.5">redirects :80 &#8594; 127.0.0.1:8080</text>
+
+        <!-- disk -->
+        <rect x="560" y="54" width="330" height="78" rx="5" fill="var(--panel)" stroke="var(--line)" />
+        <rect x="560" y="60" width="3" height="66" fill="var(--sage)" />
+        <text x="580" y="82" fill="var(--ink)" font-size="14" font-weight="600">symlinks/ &#160;&#8212;&#160; the disk</text>
+        <text x="580" y="104" fill="var(--muted)" font-size="11.5">one symlink per registered app</text>
+        <text x="580" y="122" fill="var(--faint)" font-size="11.5">the only source of truth</text>
+
+        <!-- ===== band ② the server ===== -->
+        <rect x="30" y="206" width="860" height="356" rx="8" fill="var(--bg-deep)" stroke="var(--line)" />
+        <text x="52" y="236" fill="var(--muted)" font-size="11.5" letter-spacing="2.4" font-weight="600">② THE SERVER &#160;&#183;&#160; ONE UVICORN PROCESS &#160;&#183;&#160; TWELVE PYTHON FILES</text>
+
+        <!-- top row: entry, hub, registry, watcher -->
+        <!-- __main__.py -->
+        <rect x="52" y="258" width="216" height="64" rx="5" fill="var(--panel)" stroke="var(--line)" />
+        <rect x="52" y="264" width="3" height="52" fill="var(--peach)" />
+        <text x="70" y="284" fill="var(--ink)" font-size="13" font-weight="600">__main__.py</text>
+        <text x="70" y="304" fill="var(--muted)" font-size="10.5">uvicorn &#8594; 127.0.0.1:8080</text>
+
+        <!-- server.py (hub) -->
+        <rect x="300" y="254" width="226" height="72" rx="5" fill="var(--panel)" stroke="var(--lavender)" />
+        <rect x="300" y="260" width="3" height="60" fill="var(--lavender)" />
+        <text x="318" y="282" fill="var(--ink)" font-size="13" font-weight="600">server.py &#183; create_app()</text>
+        <text x="318" y="302" fill="var(--muted)" font-size="10.5">the spine &#183; 7 HTTP routes</text>
+
+        <!-- registry.py -->
+        <rect x="560" y="258" width="150" height="64" rx="5" fill="var(--panel)" stroke="var(--line)" />
+        <rect x="560" y="264" width="3" height="52" fill="var(--sage)" />
+        <text x="576" y="284" fill="var(--ink)" font-size="13" font-weight="600">registry.py</text>
+        <text x="576" y="304" fill="var(--muted)" font-size="10.5">scan() &#8594; App[]</text>
+
+        <!-- watcher.py -->
+        <rect x="726" y="258" width="150" height="64" rx="5" fill="var(--panel)" stroke="var(--line)" />
+        <rect x="726" y="264" width="3" height="52" fill="var(--powder)" />
+        <text x="742" y="284" fill="var(--ink)" font-size="13" font-weight="600">watcher.py</text>
+        <text x="742" y="304" fill="var(--muted)" font-size="10.5">watchfiles</text>
+
+        <!-- bottom row: inject, pubsub, index pipeline -->
+        <!-- inject.py -->
+        <rect x="52" y="466" width="216" height="62" rx="5" fill="var(--panel)" stroke="var(--line)" />
+        <rect x="52" y="472" width="3" height="50" fill="var(--rose)" />
+        <text x="70" y="492" fill="var(--ink)" font-size="13" font-weight="600">inject.py</text>
+        <text x="70" y="512" fill="var(--muted)" font-size="10.5">adds reload.js to HTML</text>
+
+        <!-- pubsub.py -->
+        <rect x="300" y="466" width="226" height="62" rx="5" fill="var(--panel)" stroke="var(--line)" />
+        <rect x="300" y="472" width="3" height="50" fill="var(--mist)" />
+        <text x="318" y="492" fill="var(--ink)" font-size="13" font-weight="600">pubsub.py</text>
+        <text x="318" y="512" fill="var(--muted)" font-size="10.5">async fan-out to subscribers</text>
+
+        <!-- index.py + template -->
+        <rect x="560" y="466" width="316" height="62" rx="5" fill="var(--panel)" stroke="var(--line)" />
+        <rect x="560" y="472" width="3" height="50" fill="var(--mauve)" />
+        <text x="578" y="492" fill="var(--ink)" font-size="13" font-weight="600">index.py + icons + accents</text>
+        <text x="578" y="512" fill="var(--muted)" font-size="10.5">Jinja2 &#8594; the index page HTML</text>
+
+        <!-- bootstrap.py: first-run seeding, off the request path -->
+        <rect x="52" y="372" width="216" height="60" rx="5" fill="var(--panel)" stroke="var(--line)" />
+        <rect x="52" y="378" width="3" height="48" fill="#c9b6a0" />
+        <text x="70" y="398" fill="var(--ink)" font-size="13" font-weight="600">bootstrap.py</text>
+        <text x="70" y="418" fill="var(--muted)" font-size="10.5">seeds symlinks/ on first run</text>
+        <polyline points="340,326 340,350 160,350 160,370" fill="none" stroke="#7a7290" stroke-width="1.3" marker-end="url(#arF)" />
+        <text x="186" y="344" fill="var(--faint)" font-size="10">lifespan seeds</text>
+
+        <!-- internal arrows -->
+        <!-- hub drives the render pipeline: server.py -> registry -->
+        <line x1="528" y1="290" x2="558" y2="290" stroke="#7a7290" stroke-width="1.3" marker-end="url(#arF)" />
+        <!-- registry -> index (App records), clean vertical -->
+        <line x1="635" y1="324" x2="635" y2="464" stroke="#7a7290" stroke-width="1.3" marker-end="url(#arF)" />
+        <text x="643" y="400" fill="var(--faint)" font-size="10">App[]</text>
+
+        <!-- loop: watcher -> pubsub, orthogonal -->
+        <polyline points="801,324 801,420 521,420 521,464" fill="none" stroke="#a3c4c4" stroke-width="1.7" marker-end="url(#arL)" />
+        <text x="612" y="412" fill="var(--mist)" font-size="10">publish</text>
+        <!-- loop: pubsub -> server.py (SSE route), clean vertical -->
+        <line x1="392" y1="464" x2="392" y2="330" stroke="#a3c4c4" stroke-width="1.7" marker-end="url(#arL)" />
+        <text x="400" y="402" fill="var(--mist)" font-size="10">feeds the SSE route</text>
+
+        <!-- ===== band ③ the browser ===== -->
+        <rect x="30" y="634" width="860" height="222" rx="8" fill="var(--bg-deep)" stroke="var(--line)" />
+        <text x="52" y="664" fill="var(--muted)" font-size="11.5" letter-spacing="2.4" font-weight="600">③ THE BROWSER &#160;&#183;&#160; WHAT THE SERVER RETURNS</text>
+
+        <!-- reload.js -->
+        <rect x="52" y="686" width="246" height="146" rx="5" fill="var(--panel)" stroke="var(--line)" />
+        <rect x="52" y="692" width="3" height="134" fill="var(--rose)" />
+        <text x="72" y="718" fill="var(--ink)" font-size="13" font-weight="600">reload.js</text>
+        <text x="72" y="744" fill="var(--muted)" font-size="11">SSE client</text>
+        <text x="72" y="764" fill="var(--muted)" font-size="11">listens on /__events</text>
+        <text x="72" y="784" fill="var(--muted)" font-size="11">reloads the open tab</text>
+
+        <!-- index.html + css -->
+        <rect x="337" y="686" width="246" height="146" rx="5" fill="var(--panel)" stroke="var(--line)" />
+        <rect x="337" y="692" width="3" height="134" fill="var(--thistle)" />
+        <text x="357" y="718" fill="var(--ink)" font-size="13" font-weight="600">index.html + index.css</text>
+        <text x="357" y="744" fill="var(--muted)" font-size="11">the server-rendered page</text>
+        <text x="357" y="764" fill="var(--muted)" font-size="11">and its whole stylesheet</text>
+
+        <!-- behaviour scripts -->
+        <rect x="622" y="686" width="246" height="146" rx="5" fill="var(--panel)" stroke="var(--line)" />
+        <rect x="622" y="692" width="3" height="134" fill="var(--honey)" />
+        <text x="642" y="718" fill="var(--ink)" font-size="13" font-weight="600">behaviour scripts</text>
+        <text x="642" y="744" fill="var(--muted)" font-size="11">sort &#183; pin &#183; search</text>
+        <text x="642" y="764" fill="var(--muted)" font-size="11">peek &#183; keys &#183; edit</text>
+        <text x="642" y="784" fill="var(--muted)" font-size="11">help &#183; visited &#183; delete</text>
+
+        <!-- ===== external + cross-band arrows ===== -->
+        <!-- OS binds :80 -> __main__ -->
+        <line x1="160" y1="132" x2="160" y2="256" stroke="#7a7290" stroke-width="1.3" marker-end="url(#arF)" />
+        <text x="168" y="186" fill="var(--faint)" font-size="10">:80 &#8594; :8080</text>
+
+        <!-- disk -> registry (scan reads), clean vertical -->
+        <line x1="635" y1="132" x2="635" y2="256" stroke="#7a7290" stroke-width="1.3" marker-end="url(#arF)" />
+        <text x="643" y="186" fill="var(--faint)" font-size="10">scan() reads</text>
+
+        <!-- disk -> watcher (fs change), clean vertical (loop) -->
+        <line x1="801" y1="132" x2="801" y2="256" stroke="#a3c4c4" stroke-width="1.7" marker-end="url(#arL)" />
+        <text x="745" y="186" fill="var(--mist)" font-size="10">fs change</text>
+
+        <!-- browser -> server: GET / -->
+        <line x1="392" y1="632" x2="392" y2="564" stroke="#7a7290" stroke-width="1.3" marker-end="url(#arF)" />
+        <text x="354" y="606" fill="var(--faint)" font-size="10">GET /</text>
+
+        <!-- server -> browser: rendered HTML -->
+        <line x1="460" y1="564" x2="460" y2="632" stroke="#7a7290" stroke-width="1.3" marker-end="url(#arF)" />
+        <text x="470" y="606" fill="var(--faint)" font-size="10">renders HTML</text>
+
+        <!-- server -> reload.js: SSE push (loop) -->
+        <line x1="160" y1="564" x2="160" y2="632" stroke="#a3c4c4" stroke-width="1.7" marker-end="url(#arL)" />
+        <text x="168" y="606" fill="var(--mist)" font-size="10">/__events stream</text>
+      </svg>
+
+      <div class="legend">
+        <span><i class="l-req"></i> <b>request &amp; response</b> — a browser asks, the server renders</span>
+        <span><i class="l-loop"></i> <b>live-reload loop</b> — a file changes &rarr; watcher &rarr; pubsub &rarr; SSE &rarr; your tab reloads</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 the file grid ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — the twelve files</div>
+      <h2>One page per file.</h2>
+      <p>Source lives in <code class="tok">src/localhost_pages/</code>. Cards are ordered as a sensible
+        first read — the entry point and the spine, then the reload loop, then the index pipeline.
+        Click any card for its line-by-line walkthrough. These twelve are the <b>server</b> — the
+        Python that runs; the next section is the front-end it sends to the browser.</p>
+    </div>
+
+    <div class="filegrid">
+      <a class="filecard reveal d1" href="/technical-explanation/main/" style="--fc:var(--peach)">
+        <div class="ord">01 — ENTRY POINT</div>
+        <div class="fn">__main__<b>.py</b></div>
+        <div class="role">Reads four env vars, sets up logging, and hands a built app to <code class="tok">uvicorn.run()</code>.</div>
+        <div class="foot"><span>33 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d1" href="/technical-explanation/logconfig/" style="--fc:#a9c2b5">
+        <div class="ord">02 — BOOT &amp; LOGGING</div>
+        <div class="fn">logconfig<b>.py</b></div>
+        <div class="role">Always-on rotating file logs at a platform path, the startup banner, and the <code class="tok">__version__</code> reader.</div>
+        <div class="foot"><span>98 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d1" href="/technical-explanation/server/" style="--fc:var(--lavender)">
+        <div class="ord">03 — THE SPINE</div>
+        <div class="fn">server<b>.py</b></div>
+        <div class="role">The <code class="tok">create_app()</code> factory, the lifespan hook, request logging, and all seven HTTP routes.</div>
+        <div class="foot"><span>205 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d1" href="/technical-explanation/bootstrap/" style="--fc:#c9b6a0">
+        <div class="ord">04 — FIRST-RUN SEED</div>
+        <div class="fn">bootstrap<b>.py</b></div>
+        <div class="role">Seeds the bundled default apps into <code class="tok">symlinks/</code> once, on first run — guarded by a marker file.</div>
+        <div class="foot"><span>33 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d2" href="/technical-explanation/pubsub/" style="--fc:var(--mist)">
+        <div class="ord">05 — RELOAD LOOP</div>
+        <div class="fn">pubsub<b>.py</b></div>
+        <div class="role">A 31-line async fan-out. Subscribe to a topic for a queue; publish, and every queue gets it.</div>
+        <div class="foot"><span>31 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d2" href="/technical-explanation/inject/" style="--fc:var(--rose)">
+        <div class="ord">06 — RELOAD LOOP</div>
+        <div class="fn">inject<b>.py</b></div>
+        <div class="role">Splices the live-reload <code class="tok">&lt;script&gt;</code> into served HTML, before <code class="tok">&lt;/body&gt;</code>.</div>
+        <div class="foot"><span>32 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d2" href="/technical-explanation/watcher/" style="--fc:var(--powder)">
+        <div class="ord">07 — RELOAD LOOP</div>
+        <div class="fn">watcher<b>.py</b></div>
+        <div class="role">Watches the filesystem with <code class="tok">watchfiles</code> and publishes changes — with backoff and a reaper.</div>
+        <div class="foot"><span>136 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d2" href="/technical-explanation/registry/" style="--fc:var(--sage)">
+        <div class="ord">08 — INDEX PIPELINE</div>
+        <div class="fn">registry<b>.py</b></div>
+        <div class="role"><code class="tok">scan()</code> walks the symlinks dir into <code class="tok">App</code> records, parsing each <code class="tok">meta.json</code>.</div>
+        <div class="foot"><span>108 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d3" href="/technical-explanation/index/" style="--fc:var(--mauve)">
+        <div class="ord">09 — INDEX PIPELINE</div>
+        <div class="fn">index<b>.py</b></div>
+        <div class="role">Renders the <code class="tok">App</code> list into the index page's HTML via a Jinja2 template.</div>
+        <div class="foot"><span>23 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d3" href="/technical-explanation/icons/" style="--fc:var(--sand)">
+        <div class="ord">10 — INDEX PIPELINE</div>
+        <div class="fn">icons<b>.py</b></div>
+        <div class="role"><code class="tok">resolve_icon()</code> turns a Lucide name, emoji, or raw SVG into inline-ready card HTML.</div>
+        <div class="foot"><span>51 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d3" href="/technical-explanation/accents/" style="--fc:var(--honey)">
+        <div class="ord">11 — INDEX PIPELINE</div>
+        <div class="fn">accents<b>.py</b></div>
+        <div class="role">32 named pastels. <code class="tok">resolve_accent()</code> maps a name to hex, or hashes the app name.</div>
+        <div class="foot"><span>67 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d3" href="/technical-explanation/init/" style="--fc:var(--thistle)">
+        <div class="ord">12 — PACKAGE MARKER</div>
+        <div class="fn">__init__<b>.py</b></div>
+        <div class="role">The file that makes the folder a package. One line — the version string.</div>
+        <div class="foot"><span>1 line</span><span class="go">read &rarr;</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 the front-end ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — what reaches the browser</div>
+      <h2>And the half that runs in your browser.</h2>
+      <p>The server renders one Jinja2 template, then serves a stylesheet and a handful of small
+        scripts that turn the static index into something you can sort, filter, pin, preview and
+        drive entirely from the keyboard. Fourteen more files — each, again, with its own page.</p>
+    </div>
+
+    <div class="filegrid">
+      <a class="filecard reveal d1" href="/technical-explanation/template/" style="--fc:#bdd0b8">
+        <div class="ord">13 — THE TEMPLATE</div>
+        <div class="fn">index<b>.html</b></div>
+        <div class="role">The one Jinja2 template — the index page's HTML skeleton, rendered fresh on every request.</div>
+        <div class="foot"><span>89 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d1" href="/technical-explanation/styles/" style="--fc:#c8b5e0">
+        <div class="ord">14 — THE STYLESHEET</div>
+        <div class="fn">index<b>.css</b></div>
+        <div class="role">The whole look of the index in one file — design tokens, the row, the overlays. No framework.</div>
+        <div class="foot"><span>577 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d1" href="/technical-explanation/reload/" style="--fc:#e0b5b5">
+        <div class="ord">15 — THE RELOAD CLIENT</div>
+        <div class="fn">reload<b>.js</b></div>
+        <div class="role">The SSE client injected into every served page — the browser end of the live-reload loop.</div>
+        <div class="foot"><span>38 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d2" href="/technical-explanation/lp-log/" style="--fc:#d6a89e">
+        <div class="ord">16 — ERROR CAPTURE</div>
+        <div class="fn">lp-log<b>.js</b></div>
+        <div class="role">Catches browser errors on the dashboard and forwards them to <code class="tok">/__log</code> — front-end bugs in the same log file.</div>
+        <div class="foot"><span>67 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d2" href="/technical-explanation/delete/" style="--fc:#c89e9e">
+        <div class="ord">17 — INDEX BEHAVIOUR</div>
+        <div class="fn">delete<b>.js</b></div>
+        <div class="role">The &times; button — a two-click confirm, then <code class="tok">DELETE /__apps</code>.</div>
+        <div class="foot"><span>94 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d2" href="/technical-explanation/visited/" style="--fc:#b5d0d0">
+        <div class="ord">18 — INDEX BEHAVIOUR</div>
+        <div class="fn">visited<b>.js</b></div>
+        <div class="role">Marks a row as updated when its file is newer than the last time you looked.</div>
+        <div class="foot"><span>59 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d2" href="/technical-explanation/pin/" style="--fc:#d0c8b5">
+        <div class="ord">19 — INDEX BEHAVIOUR</div>
+        <div class="fn">pin<b>.js</b></div>
+        <div class="role">Pin apps to the top — a JSON set kept in <code class="tok">localStorage</code>.</div>
+        <div class="foot"><span>36 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d3" href="/technical-explanation/sort/" style="--fc:#b5c8e0">
+        <div class="ord">20 — INDEX BEHAVIOUR</div>
+        <div class="fn">sort<b>.js</b></div>
+        <div class="role">A hand-built dropdown and five ways to order the list — pinned rows always float up.</div>
+        <div class="foot"><span>115 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d3" href="/technical-explanation/edit/" style="--fc:#b89eb4">
+        <div class="ord">21 — INDEX BEHAVIOUR</div>
+        <div class="fn">edit<b>.js</b></div>
+        <div class="role">Edit mode — native drag-and-drop reordering, persisted to <code class="tok">lp:order</code>.</div>
+        <div class="foot"><span>78 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d3" href="/technical-explanation/keys/" style="--fc:#96b4b4">
+        <div class="ord">22 — INDEX BEHAVIOUR</div>
+        <div class="fn">keys<b>.js</b></div>
+        <div class="role">Keyboard navigation — j / k to move; every action delegates to an existing button.</div>
+        <div class="foot"><span>100 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d1" href="/technical-explanation/peek/" style="--fc:#a896c8">
+        <div class="ord">23 — INDEX BEHAVIOUR</div>
+        <div class="fn">peek<b>.js</b></div>
+        <div class="role">A history-aware iframe preview — see an app without leaving the index.</div>
+        <div class="foot"><span>118 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d2" href="/technical-explanation/search/" style="--fc:#9eaecc">
+        <div class="ord">24 — INDEX BEHAVIOUR</div>
+        <div class="fn">search<b>.js</b></div>
+        <div class="role">Live filter-as-you-type across each app's name, title and description.</div>
+        <div class="foot"><span>46 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d2" href="/technical-explanation/help/" style="--fc:#c8b496">
+        <div class="ord">25 — INDEX BEHAVIOUR</div>
+        <div class="fn">help<b>.js</b></div>
+        <div class="role">The <code class="tok">?</code> overlay — every shortcut, built lazily on first open.</div>
+        <div class="foot"><span>98 lines</span><span class="go">read &rarr;</span></div>
+      </a>
+
+      <a class="filecard reveal d3" href="/technical-explanation/assets/" style="--fc:#d4b8d0">
+        <div class="ord">26 — BUNDLED ASSETS</div>
+        <div class="fn">static/<b>lucide</b></div>
+        <div class="role">1703 vendored Lucide icons and the JetBrains Mono font — every asset in-repo, zero CDN calls.</div>
+        <div class="foot"><span>1703 icons</span><span class="go">read &rarr;</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 05 reading order ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">05 — how to read it</div>
+      <h2>A suggested path.</h2>
+      <p>The whole project is one comfortable sitting. Pair each file with its
+        <code class="tok">tests/test_*.py</code> — the tests double as executable documentation.</p>
+    </div>
+    <div class="reading reveal d1">
+      <div class="rrow">
+        <div class="ri">i</div>
+        <div class="rc">
+          <h4>Orient — <span>README.md</span> &amp; <span>AGENTS.md</span></h4>
+          <p>What it does, how to run it, and the symlink registration contract the whole server is built around.</p>
+        </div>
+      </div>
+      <div class="rrow">
+        <div class="ri">ii</div>
+        <div class="rc">
+          <h4>The spine — <span>__main__.py</span>, <span>logconfig.py</span>, <span>server.py</span> &amp; <span>bootstrap.py</span></h4>
+          <p>The process entry point — which calls <code class="tok">logconfig.py</code> to turn on always-on
+            rotating logs — then the file every route lives in, whose <code class="tok">lifespan</code> hook
+            calls <code class="tok">bootstrap.py</code> to seed the bundled docs into <code class="tok">symlinks/</code> on
+            first run. Read <code class="tok">create_app()</code> top to bottom.</p>
+        </div>
+      </div>
+      <div class="rrow">
+        <div class="ri">iii</div>
+        <div class="rc">
+          <h4>The reload loop — <span>pubsub.py</span>, <span>inject.py</span>, <span>watcher.py</span></h4>
+          <p>Smallest first. Once these click, the SSE endpoint back in <code class="tok">server.py</code> reads trivially.</p>
+        </div>
+      </div>
+      <div class="rrow">
+        <div class="ri">iv</div>
+        <div class="rc">
+          <h4>The index pipeline — <span>registry.py</span> &rarr; <span>index.py</span> &rarr; <span>icons.py</span> &rarr; <span>accents.py</span></h4>
+          <p>Discover the apps, render the cards, give each one an icon and a deterministic colour.</p>
+        </div>
+      </div>
+      <div class="rrow">
+        <div class="ri">v</div>
+        <div class="rc">
+          <h4>The front-end — <span>index.html</span> &amp; <span>index.css</span>, then the scripts</h4>
+          <p>The template and stylesheet the server renders, then <code class="tok">reload.js</code> and the
+            ten little scripts that make the index sortable, searchable and keyboard-driven — including
+            <code class="tok">lp-log.js</code>, which forwards browser errors to the server. End on
+            <code class="tok">static/lucide/</code>.</p>
+        </div>
+      </div>
+      <div class="rrow">
+        <div class="ri">vi</div>
+        <div class="rc">
+          <h4>The edges — <span>tests/</span> &amp; <span>.superpowers/specs/</span></h4>
+          <p>Each test file mirrors a module; the spec and plan docs explain the recent index redesign.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>localhost-pages — an always-on local web server. FastAPI &middot; watchfiles &middot; uv.</span>
+    <span>This site is a registered app. Edit any page's HTML and the open tab reloads itself.</span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>accents.py — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #e0d0b5; }   /* honey — accents.py */
+
+  /* page-local: the swatch grid */
+  .swatchwrap { margin: 22px 0 8px; }
+  .swatchhead {
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--faint); margin: 26px 0 12px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .swatchhead::before { content: ""; width: 22px; height: 1px; background: var(--line); }
+  .swatchgrid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  }
+  .chip {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--panel);
+    overflow: hidden;
+  }
+  .chip .cap-color {
+    height: 46px;
+    display: flex; align-items: flex-end; justify-content: flex-end;
+    padding: 5px 7px;
+  }
+  .chip .idx {
+    font-size: 9px; color: rgba(17,15,23,0.55);
+    font-weight: 600; letter-spacing: 0.04em;
+  }
+  .chip .meta {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 6px 8px 7px;
+  }
+  .chip .nm { font-size: 11px; color: var(--ink); }
+  .chip .hex { font-size: 9.5px; color: var(--faint); }
+  @media (max-width: 720px) {
+    .swatchgrid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">accents.py</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">accents.py</span><br />gives every app a <em>colour.</em></h1>
+    <p class="lede reveal d2">
+      Each card on the index needs an identity hue. This file is the whole colour system:
+      a fixed table of <b>32 muted pastels</b>, and a tiny resolver that turns an app's
+      <code class="tok">meta.json</code> hint — or its name — into one stable hex string.
+      No randomness, no global state, <b>67 lines</b>.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">67</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">32</div><div class="l">named colours</div></div>
+      <div class="stat reveal d3"><div class="n">8&times;4</div><div class="l">hues &times; shades</div></div>
+      <div class="stat reveal d3"><div class="n">2</div><div class="l">public functions</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 top of file ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — top of the file</div>
+      <h2>One import. That is the whole dependency list.</h2>
+      <p>No FastAPI, no project siblings — this module is pure data and arithmetic. It depends
+        only on the standard library's <code class="tok">hashlib</code>, which makes it trivially testable
+        and import-cheap.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">accents.py</span><span>lines 1 — 7</span></div>
+      <pre><div class="cl"><span class="ln">1</span><span class="ct"><span class="k">from</span> __future__ <span class="k">import</span> annotations</span></div><div class="cl"><span class="ln">2</span><span class="ct"></span></div><div class="cl"><span class="ln">3</span><span class="ct"><span class="k">import</span> hashlib</span></div><div class="cl"><span class="ln">4</span><span class="ct"></span></div><div class="cl"><span class="ln">5</span><span class="ct"><span class="c"># 32 muted pastels — desaturated, dusty, all readable on #1a1822.</span></span></div><div class="cl"><span class="ln">6</span><span class="ct"><span class="c"># Organized as 8 hue families × 4 shades. Each colour has a unique name so</span></span></div><div class="cl"><span class="ln">7</span><span class="ct"><span class="c"># apps can opt into any specific accent via meta.json.</span></span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">1</div>
+        <div class="txt"><code class="tok">from __future__ import annotations</code> defers evaluation of type hints —
+          it lets the module write <code class="tok">dict[str, str]</code> and <code class="tok">str | None</code>
+          as annotations without needing a recent Python at import time.</div>
+      </div>
+      <div class="row">
+        <div class="lref">3</div>
+        <div class="txt">The only import. <b>hashlib</b> supplies SHA-1, used later to turn an app name
+          into a deterministic palette index.</div>
+      </div>
+      <div class="row">
+        <div class="lref">5 — 7</div>
+        <div class="txt">The design brief, stated up front: every colour is <b>desaturated</b> so white text and
+          the dark <code class="tok">#1a1822</code> background both stay legible, and the table is
+          <b>structured</b> — 8 hue families, 4 shades each — so a human can pick one by name.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 NAMED_ACCENTS ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — the table</div>
+      <h2><span class="mono">NAMED_ACCENTS</span> &nbsp;— 32 colours, by name.</h2>
+      <p>A plain dict mapping a colour name to a hex string. It is the single source of truth:
+        both the human-facing names and the raw palette are derived from it.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">accents.py</span><span>lines 8 — 45 &nbsp;(condensed)</span></div>
+      <pre><div class="cl"><span class="ln">8</span><span class="ct">NAMED_ACCENTS: dict[str, str] = {</span></div><div class="cl"><span class="ln">9</span><span class="ct">    <span class="c"># Base shades — one of each hue family</span></span></div><div class="cl"><span class="ln">10</span><span class="ct">    <span class="s">"sage"</span>:     <span class="s">"#a8c8a3"</span>,</span></div><div class="cl"><span class="ln">11</span><span class="ct">    <span class="s">"mauve"</span>:    <span class="s">"#c8a3c4"</span>,</span></div><div class="cl"><span class="ln">17</span><span class="ct">    <span class="s">"lavender"</span>: <span class="s">"#b8a3d6"</span>,</span></div><div class="cl"><span class="ln">18</span><span class="ct">    <span class="c"># Lighter shades</span></span></div><div class="cl"><span class="ln">19</span><span class="ct">    <span class="s">"fern"</span>:     <span class="s">"#bdd0b8"</span>,</span></div><div class="cl"><span class="ln">25</span><span class="ct">    <span class="s">"honey"</span>:    <span class="s">"#e0d0b5"</span>,</span></div><div class="cl"><span class="ln">27</span><span class="ct">    <span class="c"># Darker shades</span></span></div><div class="cl"><span class="ln">28</span><span class="ct">    <span class="s">"moss"</span>:     <span class="s">"#9eb89e"</span>,</span></div><div class="cl"><span class="ln">36</span><span class="ct">    <span class="c"># Palest shades</span></span></div><div class="cl"><span class="ln">37</span><span class="ct">    <span class="s">"mint"</span>:     <span class="s">"#c0d4ba"</span>,</span></div><div class="cl"><span class="ln">44</span><span class="ct">    <span class="s">"thistle"</span>:  <span class="s">"#c8bcdc"</span>,</span></div><div class="cl"><span class="ln">45</span><span class="ct">}</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">8</div>
+        <div class="txt">A module-level constant — built once, at import. The annotation
+          <code class="tok">dict[str, str]</code> documents the contract: name in, hex out.</div>
+      </div>
+      <div class="row">
+        <div class="lref">9 — 17</div>
+        <div class="txt"><b>Block one — base shades.</b> Eight entries, one canonical colour per hue family:
+          <em>sage, mauve, rose, powder, sand, mist, peach, lavender</em>. These are the names you would
+          reach for first.</div>
+      </div>
+      <div class="row">
+        <div class="lref">18 — 44</div>
+        <div class="txt">Three more blocks of eight — <b>lighter</b>, <b>darker</b>, and <b>palest</b> variants of the
+          same eight hues. The comment headers make the 8&times;4 grid visible in the source itself.</div>
+      </div>
+      <div class="row">
+        <div class="lref">45</div>
+        <div class="txt">32 entries total. Insertion order is preserved (Python 3.7+ dicts are ordered) —
+          which matters, because the next constant turns this dict into an ordered sequence.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--peach)">
+      <h4>Why a named table at all?</h4>
+      <p>Pure hashing would still produce stable colours. The names exist so an app author can be
+        deliberate — set <code class="tok">"accent": "honey"</code> in <code class="tok">meta.json</code> and
+        get exactly that swatch. The table is the menu; the hash is only the fallback.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 the swatch grid ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — see the table</div>
+      <h2>All 32, rendered.</h2>
+      <p>The same dict from section 02, drawn as chips. Read top-to-bottom in four rows of eight
+        and the structure is plain: each column is one hue family, each row one shade band.
+        The index on each chip is its position in <code class="tok">PALETTE</code> (section 04).</p>
+    </div>
+
+    <div class="swatchwrap reveal d1">
+      <div class="swatchhead">Base shades &mdash; one per hue family</div>
+      <div class="swatchgrid">
+        <div class="chip"><div class="cap-color" style="background:#a8c8a3"><span class="idx">00</span></div><div class="meta"><span class="nm">sage</span><span class="hex">#a8c8a3</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#c8a3c4"><span class="idx">01</span></div><div class="meta"><span class="nm">mauve</span><span class="hex">#c8a3c4</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#d6a3a3"><span class="idx">02</span></div><div class="meta"><span class="nm">rose</span><span class="hex">#d6a3a3</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#a3b8d6"><span class="idx">03</span></div><div class="meta"><span class="nm">powder</span><span class="hex">#a3b8d6</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#c4b8a3"><span class="idx">04</span></div><div class="meta"><span class="nm">sand</span><span class="hex">#c4b8a3</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#a3c4c4"><span class="idx">05</span></div><div class="meta"><span class="nm">mist</span><span class="hex">#a3c4c4</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#d6c4a3"><span class="idx">06</span></div><div class="meta"><span class="nm">peach</span><span class="hex">#d6c4a3</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#b8a3d6"><span class="idx">07</span></div><div class="meta"><span class="nm">lavender</span><span class="hex">#b8a3d6</span></div></div>
+      </div>
+    </div>
+
+    <div class="swatchwrap reveal d1">
+      <div class="swatchhead">Lighter shades</div>
+      <div class="swatchgrid">
+        <div class="chip"><div class="cap-color" style="background:#bdd0b8"><span class="idx">08</span></div><div class="meta"><span class="nm">fern</span><span class="hex">#bdd0b8</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#d4b8d0"><span class="idx">09</span></div><div class="meta"><span class="nm">blossom</span><span class="hex">#d4b8d0</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#e0b5b5"><span class="idx">10</span></div><div class="meta"><span class="nm">coral</span><span class="hex">#e0b5b5</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#b5c8e0"><span class="idx">11</span></div><div class="meta"><span class="nm">sky</span><span class="hex">#b5c8e0</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#d0c8b5"><span class="idx">12</span></div><div class="meta"><span class="nm">wheat</span><span class="hex">#d0c8b5</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#b5d0d0"><span class="idx">13</span></div><div class="meta"><span class="nm">seafoam</span><span class="hex">#b5d0d0</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#e0d0b5"><span class="idx">14</span></div><div class="meta"><span class="nm">honey</span><span class="hex">#e0d0b5</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#c8b5e0"><span class="idx">15</span></div><div class="meta"><span class="nm">lilac</span><span class="hex">#c8b5e0</span></div></div>
+      </div>
+    </div>
+
+    <div class="swatchwrap reveal d2">
+      <div class="swatchhead">Darker shades</div>
+      <div class="swatchgrid">
+        <div class="chip"><div class="cap-color" style="background:#9eb89e"><span class="idx">16</span></div><div class="meta"><span class="nm">moss</span><span class="hex">#9eb89e</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#b89eb4"><span class="idx">17</span></div><div class="meta"><span class="nm">orchid</span><span class="hex">#b89eb4</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#c89e9e"><span class="idx">18</span></div><div class="meta"><span class="nm">clay</span><span class="hex">#c89e9e</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#9eaecc"><span class="idx">19</span></div><div class="meta"><span class="nm">denim</span><span class="hex">#9eaecc</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#b8a896"><span class="idx">20</span></div><div class="meta"><span class="nm">taupe</span><span class="hex">#b8a896</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#96b4b4"><span class="idx">21</span></div><div class="meta"><span class="nm">slate</span><span class="hex">#96b4b4</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#c8b496"><span class="idx">22</span></div><div class="meta"><span class="nm">ochre</span><span class="hex">#c8b496</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#a896c8"><span class="idx">23</span></div><div class="meta"><span class="nm">iris</span><span class="hex">#a896c8</span></div></div>
+      </div>
+    </div>
+
+    <div class="swatchwrap reveal d2">
+      <div class="swatchhead">Palest shades</div>
+      <div class="swatchgrid">
+        <div class="chip"><div class="cap-color" style="background:#c0d4ba"><span class="idx">24</span></div><div class="meta"><span class="nm">mint</span><span class="hex">#c0d4ba</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#d4bac8"><span class="idx">25</span></div><div class="meta"><span class="nm">petal</span><span class="hex">#d4bac8</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#dcbcbc"><span class="idx">26</span></div><div class="meta"><span class="nm">blush</span><span class="hex">#dcbcbc</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#bcc4dc"><span class="idx">27</span></div><div class="meta"><span class="nm">ice</span><span class="hex">#bcc4dc</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#d4c8bc"><span class="idx">28</span></div><div class="meta"><span class="nm">linen</span><span class="hex">#d4c8bc</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#bcd4d4"><span class="idx">29</span></div><div class="meta"><span class="nm">frost</span><span class="hex">#bcd4d4</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#dcd0bc"><span class="idx">30</span></div><div class="meta"><span class="nm">cream</span><span class="hex">#dcd0bc</span></div></div>
+        <div class="chip"><div class="cap-color" style="background:#c8bcdc"><span class="idx">31</span></div><div class="meta"><span class="nm">thistle</span><span class="hex">#c8bcdc</span></div></div>
+      </div>
+    </div>
+
+    <div class="note reveal d3" style="--ac:var(--mist); margin-top:20px">
+      <h4>Every colour sits in the same lightness band</h4>
+      <p>None of the 32 is dark and none is white. That is deliberate: the hash picks blindly, so
+        <em>any</em> pick must look correct on the dark UI. A constrained palette is what lets a
+        random index be safe.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 PALETTE ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — the sequence</div>
+      <h2><span class="mono">PALETTE</span> &nbsp;— the same colours, indexable.</h2>
+      <p>A dict maps names to colours, but the hash needs to pick by <em>number</em>. This one line
+        re-exposes the table as an ordered, length-known tuple.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">accents.py</span><span>line 47</span></div>
+      <pre><div class="cl"><span class="ln">47</span><span class="ct">PALETTE: tuple[str, ...] = <span class="f">tuple</span>(NAMED_ACCENTS.<span class="f">values</span>())</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">47</div>
+        <div class="txt"><code class="tok">NAMED_ACCENTS.values()</code> yields the 32 hex strings in insertion order;
+          <code class="tok">tuple(&hellip;)</code> freezes them into an indexable, immutable sequence.</div>
+      </div>
+      <div class="row">
+        <div class="lref">47</div>
+        <div class="txt"><b>Derived, not duplicated.</b> Because <code class="tok">PALETTE</code> is built from
+          <code class="tok">NAMED_ACCENTS</code>, the two can never drift apart — edit the dict and the tuple
+          updates with it on the next import.</div>
+      </div>
+      <div class="row">
+        <div class="lref">47</div>
+        <div class="txt">A <b>tuple</b>, not a list, signals intent: this is a fixed lookup table, not a collection
+          anything should mutate. Its <code class="tok">len()</code> — 32 — becomes the modulus for the hash.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>Names and hashes meet here</h4>
+      <p>The chip indices in section 03 — <code class="tok">00</code> through <code class="tok">31</code> — are
+        exactly positions into <code class="tok">PALETTE</code>. A hashed app name resolves to one of those
+        numbers; a named app jumps straight to a hex. Two doors, one room.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 05 _hash_index ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">05 — the arithmetic</div>
+      <h2><span class="mono">_hash_index()</span> &nbsp;— a name becomes a number.</h2>
+      <p>Two lines turn an arbitrary string into a valid <code class="tok">PALETTE</code> index. The leading
+        underscore marks it private — only <code class="tok">resolve_accent</code> below calls it.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">accents.py</span><span>lines 50 — 52</span></div>
+      <pre><div class="cl"><span class="ln">50</span><span class="ct"><span class="k">def</span> <span class="f">_hash_index</span>(name: str) -> int:</span></div><div class="cl"><span class="ln">51</span><span class="ct">    digest = hashlib.<span class="f">sha1</span>(name.<span class="f">encode</span>(<span class="s">"utf-8"</span>)).<span class="f">hexdigest</span>()</span></div><div class="cl"><span class="ln">52</span><span class="ct">    <span class="k">return</span> <span class="f">int</span>(digest, <span class="n">16</span>) % <span class="f">len</span>(PALETTE)</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">51</div>
+        <div class="txt"><code class="tok">name.encode("utf-8")</code> turns the string into bytes — <code class="tok">sha1()</code>
+          requires bytes, not text. The result's <code class="tok">hexdigest()</code> is a 40-character
+          hexadecimal string.</div>
+      </div>
+      <div class="row">
+        <div class="lref">52</div>
+        <div class="txt"><code class="tok">int(digest, 16)</code> parses that hex string as one enormous base-16 integer.
+          <code class="tok">% len(PALETTE)</code> folds it into the range <code class="tok">0 &hellip; 31</code> —
+          always a valid index, whatever the name was.</div>
+      </div>
+      <div class="row">
+        <div class="lref">50 — 52</div>
+        <div class="txt"><b>Deterministic.</b> SHA-1 is a pure function: the same name always yields the same
+          digest, hence the same index, hence the same colour. There is no <code class="tok">random</code>,
+          no clock, no counter anywhere in this file.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--sage)">
+      <h4>Why hash at all — why not a counter?</h4>
+      <p>A counter ("first app gets colour 0, second gets 1&hellip;") would reshuffle every app's colour
+        whenever one is added or removed. Hashing the <em>name</em> makes each app's colour depend only on
+        itself — stable for the life of that app, independent of its neighbours.</p>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--mist)">
+      <h4>SHA-1 is used for spread, not security</h4>
+      <p>Nothing here is cryptographic. SHA-1 is simply a cheap, well-distributed way to scatter names
+        evenly across 32 buckets, so similar names (<code class="tok">app-1</code>, <code class="tok">app-2</code>)
+        don't all collide on the same hue.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 06 resolve_accent ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">06 — the public function</div>
+      <h2><span class="mono">resolve_accent()</span> &nbsp;— the one entry point.</h2>
+      <p>This is the only function the rest of the codebase imports. <code class="tok">registry.py</code>
+        calls it once per app while building each <code class="tok">App</code> record. It never raises and
+        never returns <code class="tok">None</code> — there is always a colour.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">accents.py</span><span>lines 55 — 67</span></div>
+      <pre><div class="cl"><span class="ln">55</span><span class="ct"><span class="k">def</span> <span class="f">resolve_accent</span>(value: str | None, name: str) -> str:</span></div><div class="cl"><span class="ln">56</span><span class="ct">    <span class="s">"""Return a hex color (#rrggbb) for this app row.</span></span></div><div class="cl"><span class="ln">57</span><span class="ct"><span class="s"></span></span></div><div class="cl"><span class="ln">58</span><span class="ct"><span class="s">    Resolution order:</span></span></div><div class="cl"><span class="ln">59</span><span class="ct"><span class="s">      1. None / empty                  &rarr; hash(name) &rarr; PALETTE</span></span></div><div class="cl"><span class="ln">60</span><span class="ct"><span class="s">      2. exact match in NAMED_ACCENTS  &rarr; mapped hex</span></span></div><div class="cl"><span class="ln">61</span><span class="ct"><span class="s">      3. anything else                 &rarr; hash fallback</span></span></div><div class="cl"><span class="ln">62</span><span class="ct"><span class="s">    """</span></span></div><div class="cl"><span class="ln">63</span><span class="ct">    <span class="k">if not</span> value:</span></div><div class="cl"><span class="ln">64</span><span class="ct">        <span class="k">return</span> PALETTE[<span class="f">_hash_index</span>(name)]</span></div><div class="cl"><span class="ln">65</span><span class="ct">    <span class="k">if</span> value <span class="k">in</span> NAMED_ACCENTS:</span></div><div class="cl"><span class="ln">66</span><span class="ct">        <span class="k">return</span> NAMED_ACCENTS[value]</span></div><div class="cl"><span class="ln">67</span><span class="ct">    <span class="k">return</span> PALETTE[<span class="f">_hash_index</span>(name)]</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">55</div>
+        <div class="txt">Two arguments. <code class="tok">value</code> is the raw <code class="tok">accent</code> field from
+          <code class="tok">meta.json</code> — possibly <code class="tok">None</code>. <code class="tok">name</code>
+          is the app's directory name, the stable identifier used as the hash seed.</div>
+      </div>
+      <div class="row">
+        <div class="lref">63 — 64</div>
+        <div class="txt"><b>Step 1.</b> <code class="tok">not value</code> is true for both <code class="tok">None</code>
+          <em>and</em> the empty string — so an app that never set an accent, or set it to <code class="tok">""</code>,
+          gets the hashed auto-pick. This is the common case.</div>
+      </div>
+      <div class="row">
+        <div class="lref">65 — 66</div>
+        <div class="txt"><b>Step 2.</b> If <code class="tok">value</code> is an exact key in the table — e.g.
+          <code class="tok">"honey"</code> — return its mapped hex directly. The app author got the colour
+          they asked for.</div>
+      </div>
+      <div class="row">
+        <div class="lref">67</div>
+        <div class="txt"><b>Step 3.</b> Anything else — a typo, a stray <code class="tok">"#ff0000"</code>, a removed
+          colour name — falls through to the <em>same</em> hash path as step 1. The unknown value is silently
+          discarded; the app still gets a sensible colour.</div>
+      </div>
+    </div>
+
+    <div class="guards reveal d2">
+      <div class="guard">
+        <div class="gl">1</div>
+        <h4>None / empty &rarr; hash</h4>
+        <p>Line 63 — no accent declared. Hash the name into <code class="tok">PALETTE</code>. Stable and
+          automatic, zero configuration required.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">2</div>
+        <h4>Known name &rarr; mapped hex</h4>
+        <p>Line 65 — an exact key in <code class="tok">NAMED_ACCENTS</code>. The author's explicit choice
+          wins; the hash is bypassed entirely.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">3</div>
+        <h4>Unknown &rarr; hash fallback</h4>
+        <p>Line 67 — anything unrecognised. Identical to step 1. A bad value can never produce a broken
+          page, only the auto-pick.</p>
+      </div>
+    </div>
+
+    <div class="note reveal d3" style="--ac:var(--rose); margin-top:22px">
+      <h4>Note what step 3 does <em>not</em> do</h4>
+      <p>It does not accept a raw hex string. <code class="tok">"#a8c8a3"</code> in <code class="tok">meta.json</code>
+        is <b>not</b> a key in <code class="tok">NAMED_ACCENTS</code>, so it falls to the hash like any other
+        unknown value. The only way to pick a specific colour is by one of the 32 names. The vocabulary is
+        closed on purpose — every accent on the index is guaranteed to come from the vetted palette.</p>
+    </div>
+
+    <div class="note reveal d3" style="--ac:var(--peach); margin-top:12px">
+      <h4>Steps 1 and 3 are the same line for a reason</h4>
+      <p>"No accent" and "bad accent" are treated identically — neither is an error worth surfacing.
+        A colour is decorative; a missing or mistyped one should degrade quietly, not break a card or
+        throw mid-scan. So <code class="tok">resolve_accent</code> has no error path at all.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 07 in context ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">07 — where it plugs in</div>
+      <h2>One call, inside the registry.</h2>
+      <p>This module produces nothing on its own. Its output lives on the <code class="tok">App</code>
+        record that <code class="tok">registry.py</code> builds for every scanned symlink.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">registry.py</span><span>the call site</span></div>
+      <pre><div class="cl"><span class="ln">9</span><span class="ct"><span class="k">from</span> .accents <span class="k">import</span> resolve_accent</span></div><div class="cl"><span class="ln">&middot;</span><span class="ct"></span></div><div class="cl"><span class="ln">67</span><span class="ct">        accent=<span class="f">resolve_accent</span>(meta.<span class="f">get</span>(<span class="s">"accent"</span>), name),</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">9</div>
+        <div class="txt">Only <code class="tok">resolve_accent</code> is imported — <code class="tok">NAMED_ACCENTS</code>,
+          <code class="tok">PALETTE</code> and <code class="tok">_hash_index</code> stay internal to this file.</div>
+      </div>
+      <div class="row">
+        <div class="lref">67</div>
+        <div class="txt"><code class="tok">meta.get("accent")</code> returns the <code class="tok">accent</code> field
+          from the app's <code class="tok">meta.json</code>, or <code class="tok">None</code> if absent — exactly the
+          <code class="tok">value</code> argument step 1 expects. <code class="tok">name</code> is the directory
+          name, the hash seed.</div>
+      </div>
+      <div class="row">
+        <div class="lref">67</div>
+        <div class="txt">The resolved hex is stored as <code class="tok">App.accent</code>. The index template then drops
+          it into each card as a CSS custom property — the same mechanism every page of <em>this</em>
+          explainer site uses for <code class="tok">--accent</code>.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>Broken apps skip this path entirely</h4>
+      <p>When <code class="tok">registry.py</code> builds a record for an app it could not load, it hard-codes
+        <code class="tok">accent="#d6928f"</code> — a dusty rose — rather than calling
+        <code class="tok">resolve_accent</code>. So a consistent off-palette colour flags failure at a glance,
+        and <code class="tok">resolve_accent</code> only ever sees healthy apps.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 08 takeaways ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">08 — step back</div>
+      <h2>Four things to take away.</h2>
+    </div>
+    <div class="notes">
+      <div class="note reveal d1">
+        <h4>Determinism is the whole point</h4>
+        <p>Same app, same colour — on every reload, every restart, every machine. The hash is a pure
+          function of the name, so a card never flickers between hues and the page looks settled the
+          instant it loads.</p>
+      </div>
+      <div class="note reveal d1" style="--ac:var(--sage)">
+        <h4>A constrained palette makes blind picks safe</h4>
+        <p>All 32 colours are desaturated and sit in one lightness band. Because every entry is known to
+          work on the dark UI, the hash can pick one sight-unseen and never produce something unreadable.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--mist)">
+        <h4>It fails quietly, by design</h4>
+        <p>An unknown or mistyped accent is not an error — it falls through to the same hash as no accent
+          at all. <code class="tok">resolve_accent</code> has no exception path; a decorative field should
+          never be able to break a scan.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--peach)">
+        <h4>One source of truth, derived twice</h4>
+        <p><code class="tok">NAMED_ACCENTS</code> is the table; <code class="tok">PALETTE</code> is just its
+          values, and <code class="tok">_hash_index</code> just its length. Edit the dict and the named lookup,
+          the indexable sequence, and the modulus all stay in sync automatically.</p>
+      </div>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/icons/"><div class="lbl">&larr; PREVIOUS</div><div class="nm"><span class="mono">icons.py</span></div></a>
+      <a class="next" href="/technical-explanation/init/"><div class="lbl">NEXT &rarr;</div><div class="nm"><span class="mono">__init__.py</span></div></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/accents.py — 67 lines, 32 colours, 2 public functions.</span>
+    <span><a href="/technical-explanation/">&larr; all twelve files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

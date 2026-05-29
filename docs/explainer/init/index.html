@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>__init__.py — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>:root{ --accent: #c8bcdc; }</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">__init__.py</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">The shortest file in the repo</div>
+    <h1 class="reveal d1"><span class="mono">__init__.py</span><br />is <em>one line.</em></h1>
+    <p class="lede reveal d2">
+      Every other page in this series picks apart dozens of lines. This one cannot —
+      <b>the whole file is a single assignment</b>. So instead it explains what an
+      <code class="tok">__init__.py</code> is <em>for</em>, and why a healthy one stays this small.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">1</div><div class="l">line</div></div>
+      <div class="stat reveal d2"><div class="n">1</div><div class="l">statement</div></div>
+      <div class="stat reveal d3"><div class="n">0.1.0</div><div class="l">__version__</div></div>
+      <div class="stat reveal d3"><div class="n">0</div><div class="l">imports</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 the whole file ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — the whole file</div>
+      <h2>Nothing is omitted here.</h2>
+      <p>The code block below is not an excerpt. It is <code class="tok">__init__.py</code> in its
+        entirety — every byte of it.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">__init__.py</span><span>line 1 — 1</span></div>
+      <pre><div class="cl"><span class="ln">1</span><span class="ct">__version__ = <span class="s">"0.1.0"</span></span></div></pre>
+    </div>
+
+    <div class="prose reveal d1">
+      <p>One module-level name, <code class="tok">__version__</code>, bound to the string
+        <code class="tok">"0.1.0"</code>. There are no imports, no functions, no classes, and no code that
+        runs for effect. Importing the <code class="tok">localhost_pages</code> package executes this single
+        assignment and nothing else.</p>
+      <p>The name <code class="tok">__version__</code> is a long-standing Python convention — the place a
+        package records its own release version so callers can read
+        <code class="tok">localhost_pages.__version__</code> at runtime.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 what __init__.py is for ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — the concept</div>
+      <h2>What <span class="mono">__init__.py</span> is for.</h2>
+      <p>It is not an ordinary module. Python treats a file with this exact name specially.</p>
+    </div>
+
+    <div class="prose reveal d1">
+      <p><b>It marks a directory as a package.</b> When <code class="tok">__init__.py</code> sits inside
+        <code class="tok">src/localhost_pages/</code>, Python recognises that directory as the importable
+        package <code class="tok">localhost_pages</code> — and the sibling files
+        (<code class="tok">server.py</code>, <code class="tok">watcher.py</code>, and the rest) become its
+        submodules, importable as <code class="tok">localhost_pages.server</code> and so on.</p>
+      <p><b>It runs once, on first import.</b> The first time anything imports the package — or any module
+        inside it — Python executes <code class="tok">__init__.py</code> top to bottom and caches the result.
+        Whatever names it defines become attributes of the package object itself.</p>
+      <p><b>It is the conventional home for package-level metadata.</b> Because it runs first and its names
+        attach to the package, <code class="tok">__init__.py</code> is where small package-wide facts live —
+        most commonly <code class="tok">__version__</code>. It can also re-export a curated public API, but it
+        is under no obligation to do either.</p>
+    </div>
+
+    <div class="note reveal d2" style="margin-top:22px">
+      <h4>This package's <code class="tok" style="font-size:.82em">__init__.py</code> does exactly one of those jobs</h4>
+      <p>It marks the directory as a package (just by existing), and it defines one metadata name. It does
+        <em>not</em> re-export anything — so the choice of what is "public" is left to each submodule and to
+        how callers import them directly.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 why empty of logic ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — by design</div>
+      <h2>Why this one holds no logic.</h2>
+      <p>A one-line <code class="tok">__init__.py</code> is not laziness. In a well-factored package it is
+        the goal.</p>
+    </div>
+
+    <div class="notes">
+      <div class="note reveal d1">
+        <h4>The real code lives in siblings</h4>
+        <p>Routing, file watching, pub/sub, scanning, rendering — each has its own module beside this file.
+          Keeping <code class="tok">__init__.py</code> minimal means there is no ambiguity about <em>where</em>
+          any given behaviour is implemented.</p>
+      </div>
+      <div class="note reveal d1" style="--ac:var(--sage)">
+        <h4>Importing the package is cheap and side-effect-free</h4>
+        <p>With no imports and no executable statements beyond one assignment, importing
+          <code class="tok">localhost_pages</code> does no work, touches no filesystem, and starts no
+          servers. A heavy <code class="tok">__init__.py</code> would impose that cost on every importer,
+          including the test suite.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--mist)">
+        <h4>No re-exports means no import cycles</h4>
+        <p>If <code class="tok">__init__.py</code> imported its own submodules to re-export their names, every
+          one of those submodules would load whenever the package is touched — and any submodule importing
+          the package back would risk a circular import. An empty-of-logic init sidesteps that entirely.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--peach)">
+        <h4>This file is the single source of the version</h4>
+        <p><code class="tok">pyproject.toml</code> does <em>not</em> repeat the version. It declares
+          <code class="tok">dynamic = ["version"]</code> and points
+          <code class="tok">[tool.hatch.version]</code> at this file's <code class="tok">__version__</code> — so the
+          packaging version is <em>derived</em> from this one line at build time. There is exactly one place
+          to edit, and the two can never drift apart.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 take away ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — step back</div>
+      <h2>Three things to take away.</h2>
+    </div>
+    <div class="notes">
+      <div class="note reveal d1">
+        <h4>A file's <em>presence</em> can be its main job</h4>
+        <p>Most of what <code class="tok">__init__.py</code> does for this package is simply existing —
+          that alone is what makes <code class="tok">src/localhost_pages/</code> an importable package.</p>
+      </div>
+      <div class="note reveal d1" style="--ac:var(--sage)">
+        <h4>Small is a feature, not a gap</h4>
+        <p>A one-line init keeps imports fast, side-effect-free, and cycle-free. There is nothing missing
+          here — the brevity is the design.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--peach)">
+        <h4>One fact, in one place</h4>
+        <p>The release version lives here as <code class="tok">__version__</code> and nowhere else.
+          <code class="tok">pyproject.toml</code> reads it through Hatch's
+          <code class="tok">[tool.hatch.version]</code>, and the running app reads it through
+          <code class="tok">logconfig.app_version()</code> — so a single edit to this line updates the package
+          metadata, the startup banner, and the diagnostics bundle at once.</p>
+      </div>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/accents/"><div class="lbl">&larr; PREVIOUS</div><div class="nm"><span class="mono">accents.py</span></div></a>
+      <a class="next" href="/technical-explanation/template/"><div class="lbl">NEXT &rarr;</div><div class="nm"><span class="mono">index.html</span></div></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/__init__.py — 1 line, 1 statement, __version__ = "0.1.0".</span>
+    <span><a href="/technical-explanation/">&larr; all the files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

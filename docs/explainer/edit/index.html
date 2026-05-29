@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>edit.js — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #b89eb4; }   /* orchid — edit.js */
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">static/edit.js</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">edit.js</span><br />drag to <em>reorder.</em></h1>
+    <p class="lede reveal d2">
+      Toggling edit mode is one line — <code class="tok">body.classList.toggle('editing')</code> — and CSS does the rest:
+      drag handles appear, the <b>✕</b> delete buttons hide, click-to-preview is suppressed.
+      The actual reordering is <b>native HTML5 drag-and-drop</b>, no library. Dropping a row
+      writes <code class="tok">lp:order</code> and forces <code class="tok">manual</code> sort so the order survives a reload.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">74</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">native</div><div class="l">HTML5 DnD</div></div>
+      <div class="stat reveal d3"><div class="n">lp:order</div><div class="l">storage key</div></div>
+      <div class="stat reveal d3"><div class="n">manual</div><div class="l">sort forced</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 entering edit mode ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — entering edit mode</div>
+      <h2>One class. CSS handles the rest.</h2>
+      <p><code class="tok">setEditing(on)</code> flips a single class on <code class="tok">body</code> —
+        <code class="tok">index.css</code> then shows drag handles, hides the <b>✕</b> buttons,
+        and disables click-to-preview. JavaScript does only what CSS cannot: flip the button label,
+        update <code class="tok">aria-pressed</code>, and set <code class="tok">draggable</code> per row.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">edit.js</span><span>lines 1 — 29</span></div>
+      <pre><div class="cl"><span class="ln">1</span><span class="ct"><span class="c">// Edit mode: toggles drag handles on/off, hides the × button to prevent</span></span></div><div class="cl"><span class="ln">2</span><span class="ct"><span class="c">// fat-finger deletes, and wires up native HTML5 drag-and-drop reordering.</span></span></div><div class="cl"><span class="ln">3</span><span class="ct"><span class="c">// Dropping a row writes the new order to lp:order and forces sort to manual.</span></span></div><div class="cl"><span class="ln">4</span><span class="ct">(<span class="k">function</span> () {</span></div><div class="cl"><span class="ln">5</span><span class="ct">  <span class="k">const</span> ORDER_KEY = <span class="s">'lp:order'</span>;</span></div><div class="cl"><span class="ln">6</span><span class="ct">  <span class="k">const</span> SORT_KEY  = <span class="s">'lp:sort'</span>;</span></div><div class="cl"><span class="ln">7</span><span class="ct">  <span class="k">const</span> list      = document.<span class="f">querySelector</span>(<span class="s">'.apps'</span>);</span></div><div class="cl"><span class="ln">8</span><span class="ct">  <span class="k">const</span> toggle    = document.<span class="f">querySelector</span>(<span class="s">'.edit-toggle'</span>);</span></div><div class="cl"><span class="ln">9</span><span class="ct">  <span class="k">const</span> sortWrap  = document.<span class="f">querySelector</span>(<span class="s">'.sort-wrap'</span>);</span></div><div class="cl"><span class="ln">10</span><span class="ct">  <span class="k">if</span> (!list || !toggle || !sortWrap) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">11</span><span class="ct"></span></div><div class="cl"><span class="ln">12</span><span class="ct">  <span class="k">function</span> <span class="f">setEditing</span>(on) {</span></div><div class="cl"><span class="ln">13</span><span class="ct">    document.body.classList.<span class="f">toggle</span>(<span class="s">'editing'</span>, on);</span></div><div class="cl"><span class="ln">14</span><span class="ct">    toggle.<span class="f">setAttribute</span>(<span class="s">'aria-pressed'</span>, <span class="f">String</span>(on));</span></div><div class="cl"><span class="ln">15</span><span class="ct">    toggle.textContent = on ? <span class="s">'DONE'</span> : <span class="s">'EDIT'</span>;</span></div><div class="cl"><span class="ln">16</span><span class="ct">    list.<span class="f">querySelectorAll</span>(<span class="s">'.row'</span>).<span class="f">forEach</span>((row) =&gt; {</span></div><div class="cl"><span class="ln">17</span><span class="ct">      row.draggable = on;</span></div><div class="cl"><span class="ln">18</span><span class="ct">    });</span></div><div class="cl"><span class="ln">19</span><span class="ct">  }</span></div><div class="cl"><span class="ln">20</span><span class="ct"></span></div><div class="cl"><span class="ln">21</span><span class="ct">  toggle.<span class="f">addEventListener</span>(<span class="s">'click'</span>, () =&gt; {</span></div><div class="cl"><span class="ln">22</span><span class="ct">    <span class="f">setEditing</span>(!document.body.classList.<span class="f">contains</span>(<span class="s">'editing'</span>));</span></div><div class="cl"><span class="ln">23</span><span class="ct">  });</span></div><div class="cl"><span class="ln">24</span><span class="ct"></span></div><div class="cl"><span class="ln">25</span><span class="ct">  document.<span class="f">addEventListener</span>(<span class="s">'keydown'</span>, (e) =&gt; {</span></div><div class="cl"><span class="ln">26</span><span class="ct">    <span class="k">if</span> (e.key === <span class="s">'Escape'</span> &amp;&amp; document.body.classList.<span class="f">contains</span>(<span class="s">'editing'</span>)) {</span></div><div class="cl"><span class="ln">27</span><span class="ct">      <span class="f">setEditing</span>(<span class="k">false</span>);</span></div><div class="cl"><span class="ln">28</span><span class="ct">    }</span></div><div class="cl"><span class="ln">29</span><span class="ct">  });</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">5 — 10</div>
+        <div class="txt">Three DOM lookups at module init — <b>list</b> is the card container, <b>toggle</b> is the EDIT/DONE button,
+          <b>sortWrap</b> exposes the <code class="tok">__setSort</code> method wired by <code class="tok">sort.js</code>.
+          The early <code class="tok">return</code> on line 10 is a safety guard: this script runs on every page load
+          but is only wired if all three elements exist.</div>
+      </div>
+      <div class="row">
+        <div class="lref">12 — 19</div>
+        <div class="txt"><b>setEditing</b> is the single point of truth. <code class="tok">classList.toggle('editing', on)</code>
+          drives all CSS state — every visual difference between browse and edit mode is expressed as a
+          <code class="tok">body.editing …</code> rule in <code class="tok">index.css</code>.
+          <code class="tok">row.draggable = on</code> enables the native DnD events for each card row.</div>
+      </div>
+      <div class="row">
+        <div class="lref">21 — 23</div>
+        <div class="txt">The toggle button reads current state from the class list — so it never goes out of sync
+          with programmatic calls to <code class="tok">setEditing</code>.</div>
+      </div>
+      <div class="row">
+        <div class="lref">25 — 29</div>
+        <div class="txt"><b>Esc to leave.</b> Only fires when already editing — no interference with other Escape handlers
+          on the page.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 drag handlers ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — the drag handlers</div>
+      <h2>Four events. Live DOM reorder.</h2>
+      <p>The reorder happens inside <code class="tok">dragover</code> — the DOM is updated on every
+        mouse position, so the row moves with the cursor in real time.
+        <code class="tok">dragstart</code> and <code class="tok">dragend</code> manage the
+        <b>drag-source</b> marker; <code class="tok">dragover</code> does the geometry and moves the node.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">edit.js</span><span>lines 31 — 62</span></div>
+      <pre><div class="cl"><span class="ln">31</span><span class="ct">  <span class="c">// Drag-and-drop reorder. Native HTML5 DnD is enough for in-list moves.</span></span></div><div class="cl"><span class="ln">32</span><span class="ct">  <span class="k">let</span> dragging = <span class="k">null</span>;</span></div><div class="cl"><span class="ln">33</span><span class="ct"></span></div><div class="cl"><span class="ln">34</span><span class="ct">  list.<span class="f">addEventListener</span>(<span class="s">'dragstart'</span>, (e) =&gt; {</span></div><div class="cl"><span class="ln">35</span><span class="ct">    <span class="k">if</span> (!document.body.classList.<span class="f">contains</span>(<span class="s">'editing'</span>)) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">36</span><span class="ct">    <span class="k">const</span> row = e.target.<span class="f">closest</span>(<span class="s">'.row'</span>);</span></div><div class="cl"><span class="ln">37</span><span class="ct">    <span class="k">if</span> (!row) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">38</span><span class="ct">    dragging = row;</span></div><div class="cl"><span class="ln">39</span><span class="ct">    row.classList.<span class="f">add</span>(<span class="s">'drag-source'</span>);</span></div><div class="cl"><span class="ln">40</span><span class="ct">    e.dataTransfer.effectAllowed = <span class="s">'move'</span>;</span></div><div class="cl"><span class="ln">41</span><span class="ct">    e.dataTransfer.setData(<span class="s">'text/plain'</span>, row.dataset.name);</span></div><div class="cl"><span class="ln">42</span><span class="ct">  });</span></div><div class="cl"><span class="ln">43</span><span class="ct"></span></div><div class="cl"><span class="ln">44</span><span class="ct">  list.<span class="f">addEventListener</span>(<span class="s">'dragend'</span>, (e) =&gt; {</span></div><div class="cl"><span class="ln">45</span><span class="ct">    <span class="k">const</span> row = e.target.<span class="f">closest</span>(<span class="s">'.row'</span>);</span></div><div class="cl"><span class="ln">46</span><span class="ct">    <span class="k">if</span> (row) row.classList.<span class="f">remove</span>(<span class="s">'drag-source'</span>);</span></div><div class="cl"><span class="ln">47</span><span class="ct">    dragging = <span class="k">null</span>;</span></div><div class="cl"><span class="ln">48</span><span class="ct">    list.<span class="f">querySelectorAll</span>(<span class="s">'.drag-over'</span>).<span class="f">forEach</span>((r) =&gt; r.classList.<span class="f">remove</span>(<span class="s">'drag-over'</span>));</span></div><div class="cl"><span class="ln">49</span><span class="ct">  });</span></div><div class="cl"><span class="ln">50</span><span class="ct"></span></div><div class="cl"><span class="ln">51</span><span class="ct">  list.<span class="f">addEventListener</span>(<span class="s">'dragover'</span>, (e) =&gt; {</span></div><div class="cl"><span class="ln">52</span><span class="ct">    <span class="k">if</span> (!dragging) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">53</span><span class="ct">    e.<span class="f">preventDefault</span>();</span></div><div class="cl"><span class="ln">54</span><span class="ct">    <span class="k">const</span> target = e.target.<span class="f">closest</span>(<span class="s">'.row'</span>);</span></div><div class="cl"><span class="ln">55</span><span class="ct">    <span class="k">if</span> (!target || target === dragging) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">56</span><span class="ct">    <span class="k">const</span> rect = target.<span class="f">getBoundingClientRect</span>();</span></div><div class="cl"><span class="ln">57</span><span class="ct">    <span class="k">const</span> before = (e.clientY - rect.top) &lt; rect.height / <span class="n">2</span>;</span></div><div class="cl"><span class="ln">58</span><span class="ct">    list.<span class="f">querySelectorAll</span>(<span class="s">'.drag-over'</span>).<span class="f">forEach</span>((r) =&gt; r.classList.<span class="f">remove</span>(<span class="s">'drag-over'</span>));</span></div><div class="cl"><span class="ln">59</span><span class="ct">    target.classList.<span class="f">add</span>(<span class="s">'drag-over'</span>);</span></div><div class="cl"><span class="ln">60</span><span class="ct">    <span class="k">if</span> (before) target.<span class="f">before</span>(dragging);</span></div><div class="cl"><span class="ln">61</span><span class="ct">    <span class="k">else</span>        target.<span class="f">after</span>(dragging);</span></div><div class="cl"><span class="ln">62</span><span class="ct">  });</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">34 — 41</div>
+        <div class="txt"><b>dragstart</b> — records which row is moving into the module-level <code class="tok">dragging</code> variable,
+          marks it with <code class="tok">.drag-source</code> (CSS dims it), and stamps <code class="tok">effectAllowed = 'move'</code>
+          so the cursor shows the right icon. The <code class="tok">setData</code> call is required by Firefox — without it
+          Firefox cancels the drag immediately.</div>
+      </div>
+      <div class="row">
+        <div class="lref">44 — 49</div>
+        <div class="txt"><b>dragend</b> — fires whether the drop succeeded or was cancelled. Clears
+          <code class="tok">.drag-source</code>, nulls <code class="tok">dragging</code>, and sweeps any stale
+          <code class="tok">.drag-over</code> highlights. Clean state guaranteed.</div>
+      </div>
+      <div class="row">
+        <div class="lref">53</div>
+        <div class="txt"><code class="tok">e.preventDefault()</code> is what tells the browser a drop is allowed here.
+          Without it, the browser shows the "not-allowed" cursor and the <code class="tok">drop</code> event never fires.</div>
+      </div>
+      <div class="row">
+        <div class="lref">56 — 61</div>
+        <div class="txt">The geometry. <code class="tok">getBoundingClientRect()</code> gives the target row's screen position.
+          Dividing its height in half creates a <b>top half / bottom half</b> threshold — cursor above
+          the midpoint calls <code class="tok">target.before(dragging)</code>; below calls <code class="tok">target.after(dragging)</code>.
+          The DOM reorders live, every pixel of the drag.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>Why event delegation on <code class="tok" style="font-size:.82em">.apps</code>, not per-row listeners?</h4>
+      <p>Rows are dynamically rendered and can be added or removed. Attaching four listeners to the
+        container means newly inserted rows are automatically covered — no re-wiring required.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 persistence ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — persistence</div>
+      <h2>Write order. Force manual. Survive reload.</h2>
+      <p>The visual move alone is ephemeral — a page reload would re-run <code class="tok">sort.js</code>
+        and restore whatever order was last stored. The <code class="tok">drop</code> handler closes that gap:
+        write the new sequence to <code class="tok">lp:order</code>, then switch the sort mode to
+        <code class="tok">manual</code> so <code class="tok">sort.js</code> will replay it on the next render.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">edit.js</span><span>lines 64 — 73</span></div>
+      <pre><div class="cl"><span class="ln">64</span><span class="ct">  list.<span class="f">addEventListener</span>(<span class="s">'drop'</span>, (e) =&gt; {</span></div><div class="cl"><span class="ln">65</span><span class="ct">    e.<span class="f">preventDefault</span>();</span></div><div class="cl"><span class="ln">66</span><span class="ct">    list.<span class="f">querySelectorAll</span>(<span class="s">'.drag-over'</span>).<span class="f">forEach</span>((r) =&gt; r.classList.<span class="f">remove</span>(<span class="s">'drag-over'</span>));</span></div><div class="cl"><span class="ln">67</span><span class="ct">    <span class="k">if</span> (!dragging) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">68</span><span class="ct">    <span class="c">// Persist the new order across the entire list.</span></span></div><div class="cl"><span class="ln">69</span><span class="ct">    <span class="k">const</span> order = Array.<span class="f">from</span>(list.<span class="f">querySelectorAll</span>(<span class="s">'.row'</span>)).<span class="f">map</span>((r) =&gt; r.dataset.name);</span></div><div class="cl"><span class="ln">70</span><span class="ct">    localStorage.<span class="f">setItem</span>(ORDER_KEY, JSON.<span class="f">stringify</span>(order));</span></div><div class="cl"><span class="ln">71</span><span class="ct">    <span class="c">// Switch to manual sort so the new order sticks on next reload.</span></span></div><div class="cl"><span class="ln">72</span><span class="ct">    sortWrap.__setSort?.(<span class="s">'manual'</span>);</span></div><div class="cl"><span class="ln">73</span><span class="ct">  });</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">65 — 66</div>
+        <div class="txt"><code class="tok">preventDefault</code> again — required to accept the drop, since the browser
+          defaults to navigating to dropped content. Cleanup sweeps any residual <code class="tok">.drag-over</code>
+          highlights that <code class="tok">dragend</code> hasn't cleared yet.</div>
+      </div>
+      <div class="row">
+        <div class="lref">69 — 70</div>
+        <div class="txt">Read the <b>current DOM order</b> — not the old array, the live nodes — map each to its
+          <code class="tok">data-name</code> attribute, and write the resulting array as JSON to
+          <code class="tok">lp:order</code>. Snapshotting the DOM after the move guarantees the stored order
+          matches what the user sees.</div>
+      </div>
+      <div class="row">
+        <div class="lref">72</div>
+        <div class="txt"><code class="tok">sortWrap.__setSort?.('manual')</code> — optional chaining because
+          <code class="tok">sort.js</code> may not have run yet. Calling it switches the sort dropdown to
+          <b>manual</b> and writes <code class="tok">lp:sort = 'manual'</code> to localStorage.
+          On next reload, <code class="tok">sort.js</code> reads that key, reads <code class="tok">lp:order</code>,
+          and reorders the DOM to match — the hand-arranged sequence persists indefinitely.</div>
+      </div>
+    </div>
+
+    <div class="notes reveal d2" style="margin-top: 22px">
+      <div class="note">
+        <h4>Why switch sort mode, not just write the order?</h4>
+        <p><code class="tok">sort.js</code> only consults <code class="tok">lp:order</code> when the current sort
+          mode is <code class="tok">manual</code>. Writing the array alone would be ignored — the sort mode check
+          comes first. Flipping the mode is what activates the stored sequence.</p>
+      </div>
+      <div class="note" style="--ac:var(--sage)">
+        <h4>Native DnD — no library required</h4>
+        <p>HTML5 drag-and-drop covers everything an in-list vertical reorder needs:
+          source tracking, position geometry, live DOM manipulation, and drop confirmation.
+          The platform API is verbose but complete — the 40 lines here replace the entire
+          surface area of a dedicated drag library.</p>
+      </div>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/sort/">
+        <div class="lbl">&larr; PREVIOUS</div>
+        <div class="nm"><span class="mono">sort.js</span></div>
+      </a>
+      <a class="next" href="/technical-explanation/keys/">
+        <div class="lbl">NEXT &rarr;</div>
+        <div class="nm"><span class="mono">keys.js</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/static/edit.js — 74 lines, drag-to-reorder edit mode.</span>
+    <span><a href="/technical-explanation/">&larr; all the files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

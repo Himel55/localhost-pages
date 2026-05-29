@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>peek.js — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #a896c8; }   /* iris — peek.js */
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">static/peek.js</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">peek.js</span><br />a preview without <em>leaving.</em></h1>
+    <p class="lede reveal d2">
+      Click any app row and a centered <b>iframe modal</b> slides in — no navigation, no new tab.
+      The modal is <b>history-aware</b>: one <code class="tok">history.pushState</code> is all it takes,
+      so the browser Back button closes it cleanly. Modifier-clicks and the explicit <b>↗</b> button
+      always escape to the real page.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">118</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">1</div><div class="l">iframe modal</div></div>
+      <div class="stat reveal d2"><div class="n">history.pushState</div><div class="l">back-button aware</div></div>
+      <div class="stat reveal d3"><div class="n">sandboxed</div><div class="l">iframe</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 building the modal ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — building the modal</div>
+      <h2>build() is lazy — first call only.</h2>
+      <p>The DOM nodes are created exactly once, on the first click that needs them.
+        After that, <code class="tok">if (modal) return</code> makes every subsequent call free.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">peek.js</span><span>lines 10 — 43</span></div>
+      <pre><div class="cl"><span class="ln">10</span><span class="ct">  <span class="k">function</span> <span class="f">build</span>() {</span></div><div class="cl"><span class="ln">11</span><span class="ct">    <span class="k">if</span> (modal) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">12</span><span class="ct">    backdrop = document.<span class="f">createElement</span>(<span class="s">'div'</span>);</span></div><div class="cl"><span class="ln">13</span><span class="ct">    backdrop.className = <span class="s">'peek-backdrop'</span>;</span></div><div class="cl"><span class="ln">14</span><span class="ct">    modal = document.<span class="f">createElement</span>(<span class="s">'div'</span>);</span></div><div class="cl"><span class="ln">15</span><span class="ct">    modal.className = <span class="s">'peek-modal'</span>;</span></div><div class="cl"><span class="ln">16</span><span class="ct">    modal.innerHTML =</span></div><div class="cl"><span class="ln">17</span><span class="ct">      <span class="s">'&lt;a class="peek-open" href="#" aria-label="Open full page"&gt;'</span> +</span></div><div class="cl"><span class="ln">24</span><span class="ct">      <span class="s">'&lt;button class="peek-close" type="button"&gt;&times;&lt;/button&gt;'</span> +</span></div><div class="cl"><span class="ln">25</span><span class="ct">      <span class="s">'&lt;iframe sandbox="allow-same-origin allow-scripts"'</span> +</span></div><div class="cl"><span class="ln">   </span><span class="ct">      <span class="s">'        referrerpolicy="no-referrer"&gt;&lt;/iframe&gt;'</span>;</span></div><div class="cl"><span class="ln">26</span><span class="ct">    backdrop.<span class="f">appendChild</span>(modal);</span></div><div class="cl"><span class="ln">27</span><span class="ct">    document.body.<span class="f">appendChild</span>(backdrop);</span></div><div class="cl"><span class="ln">36</span><span class="ct">    modal.<span class="f">querySelector</span>(<span class="s">'.peek-open'</span>).<span class="f">addEventListener</span>(<span class="s">'click'</span>, (e) =&gt; {</span></div><div class="cl"><span class="ln">37</span><span class="ct">      <span class="k">const</span> a = e.currentTarget;</span></div><div class="cl"><span class="ln">38</span><span class="ct">      <span class="k">if</span> (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">39</span><span class="ct">      <span class="k">if</span> (e.button !== undefined &amp;&amp; e.button !== <span class="n">0</span>) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">40</span><span class="ct">      e.<span class="f">preventDefault</span>();</span></div><div class="cl"><span class="ln">41</span><span class="ct">      window.location.<span class="f">replace</span>(a.href);</span></div><div class="cl"><span class="ln">42</span><span class="ct">    });</span></div><div class="cl"><span class="ln">43</span><span class="ct">  }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">11</div>
+        <div class="txt">The guard. <code class="tok">modal</code> is module-level; once assigned it is truthy and
+          <code class="tok">build()</code> becomes a no-op. One DOM tree, for the entire session.</div>
+      </div>
+      <div class="row">
+        <div class="lref">12 — 15</div>
+        <div class="txt">Two nodes: <b>backdrop</b> (full-screen dimmed overlay) and <b>modal</b> (the
+          centered card). The backdrop click-handler closes the modal when you click outside.</div>
+      </div>
+      <div class="row">
+        <div class="lref">25</div>
+        <div class="txt">The iframe carries <code class="tok">sandbox="allow-same-origin allow-scripts"</code>
+          — it can run the app's own scripts and read its own cookies, but form submission, popups, and
+          top-level navigation are blocked by default. <code class="tok">referrerpolicy="no-referrer"</code>
+          keeps the app unaware it is being previewed.</div>
+      </div>
+      <div class="row">
+        <div class="lref">36 — 42</div>
+        <div class="txt">The <b>↗ maximize handler</b> uses <code class="tok">window.location.replace</code>,
+          not <code class="tok">href</code> navigation. <code class="tok">replace</code> overwrites the current
+          history entry — so pressing Back from the full app returns to the bare index, not a
+          bfcache-restored open preview.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 opening ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — opening</div>
+      <h2>open(row) — one pushState, one replace.</h2>
+      <p>Two deliberate choices about how the iframe loads keep the browser history clean
+        and the visit counters honest.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">peek.js</span><span>lines 45 — 67</span></div>
+      <pre><div class="cl"><span class="ln">45</span><span class="ct">  <span class="k">function</span> <span class="f">open</span>(row) {</span></div><div class="cl"><span class="ln">46</span><span class="ct">    <span class="k">if</span> (!row || !row.dataset.name) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">47</span><span class="ct">    <span class="k">if</span> (row.classList.<span class="f">contains</span>(<span class="s">'broken'</span>)) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">48</span><span class="ct">    <span class="k">if</span> (document.body.classList.<span class="f">contains</span>(<span class="s">'editing'</span>)) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">49</span><span class="ct">    <span class="f">build</span>();</span></div><div class="cl"><span class="ln">50</span><span class="ct">    openRow = row;</span></div><div class="cl"><span class="ln">51</span><span class="ct">    <span class="k">const</span> url = <span class="s">'/'</span> + <span class="f">encodeURIComponent</span>(row.dataset.name) + <span class="s">'/'</span>;</span></div><div class="cl"><span class="ln">55</span><span class="ct">    <span class="k">const</span> iframe = modal.<span class="f">querySelector</span>(<span class="s">'iframe'</span>);</span></div><div class="cl"><span class="ln">56</span><span class="ct">    <span class="k">try</span> {</span></div><div class="cl"><span class="ln">57</span><span class="ct">      iframe.contentWindow.location.<span class="f">replace</span>(url);</span></div><div class="cl"><span class="ln">58</span><span class="ct">    } <span class="k">catch</span> {</span></div><div class="cl"><span class="ln">59</span><span class="ct">      iframe.src = url;</span></div><div class="cl"><span class="ln">60</span><span class="ct">    }</span></div><div class="cl"><span class="ln">61</span><span class="ct">    modal.<span class="f">querySelector</span>(<span class="s">'.peek-open'</span>).href = url;</span></div><div class="cl"><span class="ln">62</span><span class="ct">    backdrop.classList.<span class="f">add</span>(<span class="s">'open'</span>);</span></div><div class="cl"><span class="ln">63</span><span class="ct">    history.<span class="f">pushState</span>({ peek: row.dataset.name }, <span class="s">''</span>);</span></div><div class="cl"><span class="ln">66</span><span class="ct">    window.__lpRecordVisit?.(row);</span></div><div class="cl"><span class="ln">67</span><span class="ct">  }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">46 — 48</div>
+        <div class="txt">Three early exits: no <code class="tok">data-name</code>, broken symlink, or
+          body in <code class="tok">editing</code> mode (rename in progress). None of these should preview.</div>
+      </div>
+      <div class="row">
+        <div class="lref">57</div>
+        <div class="txt"><b>The key choice.</b> <code class="tok">iframe.contentWindow.location.replace(url)</code>
+          rather than setting <code class="tok">iframe.src</code>. Using <code class="tok">replace</code> keeps the
+          iframe navigation out of the <em>top-level</em> back stack entirely — so a single
+          <code class="tok">history.pushState</code> on line 63 is all the Back button has to pop. Setting
+          <code class="tok">iframe.src</code> would add its own entry and make Back unreliable.</div>
+      </div>
+      <div class="row">
+        <div class="lref">58 — 59</div>
+        <div class="txt">The <code class="tok">try/catch</code> fallback. Cross-origin iframes block
+          <code class="tok">contentWindow.location</code> access — in that case, assigning <code class="tok">iframe.src</code>
+          is the only option.</div>
+      </div>
+      <div class="row">
+        <div class="lref">63</div>
+        <div class="txt"><code class="tok">pushState({ peek: name }, '')</code> adds exactly one history entry.
+          The state carries the app name so a future <code class="tok">popstate</code> can identify it.</div>
+      </div>
+      <div class="row">
+        <div class="lref">66</div>
+        <div class="txt"><code class="tok">window.__lpRecordVisit?.(row)</code> — optional chaining on a
+          global hook defined by <b>visited.js</b>. Opening a preview counts as a visit:
+          it updates the recently-visited sort and clears the has-update badge.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 closing & history ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — closing &amp; history</div>
+      <h2>close() balances the history stack.</h2>
+      <p>Every open adds one entry; every close pops it — unless the close was triggered
+        by the Back button itself, in which case the entry is already gone.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">peek.js</span><span>lines 69 — 85</span></div>
+      <pre><div class="cl"><span class="ln">69</span><span class="ct">  <span class="k">function</span> <span class="f">close</span>(fromPopstate = <span class="k">false</span>) {</span></div><div class="cl"><span class="ln">70</span><span class="ct">    <span class="k">if</span> (!backdrop) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">71</span><span class="ct">    <span class="k">if</span> (!backdrop.classList.<span class="f">contains</span>(<span class="s">'open'</span>)) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">72</span><span class="ct">    backdrop.classList.<span class="f">remove</span>(<span class="s">'open'</span>);</span></div><div class="cl"><span class="ln">73</span><span class="ct">    <span class="k">const</span> iframe = modal.<span class="f">querySelector</span>(<span class="s">'iframe'</span>);</span></div><div class="cl"><span class="ln">74</span><span class="ct">    <span class="k">try</span> {</span></div><div class="cl"><span class="ln">75</span><span class="ct">      iframe.contentWindow.location.<span class="f">replace</span>(<span class="s">'about:blank'</span>);</span></div><div class="cl"><span class="ln">76</span><span class="ct">    } <span class="k">catch</span> {</span></div><div class="cl"><span class="ln">77</span><span class="ct">      iframe.src = <span class="s">'about:blank'</span>;</span></div><div class="cl"><span class="ln">78</span><span class="ct">    }</span></div><div class="cl"><span class="ln">79</span><span class="ct">    openRow = <span class="k">null</span>;</span></div><div class="cl"><span class="ln">80</span><span class="ct">    <span class="k">if</span> (!fromPopstate &amp;&amp; history.state?.peek) history.<span class="f">back</span>();</span></div><div class="cl"><span class="ln">81</span><span class="ct">  }</span></div><div class="cl"><span class="ln">83</span><span class="ct">  window.<span class="f">addEventListener</span>(<span class="s">'popstate'</span>, () =&gt; {</span></div><div class="cl"><span class="ln">84</span><span class="ct">    <span class="k">if</span> (backdrop?.classList.<span class="f">contains</span>(<span class="s">'open'</span>)) <span class="f">close</span>(<span class="k">true</span>);</span></div><div class="cl"><span class="ln">85</span><span class="ct">  });</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">70 — 71</div>
+        <div class="txt">Two guards. If <code class="tok">build()</code> was never called, <code class="tok">backdrop</code>
+          is <code class="tok">null</code>. If it was called but nothing is open, removing <code class="tok">open</code>
+          again would be harmless — but the <code class="tok">history.back()</code> on line 80 would incorrectly
+          pop an unrelated entry.</div>
+      </div>
+      <div class="row">
+        <div class="lref">75</div>
+        <div class="txt">Resetting to <code class="tok">about:blank</code> stops the iframe's network activity and
+          frees the page from memory. Same <code class="tok">replace</code>-vs-<code class="tok">src</code> logic as in
+          <code class="tok">open()</code>.</div>
+      </div>
+      <div class="row">
+        <div class="lref">80</div>
+        <div class="txt">The history balance. When the × button triggers <code class="tok">close()</code>,
+          <code class="tok">fromPopstate</code> is <code class="tok">false</code> — so <code class="tok">history.back()</code>
+          is called to pop the entry that <code class="tok">open()</code> pushed. When the Back button triggers
+          <code class="tok">popstate</code>, the entry is already gone — so <code class="tok">fromPopstate = true</code>
+          skips the extra <code class="tok">back()</code> that would otherwise eat an unrelated entry.</div>
+      </div>
+      <div class="row">
+        <div class="lref">83 — 85</div>
+        <div class="txt">The <b>popstate listener</b> is the bridge between the browser's Back button and
+          <code class="tok">close()</code>. It fires whenever the history stack is navigated — if the modal is
+          currently open, close it.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>Why check <code class="tok" style="font-size:.82em">history.state?.peek</code> on line 80?</h4>
+      <p>If the user opens then immediately closes before the <code class="tok">pushState</code> completes —
+        or if the modal was somehow shown without going through <code class="tok">open()</code> — the peek
+        state may not be present. Checking avoids popping a history entry that peek did not push.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 click interception ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — click interception</div>
+      <h2>A delegated handler — and six ways to stand down.</h2>
+      <p>A single <code class="tok">click</code> listener on <code class="tok">document</code> catches every row click.
+        Before calling <code class="tok">open()</code> it checks six conditions; any one lets the native
+        click through.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">peek.js</span><span>lines 87 — 101</span></div>
+      <pre><div class="cl"><span class="ln">87</span><span class="ct">  document.<span class="f">addEventListener</span>(<span class="s">'click'</span>, (e) =&gt; {</span></div><div class="cl"><span class="ln">90</span><span class="ct">    <span class="k">if</span> (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">91</span><span class="ct">    <span class="k">if</span> (e.button !== undefined &amp;&amp; e.button !== <span class="n">0</span>) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">93</span><span class="ct">    <span class="k">if</span> (e.target.<span class="f">closest</span>(<span class="s">'.open, .pin, .del'</span>)) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">94</span><span class="ct">    <span class="k">const</span> row = e.target.<span class="f">closest</span>(<span class="s">'.row'</span>);</span></div><div class="cl"><span class="ln">95</span><span class="ct">    <span class="k">if</span> (!row) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">96</span><span class="ct">    <span class="k">if</span> (row.classList.<span class="f">contains</span>(<span class="s">'broken'</span>)) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">97</span><span class="ct">    <span class="k">if</span> (document.body.classList.<span class="f">contains</span>(<span class="s">'editing'</span>)) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">98</span><span class="ct">    <span class="k">if</span> (row.<span class="f">hasAttribute</span>(<span class="s">'data-confirming'</span>)) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">99</span><span class="ct">    e.<span class="f">preventDefault</span>();</span></div><div class="cl"><span class="ln">100</span><span class="ct">    <span class="f">open</span>(row);</span></div><div class="cl"><span class="ln">101</span><span class="ct">  });</span></div></pre>
+    </div>
+
+    <div class="guards reveal d2">
+      <div class="guard">
+        <div class="gl">1</div>
+        <h4>Modifier keys</h4>
+        <p>Line 90 — cmd/ctrl/shift/alt means the user wants "open in new tab" or similar.
+          Let the underlying <code class="tok">&lt;a class="body"&gt;</code> link handle it natively.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">2</div>
+        <h4>Middle-click</h4>
+        <p>Line 91 — <code class="tok">e.button !== 0</code> catches middle-button and right-button clicks.
+          Middle-click opens a new tab; peek should not intercept that.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">3</div>
+        <h4>Action buttons</h4>
+        <p>Line 93 — clicks on <code class="tok">.open</code>, <code class="tok">.pin</code>, or
+          <code class="tok">.del</code> belong to their own handlers. <code class="tok">closest()</code> means
+          clicking an icon inside the button is still caught.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">4</div>
+        <h4>Broken row</h4>
+        <p>Line 96 — a broken symlink has no app to preview. The row renders with a
+          <code class="tok">broken</code> class; peek stands down and lets the row's default style
+          communicate the error.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">5</div>
+        <h4>Edit mode</h4>
+        <p>Line 97 — when the body carries <code class="tok">editing</code>, a rename input is active.
+          Clicking the row should not accidentally open the preview.</p>
+      </div>
+      <div class="guard">
+        <div class="gl">6</div>
+        <h4>Delete confirm</h4>
+        <p>Line 98 — <code class="tok">data-confirming</code> means delete.js is waiting for the user
+          to confirm deletion. That interaction takes priority; peek leaves it alone.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 05 keyboard ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">05 — keyboard</div>
+      <h2>Two keys: Esc closes, f maximizes.</h2>
+      <p>The keydown listener is a no-op unless the backdrop is open — so it costs nothing
+        when no preview is showing.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">peek.js</span><span>lines 103 — 117</span></div>
+      <pre><div class="cl"><span class="ln">103</span><span class="ct">  document.<span class="f">addEventListener</span>(<span class="s">'keydown'</span>, (e) =&gt; {</span></div><div class="cl"><span class="ln">104</span><span class="ct">    <span class="k">if</span> (!backdrop?.classList.<span class="f">contains</span>(<span class="s">'open'</span>)) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">105</span><span class="ct">    <span class="k">if</span> (e.key === <span class="s">'Escape'</span>) {</span></div><div class="cl"><span class="ln">106</span><span class="ct">      e.<span class="f">stopImmediatePropagation</span>();</span></div><div class="cl"><span class="ln">107</span><span class="ct">      <span class="f">close</span>();</span></div><div class="cl"><span class="ln">108</span><span class="ct">      <span class="k">return</span>;</span></div><div class="cl"><span class="ln">109</span><span class="ct">    }</span></div><div class="cl"><span class="ln">110</span><span class="ct">    <span class="k">if</span> (e.key === <span class="s">'f'</span> || e.key === <span class="s">'F'</span>) {</span></div><div class="cl"><span class="ln">111</span><span class="ct">      <span class="k">const</span> tag = e.target.tagName;</span></div><div class="cl"><span class="ln">112</span><span class="ct">      <span class="k">if</span> (tag === <span class="s">'INPUT'</span> || tag === <span class="s">'TEXTAREA'</span> || tag === <span class="s">'SELECT'</span>) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">113</span><span class="ct">      e.<span class="f">preventDefault</span>();</span></div><div class="cl"><span class="ln">114</span><span class="ct">      <span class="k">const</span> link = modal.<span class="f">querySelector</span>(<span class="s">'.peek-open'</span>);</span></div><div class="cl"><span class="ln">115</span><span class="ct">      <span class="k">if</span> (link?.href) window.location.<span class="f">replace</span>(link.href);</span></div><div class="cl"><span class="ln">116</span><span class="ct">    }</span></div><div class="cl"><span class="ln">117</span><span class="ct">  });</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">104</div>
+        <div class="txt">Optional-chaining on <code class="tok">backdrop</code> — if <code class="tok">build()</code>
+          has never run, <code class="tok">backdrop</code> is <code class="tok">null</code> and the whole listener
+          exits in one expression.</div>
+      </div>
+      <div class="row">
+        <div class="lref">106</div>
+        <div class="txt"><code class="tok">stopImmediatePropagation</code> — not just <code class="tok">stopPropagation</code>.
+          Other listeners on <code class="tok">document</code> (search, keyboard shortcuts in the main UI)
+          may also claim Esc. <b>Peek wins</b> when it is open; no other handler sees the event.</div>
+      </div>
+      <div class="row">
+        <div class="lref">111 — 112</div>
+        <div class="txt">The input guard for <b>f</b>. If focus is inside a form element, the user is typing —
+          <code class="tok">f</code> is just the letter f. The guard prevents maximizing while the user
+          is filling in a field inside the previewed app.</div>
+      </div>
+      <div class="row">
+        <div class="lref">115</div>
+        <div class="txt">Same <code class="tok">window.location.replace</code> path as the ↗ button handler.
+          The history entry is overwritten, not pushed — Back leads to the bare index.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--mist)">
+      <h4>The whole file is an IIFE</h4>
+      <p>Line 5 opens <code class="tok">(function () {</code> and line 118 closes <code class="tok">})()</code>.
+        All module-level state — <code class="tok">backdrop</code>, <code class="tok">modal</code>,
+        <code class="tok">openRow</code> — is private. Nothing leaks onto <code class="tok">window</code>
+        except the deliberate <code class="tok">window.__lpRecordVisit</code> call, which goes the other way.</p>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/keys/">
+        <div class="lbl">&larr; PREVIOUS</div>
+        <div class="nm"><span class="mono">keys.js</span></div>
+      </a>
+      <a class="next" href="/technical-explanation/search/">
+        <div class="lbl">NEXT &rarr;</div>
+        <div class="nm"><span class="mono">search.js</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/static/peek.js — 118 lines, the in-place preview modal.</span>
+    <span><a href="/technical-explanation/">&larr; all the files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

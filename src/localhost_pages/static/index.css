@@ -1,0 +1,585 @@
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/__static/JetBrainsMono.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  --bg: #1a1822;        /* deep warm neutral, slight purple cast */
+  --surface: #221f2c;   /* card body */
+  --fg: #ede7dc;        /* warm off-white */
+  --muted: #9b948a;     /* dusty mid-tone */
+  --rule: #2e2a38;      /* card border */
+  --hover: #262332;     /* slight lift on hover */
+  --broken: #d6928f;    /* dusty rose for broken state */
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Base font-size sets the rem unit. 120% = 1rem ≈ 19.2px on a default
+   16px UA, giving everything a 20% size bump while remaining responsive
+   to the user's browser zoom and font-size preferences. */
+html { font-size: 120%; scrollbar-gutter: stable; }
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 2rem;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--mono);
+}
+main, header { max-width: 47.5rem; margin-left: auto; margin-right: auto; }
+
+header {
+  border-bottom: 1px solid var(--fg);
+  padding-bottom: 0.875rem;
+  margin-bottom: 0;
+}
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.search-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0 0.4375rem;
+  height: 1.625rem;
+  flex: 1;
+  min-width: 0;
+  border: 1px solid transparent;
+  transition: border-color 0.15s;
+  vertical-align: middle;
+}
+.search-wrap:focus-within { border-color: var(--fg); }
+.search-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex: 0 0 0.875rem;
+  color: var(--muted);
+  stroke: currentColor;
+  stroke-width: 1.6;
+  fill: none;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+.search-wrap:focus-within .search-icon { color: var(--fg); }
+.search {
+  background: transparent;
+  border: 0;
+  color: var(--fg);
+  font: 500 0.6875rem/1 var(--mono);
+  letter-spacing: 0.1em;
+  outline: none;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  height: 100%;
+}
+.search::placeholder { color: var(--muted); }
+.search::-webkit-search-cancel-button { -webkit-appearance: none; }
+.search-clear {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font: 600 1rem/1 var(--mono);
+  cursor: pointer;
+  padding: 0 0.125rem;
+  display: none;
+  flex: 0 0 auto;
+}
+.search-clear:hover { color: var(--fg); }
+.search:not(:placeholder-shown) ~ .search-clear { display: block; }
+.brand {
+  font-weight: 700;
+  font-size: 1.375rem;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.meta {
+  font-weight: 500;
+  font-size: 0.6875rem;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  margin-top: 0.5rem;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.meta .sep { opacity: 0.4; }
+
+/* Custom sort dropdown */
+.sort-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  position: relative;
+}
+.sort-prefix { color: var(--muted); }
+.sort-toggle {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--fg);
+  font: 500 0.6875rem/1 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0.25rem 0.375rem 0.25rem 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  outline: none;
+}
+.sort-toggle:hover { border-color: var(--rule); }
+.sort-current {
+  display: inline-block;
+  width: 20ch;
+  text-align: left;
+}
+.sort-toggle[aria-expanded="true"] { border-color: var(--fg); background: var(--surface); }
+.sort-caret {
+  width: 0.625rem;
+  height: 0.625rem;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  transition: transform 0.15s;
+}
+.sort-toggle[aria-expanded="true"] .sort-caret { transform: rotate(180deg); }
+.sort-menu {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--fg);
+  z-index: 50;
+  min-width: 10rem;
+  box-shadow: 0 0.375rem 1.125rem rgba(0, 0, 0, 0.4);
+}
+.sort-menu li {
+  padding: 0.4375rem 0.75rem;
+  font: 500 0.6875rem/1 var(--mono);
+  color: var(--fg);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  text-transform: lowercase;
+}
+.sort-menu li:hover { background: var(--hover); }
+.sort-menu li[aria-selected="true"] {
+  color: var(--fg);
+  position: relative;
+  padding-left: 1.375rem;
+}
+.sort-menu li[aria-selected="true"]::before {
+  content: "›";
+  position: absolute;
+  left: 0.5rem;
+  color: var(--fg);
+  font-weight: 700;
+}
+.edit-toggle {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--fg);
+  font: 500 0.6875rem/1 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0.1875rem 0.5rem;
+}
+.edit-toggle:hover { border-color: var(--rule); }
+body.editing .edit-toggle { border-color: var(--fg); background: var(--surface); }
+
+.help-toggle {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--fg);
+  font: 700 0.75rem/1 var(--mono);
+  cursor: pointer;
+  padding: 0.1875rem 0.5rem;
+  letter-spacing: 0;
+}
+.help-toggle:hover { border-color: var(--rule); }
+body.help-open .help-toggle { border-color: var(--fg); background: var(--surface); }
+
+/* Diagnostics download — lives in the help overlay's Troubleshooting section.
+   A break-glass action (only used when reporting a bug), styled as a small
+   actionable chip consistent with the panel's kbd keys. */
+.diag-link {
+  display: inline-block;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  color: var(--fg);
+  font: 600 0.6875rem/1.4 var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 0.0625rem 0.5rem;
+  white-space: nowrap;
+}
+.diag-link:hover { background: var(--hover); border-color: var(--fg); }
+
+/* Help overlay — keyboard-shortcut reference, two columns. */
+.help-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 110;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.help-backdrop.open { display: flex; }
+.help-panel {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--fg);
+  box-shadow: 0 0.75rem 3rem rgba(0, 0, 0, 0.6);
+  padding: 1.75rem 2rem;
+  max-width: 51.25rem;
+  width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.help-close {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 1.75rem;
+  height: 1.75rem;
+  background: var(--surface);
+  border: 1px solid var(--fg);
+  color: var(--fg);
+  font: 600 1rem/1 var(--mono);
+  cursor: pointer;
+  padding: 0;
+}
+.help-close:hover { background: var(--hover); }
+.help-panel h2 {
+  margin: 0 0 0.375rem;
+  font: 700 0.8125rem/1 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.help-panel h2:not(:first-of-type) { margin-top: 1.375rem; }
+.help-panel dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 1.125rem;
+  row-gap: 0.5rem;
+  font-size: 0.75rem;
+}
+.help-panel dt {
+  color: var(--fg);
+  font-family: var(--mono);
+  white-space: nowrap;
+}
+.help-panel kbd {
+  display: inline-block;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  padding: 0.0625rem 0.375rem;
+  font: 600 0.6875rem/1.4 var(--mono);
+  color: var(--fg);
+  margin-right: 0.125rem;
+}
+.help-panel dd {
+  margin: 0;
+  color: var(--muted);
+  align-self: center;
+}
+
+/* Drag handle: hidden by default, shown only in editing mode. */
+.row .drag {
+  width: 0;
+  overflow: hidden;
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1;
+  cursor: grab;
+  user-select: none;
+  transition: width 0.1s, padding 0.1s;
+  z-index: 2;
+  position: relative;
+}
+body.editing .row .drag {
+  width: 0.875rem;
+  padding-right: 0.25rem;
+}
+body.editing .row { cursor: default; }
+body.editing .row .body::after { display: none; }  /* disable click-to-open while editing */
+body.editing .row .del { display: none; }
+body.editing .row .pin { opacity: 1; }  /* always visible while editing */
+
+/* Drag visual feedback */
+.row.drag-source { opacity: 0.4; }
+.row.drag-over { outline: 1px dashed var(--fg); outline-offset: -1px; }
+.row.kbd-focus { background: var(--hover); border-color: var(--accent); }
+
+/* Preview modal — centered iframe overlay with backdrop. */
+.peek-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.peek-backdrop.open { display: flex; }
+.peek-modal {
+  position: relative;
+  width: 75vw;
+  height: 75vh;
+  background: var(--surface);
+  border: 1px solid var(--fg);
+  box-shadow: 0 0.75rem 3rem rgba(0, 0, 0, 0.6);
+  /* Clip the full-bleed iframe to the content box so sub-pixel rounding of
+     the fractional 75vw/75vh size can't let it paint over the 1px border. */
+  overflow: hidden;
+}
+.peek-modal iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: var(--bg);
+}
+.peek-close,
+.peek-open {
+  position: absolute;
+  top: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  background: var(--surface);
+  border: 1px solid var(--fg);
+  color: var(--fg);
+  cursor: pointer;
+  z-index: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+.peek-close { right: 0; font: 600 1rem/1 var(--mono); }
+.peek-open { right: 1.75rem; }
+.peek-open svg {
+  width: 0.875rem; height: 0.875rem;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  fill: none;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  display: block;
+}
+.peek-close:hover,
+.peek-open:hover { background: var(--hover); }
+
+.empty {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  padding: 1.125rem 0;
+}
+.empty code {
+  background: var(--surface);
+  padding: 0.125rem 0.375rem;
+}
+
+.apps {
+  list-style: none;
+  padding: 0;
+  margin: 1.125rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+/* Visual gap between the pinned section and the rest. */
+.row.pinned + .row:not(.pinned) {
+  margin-top: 0.875rem;
+  position: relative;
+}
+.row.pinned + .row:not(.pinned)::before {
+  content: "";
+  position: absolute;
+  top: -0.5rem;
+  left: 0; right: 0;
+  border-top: 1px dashed var(--rule);
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1.125rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  transition: background-color 0.1s, border-color 0.1s;
+  cursor: pointer;
+}
+/* Stretched anchor: clicking anywhere on the row navigates via .body's
+   pseudo-overlay. The × button sits at a higher z-index so it isn't
+   covered. */
+.row .body::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.row .del,
+.row .pin { z-index: 2; }
+/* Hover effects are suppressed while keyboard nav owns the focus
+   (any row has .kbd-focus), so the cursor doesn't visually compete. */
+body:not(:has(.row.kbd-focus)) .row:hover:not([data-confirming]) {
+  background: var(--hover);
+  border-color: var(--accent);
+}
+
+.row .num {
+  font-weight: 700;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  width: 1.375rem;
+  flex: 0 0 1.375rem;
+}
+.row .ico {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 1.25rem;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.row .ico svg {
+  width: 100%; height: 100%;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  fill: none;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+.row .ico .icon-emoji { font-size: 1.125rem; line-height: 1; }
+
+.row .body {
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+.row .name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.2;
+}
+.row .desc {
+  font-weight: 400;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  color: var(--muted);
+  margin-top: 0.1875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.row .name .broken-tag {
+  font-weight: 700;
+  font-size: 0.5625rem;
+  color: var(--broken);
+  border: 1px solid var(--broken);
+  padding: 0.125rem 0.3125rem;
+  margin-left: 0.375rem;
+  letter-spacing: 0.1em;
+  vertical-align: 0.125rem;
+}
+.row.has-update {
+  border-left: 0.25rem solid var(--accent);
+  padding-left: calc(1.125rem - 0.1875rem);  /* compensate so content doesn't shift */
+}
+.row .pin,
+.row .del {
+  position: absolute;
+  top: 0.75rem;
+  background: transparent;
+  border: 0;
+  color: var(--fg);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s, color 0.1s;
+}
+.row .del {
+  right: 0.75rem;
+  font: 600 1rem/1 var(--mono);
+  padding: 0.125rem 0.25rem;
+}
+.row .pin {
+  right: 2.25rem;
+  padding: 0.25rem;
+}
+.row .pin svg {
+  width: 0.875rem; height: 0.875rem;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  fill: none;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  display: block;
+}
+body:not(:has(.row.kbd-focus)) .row:hover:not([data-confirming]) .pin { opacity: 0.6; }
+.row[data-confirming] .pin { opacity: 0 !important; pointer-events: none; }
+.row .pin:hover { opacity: 1; }
+.row.pinned .pin {
+  opacity: 1;
+  color: var(--accent);
+  fill: var(--accent);
+}
+.row.pinned .pin svg { fill: var(--accent); }
+body:not(:has(.row.kbd-focus)) .row:hover .del { opacity: 0.6; }
+.row .del:hover { opacity: 1; }
+
+.row.broken {
+  --accent: var(--broken);
+}
+.row[data-confirming] {
+  --accent: var(--broken);
+  background: var(--broken);
+  border-color: var(--broken);
+}
+.row[data-confirming] .name,
+.row[data-confirming] .del,
+.row[data-confirming] .ico { color: var(--bg); }
+.row[data-confirming] .num,
+.row[data-confirming] .desc { color: var(--bg); opacity: 0.7; }
+.row[data-confirming] .del {
+  opacity: 1;
+  font-size: 0.6875rem;
+  letter-spacing: 0.05em;
+}
+
+/* Narrow viewports (phones, split-screen). The header .meta row already
+   flex-wraps; here we reclaim the wide desktop padding/zoom and let the
+   header controls stack instead of overflowing. Paired with the
+   <meta name="viewport"> tag so the page renders at device width. */
+@media (max-width: 34rem) {
+  html { font-size: 100%; }
+  body { padding: 1rem; }
+  .header-top { flex-wrap: wrap; }
+  .meta { row-gap: 0.5rem; }
+  .search-wrap { flex-basis: 100%; }
+}

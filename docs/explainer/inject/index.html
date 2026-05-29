@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>inject.py — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #d6a3a3; }   /* rose — inject.py */
+
+  /* page-local: the on-disk vs on-the-wire diagram */
+  .pipe { display: grid; grid-template-columns: 1fr 44px 1fr; align-items: stretch; gap: 0; margin-top: 22px; }
+  .pipe .box {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    border-radius: 4px;
+    padding: 18px 20px;
+  }
+  .pipe .box.on { border-top: 2px solid var(--accent); }
+  .pipe .box h4 { font-size: 12px; color: var(--ink); margin-bottom: 8px; letter-spacing: 0.04em; }
+  .pipe .box .file {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11.5px;
+    color: var(--muted); white-space: pre; line-height: 1.7;
+  }
+  .pipe .box .file .add { color: var(--accent); }
+  .pipe .arrow {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: var(--accent);
+  }
+  @media (max-width: 720px) {
+    .pipe { grid-template-columns: 1fr; }
+    .pipe .arrow { transform: rotate(90deg); padding: 8px 0; }
+  }
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">inject.py</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">inject.py</span><br />is the <em>seam.</em></h1>
+    <p class="lede reveal d2">
+      Sixteen lines — the smallest module in <b>localhost-pages</b>. It does exactly one thing:
+      splice a single <b>&lt;script&gt;</b> tag into a page on its way out the door. The app's HTML on disk
+      is never touched. This file is the entire reason "drop a symlink, get live reload" works.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">16</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">1</div><div class="l">function</div></div>
+      <div class="stat reveal d3"><div class="n">1</div><div class="l">import</div></div>
+      <div class="stat reveal d3"><div class="n">0</div><div class="l">files written</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 top of file ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — top of the file</div>
+      <h2>One import, one constant.</h2>
+      <p>No frameworks, no I/O. The module pulls in a single helper from the standard library and
+        defines the marker string that the whole design pivots on.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">inject.py</span><span>lines 1 — 5</span></div>
+      <pre><div class="cl"><span class="ln">1</span><span class="ct"><span class="k">from</span> __future__ <span class="k">import</span> annotations</span></div><div class="cl"><span class="ln">2</span><span class="ct"></span></div><div class="cl"><span class="ln">3</span><span class="ct"><span class="k">from</span> html <span class="k">import</span> escape</span></div><div class="cl"><span class="ln">4</span><span class="ct"></span></div><div class="cl"><span class="ln">5</span><span class="ct">MARKER = <span class="s">"data-localhost-pages-reload"</span></span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">1</div>
+        <div class="txt"><code class="tok">from __future__ import annotations</code> defers evaluation of type hints to strings.
+          It costs nothing and is applied uniformly across the package — the annotations on line 8 are read,
+          never executed.</div>
+      </div>
+      <div class="row">
+        <div class="lref">3</div>
+        <div class="txt">The only dependency: <code class="tok">html.escape</code> from the standard library. No third-party code,
+          no template engine — escaping is the one piece of correctness this file cannot hand-roll safely.</div>
+      </div>
+      <div class="row">
+        <div class="lref">5</div>
+        <div class="txt"><b>MARKER</b> is a constant, defined at module scope so it is computed once. It is both the
+          <em>attribute name</em> stamped onto the injected tag and the <em>sentinel</em> the function searches for.
+          A single string plays both roles — that is what makes the idempotency check on line 9 trivially correct.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="margin-top:22px">
+      <h4>Why an unusual attribute name?</h4>
+      <p><code class="tok">data-localhost-pages-reload</code> is a valid HTML5 <code class="tok">data-*</code> attribute, so
+        the browser ignores it. It is also long and specific enough that no real page would ever contain that exact
+        string by accident — which matters, because the function's only "have I already done this?" test is a
+        plain substring search for it.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 signature + guard ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — signature &amp; idempotency guard</div>
+      <h2>Run twice, change nothing the second time.</h2>
+      <p>The function takes a page and an app name, returns a page. Before doing any work it asks one
+        question: is the marker already here?</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">inject.py</span><span>lines 8 — 10</span></div>
+      <pre><div class="cl"><span class="ln">8</span><span class="ct"><span class="k">def</span> <span class="f">inject_reload_script</span>(html: str, app_name: str) -> str:</span></div><div class="cl"><span class="ln">9</span><span class="ct">    <span class="k">if</span> MARKER <span class="k">in</span> html:</span></div><div class="cl"><span class="ln">10</span><span class="ct">        <span class="k">return</span> html</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">8</div>
+        <div class="txt">A pure <code class="tok">str → str</code> transform. It takes <b>html</b> — the page text as read from
+          disk — and <b>app_name</b> — the registered name of the app it belongs to. No defaults, no globals,
+          no side effects: easy to test in isolation, easy to reason about.</div>
+      </div>
+      <div class="row">
+        <div class="lref">9 — 10</div>
+        <div class="txt"><b>The idempotency guard.</b> If the marker substring already appears anywhere in the page,
+          the function returns the input <em>unchanged</em>. <code class="tok">MARKER in html</code> is a plain
+          substring search — cheap, and run before any allocation.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="margin-top:22px">
+      <h4>Why guard against double injection at all?</h4>
+      <p>The function is the last step of <code class="tok">serve_app</code> in <code class="tok">server.py</code>,
+        called on <em>every</em> HTML response. Nothing downstream stops a page that already carries the tag from
+        passing through again — for instance an HTML file that was itself produced by a previous serve, or simply a
+        defensive second call. Without the guard, a page could accumulate one reload script per request. Because the
+        injected tag <em>contains</em> <code class="tok">MARKER</code> (see line 11), the very first injection makes
+        every subsequent call a no-op. The function is <b>idempotent</b>: <code class="tok">f(f(x)) == f(x)</code>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 building the tag ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — building the tag</div>
+      <h2>One script element, escaped at the seam.</h2>
+      <p>Past the guard, the function assembles the tag it will splice in. It is a literal
+        <code class="tok">&lt;script&gt;</code> with three attributes — and exactly one of them is untrusted.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">inject.py</span><span>lines 11 — 12</span></div>
+      <pre><div class="cl"><span class="ln">11</span><span class="ct">    tag = (<span class="s">f'&lt;script {MARKER} src="/__static/reload.js" '</span></span></div><div class="cl"><span class="ln">12</span><span class="ct">           <span class="s">f'data-app="{escape(app_name, quote=True)}"&gt;&lt;/script&gt;'</span>)</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">11</div>
+        <div class="txt">An f-string spread across two adjacent literals — Python concatenates them at compile time, so
+          this is a single string with no runtime join. <code class="tok">{MARKER}</code> interpolates the constant
+          from line 5 directly into the tag's attribute list. That is the move that makes the guard self-fulfilling:
+          the tag the function emits <em>is</em> what the guard later finds.</div>
+      </div>
+      <div class="row">
+        <div class="lref">11</div>
+        <div class="txt"><code class="tok">src="/__static/reload.js"</code> points at the package's own static mount.
+          The <code class="tok">__static</code> prefix is the reserved namespace <code class="tok">server.py</code> sets
+          up — user apps can never be named <code class="tok">__&hellip;</code>, so this path can never be shadowed.</div>
+      </div>
+      <div class="row">
+        <div class="lref">12</div>
+        <div class="txt"><code class="tok">data-app="&hellip;"</code> carries the app name into the page so
+          <code class="tok">reload.js</code> knows which SSE topic to subscribe to. This is the only attribute value
+          built from data the function received as an argument — and it is the only one that is escaped.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--rose); margin-top:22px">
+      <h4>Why <code class="tok" style="font-size:.82em">escape(app_name, quote=True)</code> is not optional</h4>
+      <p><b>app_name</b> originates from a path segment in an HTTP request. It is interpolated <em>inside a
+        double-quoted HTML attribute</em>. <code class="tok">html.escape</code> turns <code class="tok">&amp;</code>,
+        <code class="tok">&lt;</code> and <code class="tok">&gt;</code> into entities — and crucially,
+        <code class="tok">quote=True</code> additionally escapes the double quote character.</p>
+      <p>Without <code class="tok">quote=True</code>, an app name containing a <code class="tok">"</code> could close the
+        <code class="tok">data-app</code> attribute early and inject arbitrary new attributes — or, with a
+        <code class="tok">&gt;</code>, break out of the tag entirely. That is a stored-XSS hole opened by nothing more
+        than the name on a symlink. The default for <code class="tok">html.escape</code> is <code class="tok">quote=True</code>,
+        but passing it explicitly states the intent: this value lands between quotes, so quotes must die.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 finding the splice point ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — finding the splice point</div>
+      <h2>Locate <span class="mono">&lt;/body&gt;</span>, or fall back.</h2>
+      <p>The tag has to go somewhere. The function looks for the closing body tag — searching from the
+        <em>end</em> — and has a defined answer for when there isn't one.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">inject.py</span><span>lines 13 — 15</span></div>
+      <pre><div class="cl"><span class="ln">13</span><span class="ct">    idx = html.<span class="f">rfind</span>(<span class="s">"&lt;/body&gt;"</span>)</span></div><div class="cl"><span class="ln">14</span><span class="ct">    <span class="k">if</span> idx == -<span class="n">1</span>:</span></div><div class="cl"><span class="ln">15</span><span class="ct">        <span class="k">return</span> html + tag</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">13</div>
+        <div class="txt"><code class="tok">rfind</code> — <em>not</em> <code class="tok">find</code> — returns the index of the
+          <b>last</b> occurrence of <code class="tok">&lt;/body&gt;</code>. A well-formed document has exactly one, so
+          for valid input the direction is irrelevant. But searching from the end is the safer choice: if a page
+          contains the literal text <code class="tok">&lt;/body&gt;</code> earlier (inside a code sample, a comment, an
+          inline script), <code class="tok">rfind</code> still targets the structural closing tag, which is the last one.</div>
+      </div>
+      <div class="row">
+        <div class="lref">14 — 15</div>
+        <div class="txt"><b>The fallback.</b> <code class="tok">rfind</code> returns <code class="tok">-1</code> when the
+          substring is absent. Rather than fail, the function appends the tag to the very end of the document and
+          returns. A fragment with no <code class="tok">&lt;/body&gt;</code> — a partial template, a bare snippet —
+          still gets a working reload script. Degraded placement, never a crash.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--peach); margin-top:22px">
+      <h4>Why splice <em>before</em> <code class="tok" style="font-size:.82em">&lt;/body&gt;</code>?</h4>
+      <p>Putting the script at the bottom of the body is the conventional spot for behavioural JavaScript: by the
+        time the browser reaches it, the document above has been parsed. It also keeps the injection visually
+        unobtrusive and out of the page author's <code class="tok">&lt;head&gt;</code>. The function does a textual
+        splice, not a DOM parse — it never builds a tree, so this string-position approach is the cheapest correct
+        way to land the tag in the right place.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 05 the splice ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">05 — the splice</div>
+      <h2>Slice, insert, return.</h2>
+      <p>With an index in hand, the final line rebuilds the page in three pieces and hands it back.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">inject.py</span><span>line 16</span></div>
+      <pre><div class="cl"><span class="ln">16</span><span class="ct">    <span class="k">return</span> html[:idx] + tag + html[idx:]</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">16</div>
+        <div class="txt">Three slices concatenated: everything <b>before</b> the closing tag, then the new
+          <code class="tok">tag</code>, then <code class="tok">&lt;/body&gt;</code> and everything after it.
+          Because <code class="tok">html[idx:]</code> starts <em>at</em> the index, the closing tag is preserved —
+          the script is inserted immediately in front of it, exactly as planned in section 04.</div>
+      </div>
+      <div class="row">
+        <div class="lref">16</div>
+        <div class="txt">The original <code class="tok">html</code> string is never mutated — Python strings are immutable.
+          A brand-new string is built and returned. The input the caller passed in is left exactly as it was.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--sage); margin-top:22px">
+      <h4>The on-disk file is never written</h4>
+      <p>Every path out of this function — the guard on line 10, the fallback on line 15, the splice on line 16 —
+        <em>returns a string</em>. The module has no <code class="tok">open</code>, no <code class="tok">write</code>,
+        no <code class="tok">Path</code>. It cannot modify a file even if it wanted to. The rewrite exists only in the
+        response body that <code class="tok">server.py</code> sends back over the wire.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 06 where it sits ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">06 — where it sits</div>
+      <h2>The seam between disk and wire.</h2>
+      <p>This function has exactly one caller. It is the last thing <code class="tok">serve_app</code> does to an
+        HTML response before returning it — line 117 of <code class="tok">server.py</code>:</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">server.py</span><span>lines 115 — 117 &nbsp;(for context)</span></div>
+      <pre><div class="cl"><span class="ln">115</span><span class="ct">        <span class="k">if</span> ctype == <span class="s">"text/html"</span>:</span></div><div class="cl"><span class="ln">116</span><span class="ct">            html = requested.<span class="f">read_text</span>(encoding=<span class="s">"utf-8"</span>, errors=<span class="s">"replace"</span>)</span></div><div class="cl"><span class="ln">117</span><span class="ct">            <span class="k">return</span> <span class="f">HTMLResponse</span>(<span class="f">inject_reload_script</span>(html, app_name))</span></div></pre>
+    </div>
+
+    <div class="prose reveal d1">
+      <p>The file is <b>read</b> from disk into a string, that string is passed straight into
+        <code class="tok">inject_reload_script</code>, and the result becomes the response body. The bytes on disk and
+        the bytes on the wire diverge at exactly this point — and the only difference between them is one
+        <code class="tok">&lt;script&gt;</code> tag.</p>
+    </div>
+
+    <div class="pipe reveal d2">
+      <div class="box">
+        <h4>On disk — untouched</h4>
+        <div class="file">&lt;body&gt;
+  &lt;h1&gt;my app&lt;/h1&gt;
+&lt;/body&gt;</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box on">
+        <h4>On the wire — spliced</h4>
+        <div class="file">&lt;body&gt;
+  &lt;h1&gt;my app&lt;/h1&gt;
+<span class="add">  &lt;script data-localhost-pages-reload &hellip;&gt;</span>
+&lt;/body&gt;</div>
+      </div>
+    </div>
+
+    <div class="note reveal d3" style="--ac:var(--rose); margin-top:22px">
+      <h4>Sixteen lines that make the whole app feel alive</h4>
+      <p>The reload script this function inserts opens an <code class="tok">EventSource</code> to
+        <code class="tok">/__events</code>, listens for the <code class="tok">change</code> events that
+        <code class="tok">watcher.py</code> publishes through <code class="tok">pubsub.py</code>, and calls
+        <code class="tok">location.reload()</code>. None of that lives here — but none of it would <em>reach the page</em>
+        without this splice. <code class="tok">inject.py</code> is the seam that connects a plain HTML file an author
+        wrote to the live-reload machinery they never asked for.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 07 worth noticing ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">07 — step back</div>
+      <h2>Four things to take away.</h2>
+    </div>
+    <div class="notes">
+      <div class="note reveal d1">
+        <h4>The file is the live-reload magic — and it is pure</h4>
+        <p>No I/O, no state, no globals. A <code class="tok">str → str</code> function and one constant. The smallest
+          module in the package carries the feature the whole project is named for, precisely <em>because</em> it
+          does so little: it only rewrites a string.</p>
+      </div>
+      <div class="note reveal d1" style="--ac:var(--sage)">
+        <h4>One constant, two jobs, idempotent for free</h4>
+        <p><code class="tok">MARKER</code> is stamped <em>into</em> the tag and searched <em>for</em> as a sentinel.
+          Because those are the same string, the first injection guarantees every later call short-circuits —
+          <code class="tok">f(f(x)) == f(x)</code> falls out of the design with no extra bookkeeping.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--rose)">
+        <h4>Escaping is the one thing it must not get wrong</h4>
+        <p><code class="tok">app_name</code> comes from an HTTP request and lands inside a quoted attribute.
+          <code class="tok">escape(app_name, quote=True)</code> is what stops a maliciously named symlink from breaking
+          out of the tag. The one untrusted value is the one value that is escaped.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--peach)">
+        <h4>Every code path returns a valid page</h4>
+        <p>Marker present → return as-is. No <code class="tok">&lt;/body&gt;</code> → append. Normal page → splice.
+          There is no exception, no <code class="tok">None</code>, no error case. Whatever HTML goes in, working HTML
+          comes out.</p>
+      </div>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/pubsub/"><div class="lbl">&larr; PREVIOUS</div><div class="nm"><span class="mono">pubsub.py</span></div></a>
+      <a class="next" href="/technical-explanation/watcher/"><div class="lbl">NEXT &rarr;</div><div class="nm"><span class="mono">watcher.py</span></div></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/inject.py — 16 lines, 1 function, 0 files written.</span>
+    <span><a href="/technical-explanation/">&larr; all twelve files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

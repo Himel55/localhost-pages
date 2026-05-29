@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>delete.js — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #c89e9e; }   /* clay — delete.js */
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">static/delete.js</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">delete.js</span><br />delete, but <em>twice.</em></h1>
+    <p class="lede reveal d2">
+      The <code class="tok">×</code> button on every index row is not a single click. It is a
+      <b>two-step confirm</b> — arm, then fire — with no modal, no dialog, and no undo needed.
+      The first click turns the row rose-red and relabels the button; the second sends the
+      <code class="tok">DELETE</code> request and removes the row. Ninety-four lines.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">94</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">2</div><div class="l">-click confirm</div></div>
+      <div class="stat reveal d3"><div class="n">1</div><div class="l">fetch call</div></div>
+      <div class="stat reveal d3"><div class="n">DELETE&nbsp;/__apps</div><div class="l">one route</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 arm & reset ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — arm &amp; reset</div>
+      <h2>Two helpers, one dataset flag.</h2>
+      <p><code class="tok">arm()</code> and <code class="tok">reset()</code> are the only state-writers.
+        Everything else reads the flag they set.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">delete.js</span><span>lines 1 — 12</span></div>
+      <pre><div class="cl"><span class="ln">1</span><span class="ct">(<span class="k">function</span> () {</span></div><div class="cl"><span class="ln">2</span><span class="ct">  <span class="k">function</span> <span class="f">reset</span>(row) {</span></div><div class="cl"><span class="ln">3</span><span class="ct">    <span class="k">delete</span> row.dataset.confirming;</span></div><div class="cl"><span class="ln">4</span><span class="ct">    <span class="k">const</span> btn = row.<span class="f">querySelector</span>(<span class="s">'.del'</span>);</span></div><div class="cl"><span class="ln">5</span><span class="ct">    <span class="k">if</span> (btn) btn.textContent = <span class="s">'×'</span>;</span></div><div class="cl"><span class="ln">6</span><span class="ct">  }</span></div><div class="cl"><span class="ln">7</span><span class="ct"></span></div><div class="cl"><span class="ln">8</span><span class="ct">  <span class="k">function</span> <span class="f">arm</span>(row) {</span></div><div class="cl"><span class="ln">9</span><span class="ct">    row.dataset.confirming = <span class="s">'true'</span>;</span></div><div class="cl"><span class="ln">10</span><span class="ct">    <span class="k">const</span> btn = row.<span class="f">querySelector</span>(<span class="s">'.del'</span>);</span></div><div class="cl"><span class="ln">11</span><span class="ct">    <span class="k">if</span> (btn) btn.textContent = <span class="s">'× CONFIRM'</span>;</span></div><div class="cl"><span class="ln">12</span><span class="ct">  }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">3</div>
+        <div class="txt"><code class="tok">delete row.dataset.confirming</code> removes the attribute entirely — not sets it to empty. The CSS selector <code class="tok">[data-confirming]</code> in <b>index.css</b> matches on presence, so removing it cleanly withdraws the rose-red styling.</div>
+      </div>
+      <div class="row">
+        <div class="lref">9</div>
+        <div class="txt">Setting <code class="tok">dataset.confirming = 'true'</code> writes <code class="tok">data-confirming="true"</code> onto the DOM element. From this moment the row is visually armed — CSS handles the colour change without any JS style manipulation.</div>
+      </div>
+      <div class="row">
+        <div class="lref">5, 11</div>
+        <div class="txt">Button label is the only other visible signal. <b>×</b> at rest; <b>× CONFIRM</b> armed. Simple, no icons, no extra elements.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2">
+      <h4>CSS does the heavy lifting</h4>
+      <p><code class="tok">index.css</code> contains a rule keyed on <code class="tok">.row[data-confirming]</code>
+        that applies the rose-red background. <code class="tok">delete.js</code> never touches <code class="tok">style</code>
+        directly — it only manages the dataset flag, and CSS responds.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 doDelete ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — doDelete</div>
+      <h2>One fetch. Two outcomes.</h2>
+      <p>Success is silent — the row disappears. Failure is loud — an alert and a reset.
+        Either way the UI stays coherent.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">delete.js</span><span>lines 32 — 53</span></div>
+      <pre><div class="cl"><span class="ln">32</span><span class="ct">  <span class="k">async function</span> <span class="f">doDelete</span>(row) {</span></div><div class="cl"><span class="ln">33</span><span class="ct">    <span class="k">const</span> name = row.dataset.name;</span></div><div class="cl"><span class="ln">34</span><span class="ct">    <span class="k">try</span> {</span></div><div class="cl"><span class="ln">35</span><span class="ct">      <span class="k">const</span> res = <span class="k">await</span> <span class="f">fetch</span>(<span class="s">'/__apps/'</span> + <span class="f">encodeURIComponent</span>(name), { method: <span class="s">'DELETE'</span> });</span></div><div class="cl"><span class="ln">36</span><span class="ct">      <span class="k">if</span> (res.ok) {</span></div><div class="cl"><span class="ln">37</span><span class="ct">        <span class="f">purgeStorage</span>(name);</span></div><div class="cl"><span class="ln">38</span><span class="ct">        row.<span class="f">remove</span>();</span></div><div class="cl"><span class="ln">39</span><span class="ct">      } <span class="k">else</span> {</span></div><div class="cl"><span class="ln">40</span><span class="ct">        <span class="k">if</span> (window.lpReport) {</span></div><div class="cl"><span class="ln">41</span><span class="ct">          window.<span class="f">lpReport</span>(<span class="s">'delete failed for '</span> + name + <span class="s">': '</span> + res.status + <span class="s">' '</span> + res.statusText);</span></div><div class="cl"><span class="ln">42</span><span class="ct">        }</span></div><div class="cl"><span class="ln">43</span><span class="ct">        <span class="f">alert</span>(<span class="s">'Delete failed: '</span> + res.status + <span class="s">' '</span> + res.statusText);</span></div><div class="cl"><span class="ln">44</span><span class="ct">        <span class="f">reset</span>(row);</span></div><div class="cl"><span class="ln">45</span><span class="ct">      }</span></div><div class="cl"><span class="ln">46</span><span class="ct">    } <span class="k">catch</span> (err) {</span></div><div class="cl"><span class="ln">47</span><span class="ct">      <span class="k">if</span> (window.lpReport) {</span></div><div class="cl"><span class="ln">48</span><span class="ct">        window.<span class="f">lpReport</span>(<span class="s">'delete request error for '</span> + name + <span class="s">': '</span> + err, err);</span></div><div class="cl"><span class="ln">49</span><span class="ct">      }</span></div><div class="cl"><span class="ln">50</span><span class="ct">      <span class="f">alert</span>(<span class="s">'Delete failed: '</span> + err);</span></div><div class="cl"><span class="ln">51</span><span class="ct">      <span class="f">reset</span>(row);</span></div><div class="cl"><span class="ln">52</span><span class="ct">    }</span></div><div class="cl"><span class="ln">53</span><span class="ct">  }</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">33</div>
+        <div class="txt"><code class="tok">row.dataset.name</code> is the app name written into the HTML by the server when rendering the index. It drives the URL — no DOM scraping, no inner-text parsing.</div>
+      </div>
+      <div class="row">
+        <div class="lref">35</div>
+        <div class="txt"><code class="tok">encodeURIComponent(name)</code> ensures names with unusual characters survive as a URL segment. The request lands at <b>DELETE /__apps/{name}</b> — the route documented on the server.py page, which validates and removes the symlink.</div>
+      </div>
+      <div class="row">
+        <div class="lref">38</div>
+        <div class="txt">On <code class="tok">res.ok</code> — <b>status 204</b> from the server — the row is removed from the DOM immediately. No confirmation needed; the user already confirmed on the second click.</div>
+      </div>
+      <div class="row">
+        <div class="lref">43 — 51</div>
+        <div class="txt">HTTP error or network failure both call <code class="tok">reset(row)</code> after alerting. The row returns to its normal state so the user can try again — no stuck "armed" UI.</div>
+      </div>
+      <div class="row">
+        <div class="lref">40 — 49</div>
+        <div class="txt">Before each <code class="tok">alert</code>, both error paths also call <code class="tok">window.lpReport(…)</code> — the browser-error logger defined in <b>lp-log.js</b>, which POSTs to the server's <b>/__log</b> endpoint. A failed delete is captured in the diagnostics log a user can send, not just flashed in an alert.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 click handler ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — the click handler</div>
+      <h2>Event delegation. One listener, four branches.</h2>
+      <p>A single <code class="tok">click</code> listener on <code class="tok">document</code> handles every
+        interaction — the delete button, the confirming row, and anywhere else on the page.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">delete.js</span><span>lines 30 — 59</span></div>
+      <pre><div class="cl"><span class="ln">30</span><span class="ct">  document.<span class="f">addEventListener</span>(<span class="s">'click'</span>, (e) =&gt; {</span></div><div class="cl"><span class="ln">31</span><span class="ct">    <span class="k">const</span> btn = e.target.<span class="f">closest</span>(<span class="s">'.del'</span>);</span></div><div class="cl"><span class="ln">32</span><span class="ct">    <span class="k">if</span> (btn) {</span></div><div class="cl"><span class="ln">33</span><span class="ct">      e.<span class="f">preventDefault</span>();</span></div><div class="cl"><span class="ln">34</span><span class="ct">      e.<span class="f">stopPropagation</span>();</span></div><div class="cl"><span class="ln">35</span><span class="ct">      <span class="k">const</span> row = btn.<span class="f">closest</span>(<span class="s">'.row'</span>);</span></div><div class="cl"><span class="ln">36</span><span class="ct">      <span class="k">if</span> (!row) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">37</span><span class="ct">      <span class="c">// Cancel any other rows that were armed.</span></span></div><div class="cl"><span class="ln">38</span><span class="ct">      document.<span class="f">querySelectorAll</span>(<span class="s">'.row[data-confirming]'</span>).<span class="f">forEach</span>((r) =&gt; {</span></div><div class="cl"><span class="ln">39</span><span class="ct">        <span class="k">if</span> (r !== row) <span class="f">reset</span>(r);</span></div><div class="cl"><span class="ln">40</span><span class="ct">      });</span></div><div class="cl"><span class="ln">41</span><span class="ct">      <span class="k">if</span> (row.dataset.confirming) {</span></div><div class="cl"><span class="ln">42</span><span class="ct">        <span class="f">doDelete</span>(row);</span></div><div class="cl"><span class="ln">43</span><span class="ct">      } <span class="k">else</span> {</span></div><div class="cl"><span class="ln">44</span><span class="ct">        <span class="f">arm</span>(row);</span></div><div class="cl"><span class="ln">45</span><span class="ct">      }</span></div><div class="cl"><span class="ln">46</span><span class="ct">      <span class="k">return</span>;</span></div><div class="cl"><span class="ln">47</span><span class="ct">    }</span></div><div class="cl"><span class="ln">50</span><span class="ct">    <span class="k">const</span> confirmingRow = e.target.<span class="f">closest</span>(<span class="s">'.row[data-confirming]'</span>);</span></div><div class="cl"><span class="ln">51</span><span class="ct">    <span class="k">if</span> (confirmingRow) {</span></div><div class="cl"><span class="ln">52</span><span class="ct">      e.<span class="f">preventDefault</span>();</span></div><div class="cl"><span class="ln">53</span><span class="ct">      e.<span class="f">stopImmediatePropagation</span>();</span></div><div class="cl"><span class="ln">54</span><span class="ct">      <span class="f">reset</span>(confirmingRow);</span></div><div class="cl"><span class="ln">55</span><span class="ct">      <span class="k">return</span>;</span></div><div class="cl"><span class="ln">56</span><span class="ct">    }</span></div><div class="cl"><span class="ln">57</span><span class="ct">    <span class="c">// Click anywhere else cancels all armed rows.</span></span></div><div class="cl"><span class="ln">58</span><span class="ct">    document.<span class="f">querySelectorAll</span>(<span class="s">'.row[data-confirming]'</span>).<span class="f">forEach</span>(<span class="f">reset</span>);</span></div><div class="cl"><span class="ln">59</span><span class="ct">  });</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">33 — 34</div>
+        <div class="txt"><code class="tok">preventDefault</code> stops any default button action; <code class="tok">stopPropagation</code> ensures the row's own click-to-preview listener never fires when the <b>×</b> button is the target. The two calls are load-bearing — without them a delete click would also open the preview.</div>
+      </div>
+      <div class="row">
+        <div class="lref">38 — 40</div>
+        <div class="txt">Only <b>one row may be armed at a time</b>. Clicking a different row's <b>×</b> resets all currently armed rows first. Clean, predictable UI — no two rows glowing red at once.</div>
+      </div>
+      <div class="row">
+        <div class="lref">41 — 44</div>
+        <div class="txt">The confirm gate. If <code class="tok">data-confirming</code> is already set — this is the <em>second</em> click — call <code class="tok">doDelete</code>. Otherwise arm the row. Two clicks required; the logic is explicit.</div>
+      </div>
+      <div class="row">
+        <div class="lref">50 — 55</div>
+        <div class="txt">A click anywhere inside an armed row (but not on the <b>×</b> button) cancels the confirm and <em>does not navigate</em>. <code class="tok">stopImmediatePropagation</code> here — stronger than <code class="tok">stopPropagation</code> — prevents other listeners on <code class="tok">document</code> from treating this click as a row-open event.</div>
+      </div>
+      <div class="row">
+        <div class="lref">58</div>
+        <div class="txt">The fallback branch — a click anywhere outside any armed row resets all armed rows silently. No alert, no disruption; armed state just dissolves.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 Esc handling ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — Esc handling</div>
+      <h2>Cooperative Esc — cancel only when needed.</h2>
+      <p>A <code class="tok">keydown</code> listener cancels armed rows on Escape. The subtle part:
+        it only blocks the event when it actually has work to do.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">delete.js</span><span>lines 64 — 70</span></div>
+      <pre><div class="cl"><span class="ln">64</span><span class="ct">  document.<span class="f">addEventListener</span>(<span class="s">'keydown'</span>, (e) =&gt; {</span></div><div class="cl"><span class="ln">65</span><span class="ct">    <span class="k">if</span> (e.key !== <span class="s">'Escape'</span>) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">66</span><span class="ct">    <span class="k">const</span> armed = document.<span class="f">querySelectorAll</span>(<span class="s">'.row[data-confirming]'</span>);</span></div><div class="cl"><span class="ln">67</span><span class="ct">    <span class="k">if</span> (!armed.length) <span class="k">return</span>;</span></div><div class="cl"><span class="ln">68</span><span class="ct">    e.<span class="f">stopImmediatePropagation</span>();</span></div><div class="cl"><span class="ln">69</span><span class="ct">    armed.<span class="f">forEach</span>(<span class="f">reset</span>);</span></div><div class="cl"><span class="ln">70</span><span class="ct">  });</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">67</div>
+        <div class="txt">Early exit when nothing is armed. If no rows hold <code class="tok">data-confirming</code>, <code class="tok">delete.js</code> returns immediately without touching the event — other Esc listeners are free to handle it normally.</div>
+      </div>
+      <div class="row">
+        <div class="lref">68</div>
+        <div class="txt"><code class="tok">stopImmediatePropagation</code> fires only when there is actually something to cancel. It prevents <b>keys.js</b>'s own Esc handler from running in the same frame — cancelling a delete confirm and clearing keyboard focus would be competing actions.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--mist)">
+      <h4>The cooperative-Esc pattern</h4>
+      <p><b>delete.js</b> is loaded before <b>keys.js</b>, so its listener runs first. By only calling
+        <code class="tok">stopImmediatePropagation()</code> when it actually consumed the event — not unconditionally —
+        it behaves as a polite participant. When no rows are armed, <code class="tok">keys.js</code>'s Esc
+        handling runs as if <code class="tok">delete.js</code> were absent. This is the pattern to follow whenever
+        two independent modules share a key.</p>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/lp-log/">
+        <div class="lbl">&larr; PREVIOUS</div>
+        <div class="nm"><span class="mono">lp-log.js</span></div>
+      </a>
+      <a class="next" href="/technical-explanation/visited/">
+        <div class="lbl">NEXT &rarr;</div>
+        <div class="nm"><span class="mono">visited.js</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/static/delete.js — 94 lines, two-click delete.</span>
+    <span><a href="/technical-explanation/">&larr; all the files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+[project]
+name = "localhost-pages"
+dynamic = ["version"]
+description = "Always-on local web server aggregating HTML output from many small AI apps via symlinks."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12"
+keywords = ["localhost", "dashboard", "ai", "agents", "html", "fastapi", "live-reload"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+]
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "watchfiles>=0.24",
+    "jinja2>=3.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/your-org/localhost-pages"
+Repository = "https://github.com/your-org/localhost-pages"
+Issues = "https://github.com/your-org/localhost-pages/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "httpx>=0.27",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+# Single source of truth for the version: __version__ in the package __init__.
+# pyproject derives from it, so the two can never drift. Bump = one line there.
+path = "src/localhost_pages/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/localhost_pages"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

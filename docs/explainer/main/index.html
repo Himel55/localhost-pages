@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>__main__.py — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #d6c4a3; }   /* sand — __main__.py */
+
+  /* page-local: the env-var table */
+  .envs { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .env {
+    display: grid; grid-template-columns: 230px 1fr 92px;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+  }
+  .env:last-child { border-bottom: none; }
+  .env .var {
+    font-size: 12px; color: var(--accent);
+    padding: 14px 0 14px 18px; word-break: break-all;
+  }
+  .env .mid { padding: 12px 14px; }
+  .env .role { font-size: 12px; color: var(--ink); }
+  .env .desc { font-size: 11px; color: var(--faint); margin-top: 2px; }
+  .env .def {
+    font-size: 11px; color: var(--sand); text-align: right;
+    padding-right: 16px; word-break: break-all;
+  }
+  .esig {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.58em;
+    color: var(--sand); vertical-align: 0.14em;
+  }
+  @media (max-width: 720px) {
+    .env { grid-template-columns: 1fr; }
+    .env .var { padding-bottom: 4px; }
+    .env .def { text-align: left; padding: 0 0 12px 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">__main__.py</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">__main__.py</span><br />is the <em>front door.</em></h1>
+    <p class="lede reveal d2">
+      Run <b>python -m localhost_pages</b> and this is the first line that executes. It is 33 lines:
+      it switches on <b>always-on logging</b> (via <b>logconfig.py</b>), reads <b>four environment variables</b>,
+      logs a startup banner, asks <b>server.py</b> for a built app, and hands that app to <b>uvicorn</b>.
+      It owns no logic of its own — it is pure wiring.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">33</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">1</div><div class="l">function</div></div>
+      <div class="stat reveal d3"><div class="n">4</div><div class="l">env vars read</div></div>
+      <div class="stat reveal d3"><div class="n">0</div><div class="l">flags / config files</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 imports ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — top of the file</div>
+      <h2>Six imports, two of them siblings.</h2>
+      <p>The imports tell you exactly what an entrypoint needs: a way to read the environment,
+        a way to touch the filesystem, an ASGI server, and two siblings — the logging setup and
+        the app itself. A module-level logger is created right after.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">__main__.py</span><span>lines 1 — 12</span></div>
+      <pre><div class="cl"><span class="ln">1</span><span class="ct"><span class="k">from</span> __future__ <span class="k">import</span> annotations</span></div><div class="cl"><span class="ln">2</span><span class="ct"></span></div><div class="cl"><span class="ln">3</span><span class="ct"><span class="k">import</span> logging</span></div><div class="cl"><span class="ln">4</span><span class="ct"><span class="k">import</span> os</span></div><div class="cl"><span class="ln">5</span><span class="ct"><span class="k">from</span> pathlib <span class="k">import</span> Path</span></div><div class="cl"><span class="ln">6</span><span class="ct"></span></div><div class="cl"><span class="ln">7</span><span class="ct"><span class="k">import</span> uvicorn</span></div><div class="cl"><span class="ln">8</span><span class="ct"></span></div><div class="cl"><span class="ln">9</span><span class="ct"><span class="k">from</span> .logconfig <span class="k">import</span> log_startup_banner, setup_logging</span></div><div class="cl"><span class="ln">10</span><span class="ct"><span class="k">from</span> .server <span class="k">import</span> create_app, DEFAULT_SYMLINKS</span></div><div class="cl"><span class="ln">11</span><span class="ct"></span></div><div class="cl"><span class="ln">12</span><span class="ct">logger = logging.<span class="f">getLogger</span>(__name__)</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">1</div>
+        <div class="txt"><code class="tok">from __future__ import annotations</code> defers evaluation of type
+          annotations to strings. It costs nothing here and keeps the file consistent with
+          <code class="tok">server.py</code>, which opens the same way.</div>
+      </div>
+      <div class="row">
+        <div class="lref">3 — 5</div>
+        <div class="txt">The standard-library trio. <b>logging</b> to grab a logger for the startup banner,
+          <b>os</b> to read <code class="tok">os.environ</code>, and <b>Path</b> to turn string paths into real
+          filesystem objects.</div>
+      </div>
+      <div class="row">
+        <div class="lref">7</div>
+        <div class="txt"><b>uvicorn</b> — the ASGI server. This file does not implement HTTP; it only owns
+          the process that runs it.</div>
+      </div>
+      <div class="row">
+        <div class="lref">9</div>
+        <div class="txt">The first sibling import. <b>setup_logging</b> and <b>log_startup_banner</b> live in
+          <code class="tok">logconfig.py</code> — all the real logging machinery (the rotating file handler,
+          the platform log path, the boot banner) now lives there, not inline in this file.</div>
+      </div>
+      <div class="row">
+        <div class="lref">10</div>
+        <div class="txt">The second sibling import. <b>create_app</b> is the factory that builds the FastAPI app;
+          <b>DEFAULT_SYMLINKS</b> is the fallback symlinks directory. Both are defined in
+          <code class="tok">server.py</code>, so the default lives in exactly one place.</div>
+      </div>
+      <div class="row">
+        <div class="lref">12</div>
+        <div class="txt">A module-level <code class="tok">logger</code> named after this module. It is handed to
+          <code class="tok">log_startup_banner</code> below so the banner is attributed to
+          <code class="tok">__main__</code> in the logs.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="margin-top:22px">
+      <h4>Why <code class="tok" style="font-size:.82em">create_app</code> is imported, not <code class="tok" style="font-size:.82em">app</code></h4>
+      <p><code class="tok">server.py</code> deliberately exposes a <em>factory function</em> rather than a
+        module-level <code class="tok">app</code> object. That lets this entrypoint decide the
+        <code class="tok">symlinks_dir</code> at runtime — and lets the test suite build isolated apps
+        pointed at throwaway directories. The cost here is one extra call on line 26.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 main signature ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — the only function</div>
+      <h2><span class="esig">def main()</span> &nbsp;the whole program.</h2>
+      <p>Everything below lives inside one function. It takes no arguments and returns
+        <code class="tok">None</code> — its entire job is side effects, in order.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">__main__.py</span><span>line 15</span></div>
+      <pre><div class="cl"><span class="ln">15</span><span class="ct"><span class="k">def</span> <span class="f">main</span>() -> <span class="k">None</span>:</span></div></pre>
+    </div>
+
+    <div class="prose reveal d1">
+      <p>The <code class="tok">-> None</code> annotation is honest: <code class="tok">main()</code> produces no
+        value. It runs four steps — configure logging, read the environment, build the app, run the
+        server — and the fourth step blocks forever. Naming it <code class="tok">main</code> rather than
+        running code at module scope keeps the file importable without launching a server.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 logging ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — step one</div>
+      <h2>Logging: always on, in one call.</h2>
+      <p>Before anything else, <code class="tok">main()</code> turns logging on. There is no branch and no
+        format string here anymore — it is a single call into <code class="tok">logconfig.py</code>.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">__main__.py</span><span>lines 16 — 18</span></div>
+      <pre><div class="cl"><span class="ln">16</span><span class="ct">    <span class="c"># Logging is always on (rotating file + stderr). LOCALHOST_PAGES_LOG still</span></span></div><div class="cl"><span class="ln">17</span><span class="ct">    <span class="c"># overrides the file location for users who want logs somewhere specific.</span></span></div><div class="cl"><span class="ln">18</span><span class="ct">    <span class="f">setup_logging</span>(os.environ.<span class="f">get</span>(<span class="s">"LOCALHOST_PAGES_LOG"</span>))</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">18</div>
+        <div class="txt"><b>One call, always on.</b> <code class="tok">setup_logging(...)</code> configures both a
+          rotating log file <em>and</em> stderr — every run is logged, with no flag to remember and no
+          opt-in. Logs always land somewhere discoverable.</div>
+      </div>
+      <div class="row">
+        <div class="lref">18</div>
+        <div class="txt"><b>The env var only overrides the path.</b>
+          <code class="tok">os.environ.get("LOCALHOST_PAGES_LOG")</code> returns a custom file location or
+          <code class="tok">None</code>. Unset, <code class="tok">setup_logging</code> falls back to a
+          platform-appropriate path; set, it writes there instead. It no longer flips between two modes —
+          the file always exists, this just decides <em>where</em>.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--mist); margin-top:22px">
+      <h4>The real work lives in <code class="tok" style="font-size:.82em">logconfig.py</code></h4>
+      <p>The rotating-file handler, the platform log path, directory creation, the format string, and the
+        startup banner all moved out of this file into the sibling
+        <code class="tok">logconfig.py</code>. <code class="tok">__main__.py</code> just calls
+        <code class="tok">setup_logging</code> and trusts it. For the rotation policy and banner internals,
+        read <a href="/technical-explanation/logconfig/">logconfig.py</a>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 env config ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — step two</div>
+      <h2>Configuration is four environment variables.</h2>
+      <p>No flags, no config file, no parser. The fourth variable — <code class="tok">LOCALHOST_PAGES_LOG</code> —
+        was already consumed by the <code class="tok">setup_logging</code> call above; here three more lines read
+        the symlinks directory, the host, and the port, each with a sensible built-in default.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">__main__.py</span><span>lines 20 — 22</span></div>
+      <pre><div class="cl"><span class="ln">20</span><span class="ct">    symlinks = <span class="f">Path</span>(os.environ.<span class="f">get</span>(<span class="s">"LOCALHOST_PAGES_SYMLINKS"</span>, DEFAULT_SYMLINKS))</span></div><div class="cl"><span class="ln">21</span><span class="ct">    host = os.environ.<span class="f">get</span>(<span class="s">"LOCALHOST_PAGES_HOST"</span>, <span class="s">"127.0.0.1"</span>)</span></div><div class="cl"><span class="ln">22</span><span class="ct">    port = <span class="f">int</span>(os.environ.<span class="f">get</span>(<span class="s">"LOCALHOST_PAGES_PORT"</span>, <span class="s">"8080"</span>))</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">20</div>
+        <div class="txt">Here <code class="tok">get</code> is given a <em>second</em> argument — the default returned
+          when the variable is unset. The result is wrapped in <code class="tok">Path(...)</code> so it is a
+          real path object whether it came from the environment (a string) or from
+          <code class="tok">DEFAULT_SYMLINKS</code> (already a <code class="tok">Path</code>).</div>
+      </div>
+      <div class="row">
+        <div class="lref">21</div>
+        <div class="txt">The bind address defaults to <code class="tok">127.0.0.1</code> — loopback only. The server is
+          not reachable from other machines unless you deliberately override this with
+          <code class="tok">0.0.0.0</code>. A safe default for a tool literally named <em>localhost</em>-pages.</div>
+      </div>
+      <div class="row">
+        <div class="lref">22</div>
+        <div class="txt">Environment variables are always strings, so the port is wrapped in
+          <code class="tok">int(...)</code>. The default <code class="tok">"8080"</code> is passed as a string
+          too, so both paths feed <code class="tok">int()</code> identically. A non-numeric value here would
+          raise <code class="tok">ValueError</code> on startup — failing loudly rather than silently.</div>
+      </div>
+    </div>
+
+    <div class="envs reveal d2" style="margin-top:22px">
+      <div class="env">
+        <span class="var">LOCALHOST_PAGES_LOG</span>
+        <span class="mid"><div class="role">log file path override</div><div class="desc">consumed by setup_logging; unset &rarr; platform default path</div></span>
+        <span class="def">unset</span>
+      </div>
+      <div class="env">
+        <span class="var">LOCALHOST_PAGES_SYMLINKS</span>
+        <span class="mid"><div class="role">registered-apps directory</div><div class="desc">where scanned symlinks live</div></span>
+        <span class="def">DEFAULT_SYMLINKS</span>
+      </div>
+      <div class="env">
+        <span class="var">LOCALHOST_PAGES_HOST</span>
+        <span class="mid"><div class="role">bind address</div><div class="desc">loopback unless overridden</div></span>
+        <span class="def">127.0.0.1</span>
+      </div>
+      <div class="env">
+        <span class="var">LOCALHOST_PAGES_PORT</span>
+        <span class="mid"><div class="role">TCP port</div><div class="desc">parsed through int()</div></span>
+        <span class="def">8080</span>
+      </div>
+    </div>
+
+    <div class="note reveal d3" style="margin-top:22px">
+      <h4>Why config is environment-variables-only</h4>
+      <p>There is no <code class="tok">argparse</code>, no YAML, no dotfile. Every knob is an environment
+        variable with a default — which means the install scripts that launch this as a background service
+        (a launchd plist, a systemd unit, a shell wrapper) can configure it entirely through the process
+        environment, with no command line to construct and no file to ship. Unset everything and it still
+        runs correctly. Configuration <em>is</em> the four <code class="tok">os.environ.get</code> calls — there
+        is nothing else to learn.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 05 build and run ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">05 — steps three &amp; four</div>
+      <h2>Banner, build the app, then hand it to uvicorn.</h2>
+      <p>The tail of <code class="tok">main()</code>: it logs a startup banner, constructs the app, then
+        starts the server and never returns.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">__main__.py</span><span>lines 24 — 29</span></div>
+      <pre><div class="cl"><span class="ln">24</span><span class="ct">    <span class="f">log_startup_banner</span>(logger, host=host, port=port, symlinks_dir=symlinks)</span></div><div class="cl"><span class="ln">25</span><span class="ct"></span></div><div class="cl"><span class="ln">26</span><span class="ct">    app = <span class="f">create_app</span>(symlinks_dir=symlinks)</span></div><div class="cl"><span class="ln">27</span><span class="ct">    <span class="c"># access_log=False: our request-logging middleware already records every</span></span></div><div class="cl"><span class="ln">28</span><span class="ct">    <span class="c"># request, so uvicorn's access log would just duplicate it.</span></span></div><div class="cl"><span class="ln">29</span><span class="ct">    uvicorn.<span class="f">run</span>(app, host=host, port=port, log_level=<span class="s">"info"</span>, access_log=<span class="k">False</span>)</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">24</div>
+        <div class="txt"><b>The startup banner.</b> <code class="tok">log_startup_banner</code> (from
+          <code class="tok">logconfig.py</code>) writes the version, Python build, OS, and resolved config —
+          host, port, symlinks directory — into the log at boot. When something goes wrong later, the very
+          first lines of the log already say exactly what was running and how it was configured. Triage
+          starts here.</div>
+      </div>
+      <div class="row">
+        <div class="lref">26</div>
+        <div class="txt">The factory call. The <code class="tok">symlinks</code> path resolved on line 20 is passed
+          by keyword into <code class="tok">create_app</code>, which builds and returns a fully configured
+          FastAPI instance — its watcher, pubsub, static mount, and seven routes all wired up. This
+          entrypoint never touches any of that; it only supplies the one parameter.</div>
+      </div>
+      <div class="row">
+        <div class="lref">27 — 28</div>
+        <div class="txt"><b>Why <code class="tok">access_log=False</code>.</b> The request-logging middleware in
+          <code class="tok">server.py</code> already records every request. Leaving uvicorn's own access log on
+          would log each request <em>twice</em>, so it is switched off — the middleware is the single source
+          of truth for request logs.</div>
+      </div>
+      <div class="row">
+        <div class="lref">29</div>
+        <div class="txt"><code class="tok">uvicorn.run(...)</code> binds the socket and enters the event loop.
+          The app, host, and port all flow in from the lines above. This call <b>blocks</b> — it runs until
+          the process is interrupted, so it is the last statement that ever executes in
+          <code class="tok">main()</code>.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--sage); margin-top:22px">
+      <h4>The lifespan handshake</h4>
+      <p>Passing the app object to <code class="tok">uvicorn.run</code> is what eventually triggers the
+        <code class="tok">lifespan</code> hook inside <code class="tok">create_app</code> — which creates the
+        symlinks directory if missing and starts the file watcher. So this single line is also,
+        indirectly, what turns on live reload. <code class="tok">__main__.py</code> sets the stage;
+        <code class="tok">server.py</code> performs.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 06 the guard ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">06 — the tail</div>
+      <h2>The <span class="mono">__main__</span> guard.</h2>
+      <p>The last two lines decide whether <code class="tok">main()</code> actually runs — and the answer
+        depends entirely on <em>how</em> Python loaded this file.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">__main__.py</span><span>lines 32 — 33</span></div>
+      <pre><div class="cl"><span class="ln">32</span><span class="ct"><span class="k">if</span> __name__ == <span class="s">"__main__"</span>:</span></div><div class="cl"><span class="ln">33</span><span class="ct">    <span class="f">main</span>()</span></div></pre>
+    </div>
+
+    <div class="prose reveal d1">
+      <p>Python sets the module-level variable <code class="tok">__name__</code> to the string
+        <code class="tok">"__main__"</code> only when a file is executed directly as a program. If the same
+        file is <em>imported</em> by another module, <code class="tok">__name__</code> is the module's import
+        path instead — and this branch is skipped.</p>
+      <p>The effect: <code class="tok">main()</code> runs when you invoke
+        <code class="tok">python -m localhost_pages</code>, but the file stays safely importable. A test, or
+        another module, can pull symbols from it without accidentally starting a server.</p>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--peach); margin-top:22px">
+      <h4>Why this file is named <code class="tok" style="font-size:.82em">__main__.py</code></h4>
+      <p>Inside a package, a file named <code class="tok">__main__.py</code> is the module Python runs when
+        the package itself is the target of <code class="tok">python -m</code>. So
+        <code class="tok">python -m localhost_pages</code> executes <em>this</em> file. The filename and the
+        <code class="tok">if __name__ == "__main__"</code> guard are two halves of the same convention —
+        together they make the package directly runnable.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 07 worth noticing ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">07 — step back</div>
+      <h2>Four things to take away.</h2>
+    </div>
+    <div class="notes">
+      <div class="note reveal d1">
+        <h4>An entrypoint should be wiring, not logic</h4>
+        <p>All 33 lines do is read configuration and connect parts that live elsewhere. There is no HTTP
+          handling, no file scanning, no business rule here — <code class="tok">__main__.py</code> is
+          deliberately thin, and that is what makes it easy to read in one sitting.</p>
+      </div>
+      <div class="note reveal d1" style="--ac:var(--sage)">
+        <h4>Every setting has a default</h4>
+        <p>Run <code class="tok">python -m localhost_pages</code> with an empty environment and it still
+          works: always-on logging at the default path, the default symlinks directory, loopback, port 8080. The environment
+          variables are overrides, never requirements.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--mist)">
+        <h4>The order of the four steps matters</h4>
+        <p>Logging is configured <em>first</em> so that anything later — including
+          <code class="tok">create_app</code> and the watcher it starts — can emit log lines that are
+          actually captured. Configuration is read before the app is built; the app is built before the
+          server runs. Each step depends on the one before it.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--peach)">
+        <h4>The factory boundary is shared with server.py</h4>
+        <p><code class="tok">create_app</code> and <code class="tok">DEFAULT_SYMLINKS</code> are imported
+          rather than redefined, so the default and the construction logic exist in exactly one place.
+          This file decides <em>what</em> to pass; <code class="tok">server.py</code> decides <em>how</em> to
+          build. Read server.py next to see the other side of that line.</p>
+      </div>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/"><div class="lbl">&larr; ALL FILES</div><div class="nm"><span class="mono">the twelve-file index</span></div></a>
+      <a class="next" href="/technical-explanation/logconfig/"><div class="lbl">NEXT &rarr;</div><div class="nm"><span class="mono">logconfig.py</span></div></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/__main__.py — 33 lines, 1 function, 4 env vars.</span>
+    <span><a href="/technical-explanation/">&larr; all twelve files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>

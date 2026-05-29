@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>registry.py — line by line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/technical-explanation/style.css" />
+<style>
+  :root { --accent: #a8c8a3; }   /* sage — registry.py */
+
+  /* page-local: the resolution-order ladder */
+  .ladder { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; margin-top: 22px; }
+  .lstep {
+    display: grid; grid-template-columns: 50px 1fr;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+  }
+  .lstep:last-child { border-bottom: none; }
+  .lstep .li {
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Instrument Serif', serif; font-size: 24px;
+    color: var(--accent); border-right: 1px solid var(--line);
+  }
+  .lstep .lc { padding: 13px 18px; }
+  .lstep .lc h4 { font-size: 12.5px; color: var(--ink); margin-bottom: 3px; }
+  .lstep .lc h4 .mono { font-family: 'IBM Plex Mono', monospace; color: var(--accent); }
+  .lstep .lc p { font-size: 12px; color: var(--muted); }
+  .rsig {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.6em;
+    color: var(--sand); vertical-align: 0.12em;
+  }
+  @media (max-width: 720px) {
+    .lstep { grid-template-columns: 40px 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<!-- ====================== status bar ====================== -->
+<div class="statusbar">
+  <div class="wrap">
+    <span class="crumb">&nbsp;<b>localhost-pages</b><span class="sep">/</span><a href="/technical-explanation/">technical-explanation</a><span class="sep">/</span><span class="here">registry.py</span></span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+</div>
+
+<!-- ====================== hero ====================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow reveal">One file, read closely</div>
+    <h1 class="reveal d1"><span class="mono">registry.py</span><br />turns a folder into <em>data.</em></h1>
+    <p class="lede reveal d2">
+      The <b>symlinks/</b> directory is the only API the app has. This file walks that directory and
+      hands back a list of <b>App</b> records — one per registered page. It is 89 lines of pure,
+      side-effect-free reading: <b>nothing here ever writes to disk</b>, and nothing here ever raises.
+    </p>
+    <div class="stats">
+      <div class="stat reveal d1"><div class="n">89</div><div class="l">lines</div></div>
+      <div class="stat reveal d2"><div class="n">9</div><div class="l">App fields</div></div>
+      <div class="stat reveal d3"><div class="n">4</div><div class="l">functions</div></div>
+      <div class="stat reveal d3"><div class="n">0</div><div class="l">paths that crash</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ====================== 01 top of file ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">01 — top of the file</div>
+      <h2>Imports and one constant.</h2>
+      <p>Two of the imports are siblings — <code class="tok">accents</code> and <code class="tok">icons</code> —
+        and the work of this file is mostly deciding <em>when</em> to call them. One module-level
+        constant fixes the default icon.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">registry.py</span><span>lines 1 — 14</span></div>
+      <pre><div class="cl"><span class="ln">1</span><span class="ct"><span class="k">from</span> __future__ <span class="k">import</span> annotations</span></div><div class="cl"><span class="ln">2</span><span class="ct"></span></div><div class="cl"><span class="ln">3</span><span class="ct"><span class="k">import</span> json</span></div><div class="cl"><span class="ln">4</span><span class="ct"><span class="k">import</span> logging</span></div><div class="cl"><span class="ln">5</span><span class="ct"><span class="k">from</span> dataclasses <span class="k">import</span> dataclass</span></div><div class="cl"><span class="ln">6</span><span class="ct"><span class="k">from</span> datetime <span class="k">import</span> datetime, timezone</span></div><div class="cl"><span class="ln">7</span><span class="ct"><span class="k">from</span> pathlib <span class="k">import</span> Path</span></div><div class="cl"><span class="ln">8</span><span class="ct"></span></div><div class="cl"><span class="ln">9</span><span class="ct"><span class="k">from</span> .accents <span class="k">import</span> resolve_accent</span></div><div class="cl"><span class="ln">10</span><span class="ct"><span class="k">from</span> .icons <span class="k">import</span> resolve_icon</span></div><div class="cl"><span class="ln">11</span><span class="ct"></span></div><div class="cl"><span class="ln">12</span><span class="ct">logger = logging.<span class="f">getLogger</span>(__name__)</span></div><div class="cl"><span class="ln">13</span><span class="ct"></span></div><div class="cl"><span class="ln">14</span><span class="ct">DEFAULT_ICON = <span class="s">"box"</span>  <span class="c"># Lucide name</span></span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">1</div>
+        <div class="txt"><code class="tok">from __future__ import annotations</code> makes every annotation a string
+          at runtime. That is what lets line 20 write <code class="tok">Path | None</code> without
+          paying for it — the <code class="tok">|</code> syntax never has to be evaluated.</div>
+      </div>
+      <div class="row">
+        <div class="lref">9 — 10</div>
+        <div class="txt">The two collaborators. <b>resolve_accent</b> turns an accent name (or nothing) into a hex
+          colour; <b>resolve_icon</b> turns an icon name into inline-ready HTML. This file decides the
+          <em>inputs</em>; those modules own the <em>policy</em>.</div>
+      </div>
+      <div class="row">
+        <div class="lref">12</div>
+        <div class="txt">A module-scoped logger keyed to <code class="tok">__name__</code>. It is used exactly twice —
+          both times in <code class="tok">_load_meta</code>, to record a malformed <code class="tok">meta.json</code>
+          without ever raising.</div>
+      </div>
+      <div class="row">
+        <div class="lref">14</div>
+        <div class="txt"><b>DEFAULT_ICON</b> is the single source of truth for "no icon was specified".
+          The comment matters — <code class="tok">"box"</code> is a <em>Lucide</em> name, so it resolves to a
+          bundled SVG rather than being rendered as literal text.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 02 the App dataclass ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">02 — the record</div>
+      <h2>The <span class="mono">App</span> frozen dataclass.</h2>
+      <p>Every function in this file exists to produce one of these. It is the contract between
+        <code class="tok">registry.py</code> and the Jinja template that renders the index — nine fields,
+        and once built, none of them can change.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">registry.py</span><span>lines 17 — 27</span></div>
+      <pre><div class="cl"><span class="ln">17</span><span class="ct"><span class="d">@dataclass(frozen=<span class="k">True</span>)</span></span></div><div class="cl"><span class="ln">18</span><span class="ct"><span class="k">class</span> <span class="f">App</span>:</span></div><div class="cl"><span class="ln">19</span><span class="ct">    name: str</span></div><div class="cl"><span class="ln">20</span><span class="ct">    target: Path | <span class="k">None</span></span></div><div class="cl"><span class="ln">21</span><span class="ct">    title: str</span></div><div class="cl"><span class="ln">22</span><span class="ct">    description: str</span></div><div class="cl"><span class="ln">23</span><span class="ct">    icon: str            <span class="c"># raw value from meta.json (or default)</span></span></div><div class="cl"><span class="ln">24</span><span class="ct">    icon_svg: str        <span class="c"># ready-to-inline HTML</span></span></div><div class="cl"><span class="ln">25</span><span class="ct">    accent: str          <span class="c"># resolved hex</span></span></div><div class="cl"><span class="ln">26</span><span class="ct">    last_modified: datetime | <span class="k">None</span></span></div><div class="cl"><span class="ln">27</span><span class="ct">    error: str | <span class="k">None</span></span></div></pre>
+    </div>
+
+    <div class="prose reveal d1">
+      <p>The three <code class="tok">| None</code> fields are the tell. <b>target</b>, <b>last_modified</b>
+        and <b>error</b> are exactly the fields that distinguish a healthy app from a broken one — a
+        working app has a target and an mtime and no error; a broken one is the mirror image.</p>
+    </div>
+
+    <div class="rows reveal d2" style="margin-top:22px">
+      <div class="drow"><div class="dk">name</div><div class="dv">The symlink's filename. This <b>is</b> the app's identifier — it becomes the URL segment and is used to seed the accent hash.</div></div>
+      <div class="drow"><div class="dk">target</div><div class="dv">The resolved directory the symlink points at, or <b>None</b> if the app is broken. A non-<code class="tok">None</code> target means the index.html exists.</div></div>
+      <div class="drow"><div class="dk">title</div><div class="dv">Display name for the card. Defaults to <code class="tok">name</code> when <code class="tok">meta.json</code> supplies nothing.</div></div>
+      <div class="drow"><div class="dk">description</div><div class="dv">One-line blurb under the title. Defaults to the empty string — the template simply renders nothing.</div></div>
+      <div class="drow"><div class="dk">icon</div><div class="dv">The <b>raw</b> icon value as written in <code class="tok">meta.json</code> (or <code class="tok">DEFAULT_ICON</code>). Kept around unresolved — useful for debugging and round-tripping.</div></div>
+      <div class="drow"><div class="dk">icon_svg</div><div class="dv">The <b>resolved</b> icon: inline-ready HTML produced by <code class="tok">resolve_icon</code>. Either a bundled Lucide SVG or an emoji span.</div></div>
+      <div class="drow"><div class="dk">accent</div><div class="dv">A resolved <code class="tok">#rrggbb</code> string from <code class="tok">resolve_accent</code>. Never <code class="tok">None</code> — there is always a colour, even if only a hashed one.</div></div>
+      <div class="drow"><div class="dk">last_modified</div><div class="dv">UTC timestamp of the app's <code class="tok">index.html</code>, or <b>None</b> when broken. Drives the "recently visited / recently changed" sort on the index.</div></div>
+      <div class="drow"><div class="dk">error</div><div class="dv">A human-readable reason the app could not load, or <b>None</b> for a healthy app. Its presence is the definition of "broken".</div></div>
+    </div>
+
+    <div class="note reveal d2" style="margin-top:22px">
+      <h4>Why <code class="tok" style="font-size:.82em">frozen=True</code>?</h4>
+      <p>An <code class="tok">App</code> is a snapshot of the filesystem at the instant <code class="tok">scan()</code>
+        ran. Freezing it makes that immutability enforced, not just intended — any code that holds an
+        <code class="tok">App</code> and tries to mutate a field gets a <code class="tok">FrozenInstanceError</code>.
+        It also makes the record hashable, so an <code class="tok">App</code> can live in a set or be used
+        as a dict key for free. Cheap to gain, expensive to skip.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 03 scan ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">03 — the entry point</div>
+      <h2><span class="rsig">scan()</span> &nbsp;walks the directory.</h2>
+      <p>The only public function. <code class="tok">server.py</code> calls it on every hit to
+        <code class="tok">GET /</code>. It is deliberately thin — list the directory, delegate each
+        entry to <code class="tok">_load</code>, return the list.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">registry.py</span><span>lines 30 — 38</span></div>
+      <pre><div class="cl"><span class="ln">30</span><span class="ct"><span class="k">def</span> <span class="f">scan</span>(symlinks_dir: Path) -> list[App]:</span></div><div class="cl"><span class="ln">31</span><span class="ct">    <span class="k">if not</span> symlinks_dir.<span class="f">exists</span>():</span></div><div class="cl"><span class="ln">32</span><span class="ct">        <span class="k">return</span> []</span></div><div class="cl"><span class="ln">33</span><span class="ct">    apps: list[App] = []</span></div><div class="cl"><span class="ln">34</span><span class="ct">    <span class="k">for</span> entry <span class="k">in</span> <span class="f">sorted</span>(symlinks_dir.<span class="f">iterdir</span>(), key=<span class="k">lambda</span> p: p.name):</span></div><div class="cl"><span class="ln">35</span><span class="ct">        <span class="k">if</span> entry.name.<span class="f">startswith</span>(<span class="s">"."</span>):</span></div><div class="cl"><span class="ln">36</span><span class="ct">            <span class="k">continue</span></span></div><div class="cl"><span class="ln">37</span><span class="ct">        apps.<span class="f">append</span>(<span class="f">_load</span>(entry))</span></div><div class="cl"><span class="ln">38</span><span class="ct">    <span class="k">return</span> apps</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">31 — 32</div>
+        <div class="txt">If the symlinks directory does not exist yet, return an empty list rather than
+          raising. A first-run app with no <code class="tok">symlinks/</code> folder still renders a valid
+          (empty) index — degradation, not failure.</div>
+      </div>
+      <div class="row">
+        <div class="lref">34</div>
+        <div class="txt"><code class="tok">sorted(&hellip;, key=lambda p: p.name)</code> makes the result <b>deterministic</b>.
+          <code class="tok">iterdir()</code> yields entries in arbitrary filesystem order; sorting by name
+          means the index card order is stable across requests and across machines.</div>
+      </div>
+      <div class="row">
+        <div class="lref">35 — 36</div>
+        <div class="txt">Dotfiles are skipped — <code class="tok">.DS_Store</code>, <code class="tok">.gitkeep</code>,
+          editor scratch. The directory holds <em>app symlinks</em>; anything beginning with
+          <code class="tok">.</code> is treated as not-an-app and quietly ignored.</div>
+      </div>
+      <div class="row">
+        <div class="lref">37</div>
+        <div class="txt">Every surviving entry becomes an <code class="tok">App</code> via <code class="tok">_load</code> —
+          including broken ones. <code class="tok">scan()</code> never filters on health; a broken app is still
+          a row in the list, so the index can show it.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 04 _broken ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">04 — the error path</div>
+      <h2><span class="rsig">_broken()</span> &nbsp;the failure factory.</h2>
+      <p>One helper, called from four places. It builds a valid <code class="tok">App</code> that
+        nonetheless carries an <code class="tok">error</code> — the record shape never changes, only its
+        contents.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">registry.py</span><span>lines 41 — 47</span></div>
+      <pre><div class="cl"><span class="ln">41</span><span class="ct"><span class="k">def</span> <span class="f">_broken</span>(name: str, error: str) -> App:</span></div><div class="cl"><span class="ln">42</span><span class="ct">    <span class="k">return</span> <span class="f">App</span>(</span></div><div class="cl"><span class="ln">43</span><span class="ct">        name=name, target=<span class="k">None</span>, title=name, description=<span class="s">""</span>,</span></div><div class="cl"><span class="ln">44</span><span class="ct">        icon=DEFAULT_ICON, icon_svg=<span class="f">resolve_icon</span>(DEFAULT_ICON),</span></div><div class="cl"><span class="ln">45</span><span class="ct">        accent=<span class="s">"#d6928f"</span>,  <span class="c"># broken rows always dusty rose</span></span></div><div class="cl"><span class="ln">46</span><span class="ct">        last_modified=<span class="k">None</span>, error=error,</span></div><div class="cl"><span class="ln">47</span><span class="ct">    )</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">43</div>
+        <div class="txt"><code class="tok">target=None</code> and <code class="tok">title=name</code> — a broken app has nowhere
+          to point and nothing to call itself, so it falls back to its raw filename. <code class="tok">description</code>
+          is empty.</div>
+      </div>
+      <div class="row">
+        <div class="lref">44</div>
+        <div class="txt">Even a broken row gets a real icon — <code class="tok">resolve_icon(DEFAULT_ICON)</code> yields the
+          bundled <code class="tok">box.svg</code>. The card still has a glyph; it is simply the generic one.</div>
+      </div>
+      <div class="row">
+        <div class="lref">45</div>
+        <div class="txt"><b>The fixed accent.</b> A healthy app's colour is hashed from its name and could be any of
+          32 pastels — but a broken app is hard-coded to <code class="tok">#d6928f</code>, a dusty rose. Note this
+          is <em>not</em> any of the named accents in <code class="tok">accents.py</code>; it is a reserved
+          off-palette colour so "broken" reads as visually distinct at a glance, never accidentally matching a
+          healthy card.</div>
+      </div>
+      <div class="row">
+        <div class="lref">46</div>
+        <div class="txt"><code class="tok">last_modified=None</code> (there is no <code class="tok">index.html</code> to stat)
+          and <code class="tok">error=error</code> — the caller-supplied reason string is passed straight through
+          and becomes the one piece of diagnostic the index can display.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="margin-top:22px">
+      <h4>Why a broken app is still an <code class="tok" style="font-size:.82em">App</code></h4>
+      <p>Returning <code class="tok">_broken(&hellip;)</code> instead of <code class="tok">None</code> means the
+        list from <code class="tok">scan()</code> is uniform — every element is an <code class="tok">App</code>,
+        and the template never has to special-case a missing entry. The difference between healthy and
+        broken is data inside the record (<code class="tok">error is not None</code>), not the record's type.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 05 _load ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">05 — the workhorse</div>
+      <h2><span class="rsig">_load()</span> &nbsp;one entry to one App.</h2>
+      <p>This is where a directory entry is validated and, if it survives, enriched. The structure
+        is a ladder of guards: each one either returns a <code class="tok">_broken</code> app or falls
+        through to the next.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">registry.py</span><span>lines 50 — 69</span></div>
+      <pre><div class="cl"><span class="ln">50</span><span class="ct"><span class="k">def</span> <span class="f">_load</span>(link: Path) -> App:</span></div><div class="cl"><span class="ln">51</span><span class="ct">    name = link.name</span></div><div class="cl"><span class="ln">52</span><span class="ct">    <span class="k">try</span>:</span></div><div class="cl"><span class="ln">53</span><span class="ct">        target = link.<span class="f">resolve</span>(strict=<span class="k">True</span>)</span></div><div class="cl"><span class="ln">54</span><span class="ct">    <span class="k">except</span> (FileNotFoundError, OSError) <span class="k">as</span> e:</span></div><div class="cl"><span class="ln">55</span><span class="ct">        <span class="k">return</span> <span class="f">_broken</span>(name, <span class="s">f"broken symlink: {e}"</span>)</span></div><div class="cl"><span class="ln">56</span><span class="ct">    <span class="k">if not</span> target.<span class="f">is_dir</span>():</span></div><div class="cl"><span class="ln">57</span><span class="ct">        <span class="k">return</span> <span class="f">_broken</span>(name, <span class="s">"symlink target is not a directory"</span>)</span></div><div class="cl"><span class="ln">58</span><span class="ct">    index = target / <span class="s">"index.html"</span></span></div><div class="cl"><span class="ln">59</span><span class="ct">    <span class="k">if not</span> index.<span class="f">exists</span>():</span></div><div class="cl"><span class="ln">60</span><span class="ct">        <span class="k">return</span> <span class="f">_broken</span>(name, <span class="s">"missing index.html"</span>)</span></div><div class="cl"><span class="ln">61</span><span class="ct">    meta = <span class="f">_load_meta</span>(target / <span class="s">"meta.json"</span>, name)</span></div><div class="cl"><span class="ln">62</span><span class="ct">    last_modified = datetime.<span class="f">fromtimestamp</span>(index.<span class="f">stat</span>().st_mtime, tz=timezone.utc)</span></div><div class="cl"><span class="ln">63</span><span class="ct">    <span class="k">return</span> <span class="f">App</span>(</span></div><div class="cl"><span class="ln">64</span><span class="ct">        name=name, target=target,</span></div><div class="cl"><span class="ln">65</span><span class="ct">        title=meta[<span class="s">"title"</span>], description=meta[<span class="s">"description"</span>],</span></div><div class="cl"><span class="ln">66</span><span class="ct">        icon=meta[<span class="s">"icon"</span>], icon_svg=<span class="f">resolve_icon</span>(meta[<span class="s">"icon"</span>]),</span></div><div class="cl"><span class="ln">67</span><span class="ct">        accent=<span class="f">resolve_accent</span>(meta.<span class="f">get</span>(<span class="s">"accent"</span>), name),</span></div><div class="cl"><span class="ln">68</span><span class="ct">        last_modified=last_modified, error=<span class="k">None</span>,</span></div><div class="cl"><span class="ln">69</span><span class="ct">    )</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">52 — 55</div>
+        <div class="txt"><b>Guard one.</b> <code class="tok">resolve(strict=True)</code> follows the symlink and demands
+          the target actually exist — if it does not, it raises. A dangling symlink becomes
+          <code class="tok">_broken(name, "broken symlink: &hellip;")</code> with the exception's text appended for
+          diagnosis. Catching <code class="tok">OSError</code> too covers permission errors and symlink loops.</div>
+      </div>
+      <div class="row">
+        <div class="lref">56 — 57</div>
+        <div class="txt"><b>Guard two.</b> The target resolved, but it has to be a <em>directory</em>. A symlink
+          pointing at a file is a broken app — an app is a folder of static assets, not a single file.</div>
+      </div>
+      <div class="row">
+        <div class="lref">58 — 60</div>
+        <div class="txt"><b>Guard three.</b> The directory must contain an <code class="tok">index.html</code>. That file
+          is the app's entry document; without it there is nothing for <code class="tok">GET /{app}/</code> to
+          serve, so the app is broken.</div>
+      </div>
+      <div class="row">
+        <div class="lref">61</div>
+        <div class="txt">Past the guards. Metadata is delegated to <code class="tok">_load_meta</code>, which is given the
+          path to a (possibly absent) <code class="tok">meta.json</code> and the <code class="tok">name</code> to use
+          as the title default.</div>
+      </div>
+      <div class="row">
+        <div class="lref">62</div>
+        <div class="txt">The freshness signal. The <code class="tok">index.html</code>'s <code class="tok">st_mtime</code> is
+          read and converted to a <b>timezone-aware UTC</b> datetime. Passing <code class="tok">tz=timezone.utc</code>
+          explicitly avoids a naive local-time datetime — important once the value is compared or formatted.</div>
+      </div>
+      <div class="row">
+        <div class="lref">63 — 69</div>
+        <div class="txt">The healthy <code class="tok">App</code>. <code class="tok">title/description/icon</code> come
+          straight from the <code class="tok">meta</code> dict; <code class="tok">icon_svg</code> and
+          <code class="tok">accent</code> are <em>resolved</em> here by the two sibling modules. Note
+          <code class="tok">meta.get("accent")</code> may be <code class="tok">None</code> — and
+          <code class="tok">resolve_accent</code> is built to accept exactly that, hashing the name into a colour
+          instead.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--mist); margin-top:22px">
+      <h4>The division of labour on lines 66 — 67</h4>
+      <p><code class="tok">_load</code> never decides what an icon or accent <em>means</em>. It passes the raw
+        value (or <code class="tok">None</code>) to <code class="tok">resolve_icon</code> /
+        <code class="tok">resolve_accent</code> and trusts them to apply policy — emoji fallback, Lucide lookup,
+        hash-from-name. This file knows the filesystem; those files know the design system.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 06 _load_meta ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">06 — the metadata reader</div>
+      <h2><span class="rsig">_load_meta()</span> &nbsp;never crashes on bad input.</h2>
+      <p>An app may ship a <code class="tok">meta.json</code> to customise its card. It may also ship a
+        broken one, an empty one, or none at all. This function's whole job is to absorb every one of
+        those cases and still return a usable dict.</p>
+    </div>
+
+    <div class="code reveal d1">
+      <div class="cap"><span class="fn">registry.py</span><span>lines 72 — 89</span></div>
+      <pre><div class="cl"><span class="ln">72</span><span class="ct"><span class="k">def</span> <span class="f">_load_meta</span>(path: Path, name: str) -> dict:</span></div><div class="cl"><span class="ln">73</span><span class="ct">    defaults = {<span class="s">"title"</span>: name, <span class="s">"description"</span>: <span class="s">""</span>, <span class="s">"icon"</span>: DEFAULT_ICON, <span class="s">"accent"</span>: <span class="k">None</span>}</span></div><div class="cl"><span class="ln">74</span><span class="ct">    <span class="k">if not</span> path.<span class="f">exists</span>():</span></div><div class="cl"><span class="ln">75</span><span class="ct">        <span class="k">return</span> defaults</span></div><div class="cl"><span class="ln">76</span><span class="ct">    <span class="k">try</span>:</span></div><div class="cl"><span class="ln">77</span><span class="ct">        data = json.<span class="f">loads</span>(path.<span class="f">read_text</span>())</span></div><div class="cl"><span class="ln">78</span><span class="ct">    <span class="k">except</span> (json.JSONDecodeError, OSError) <span class="k">as</span> e:</span></div><div class="cl"><span class="ln">79</span><span class="ct">        logger.<span class="f">warning</span>(<span class="s">"malformed meta.json at %s: %s"</span>, path, e)</span></div><div class="cl"><span class="ln">80</span><span class="ct">        <span class="k">return</span> defaults</span></div><div class="cl"><span class="ln">81</span><span class="ct">    <span class="k">if not</span> <span class="f">isinstance</span>(data, dict):</span></div><div class="cl"><span class="ln">82</span><span class="ct">        logger.<span class="f">warning</span>(<span class="s">"meta.json at %s is not an object"</span>, path)</span></div><div class="cl"><span class="ln">83</span><span class="ct">        <span class="k">return</span> defaults</span></div><div class="cl"><span class="ln">84</span><span class="ct">    out = <span class="f">dict</span>(defaults)</span></div><div class="cl"><span class="ln">85</span><span class="ct">    <span class="k">for</span> k <span class="k">in</span> (<span class="s">"title"</span>, <span class="s">"description"</span>, <span class="s">"icon"</span>, <span class="s">"accent"</span>):</span></div><div class="cl"><span class="ln">86</span><span class="ct">        v = data.<span class="f">get</span>(k)</span></div><div class="cl"><span class="ln">87</span><span class="ct">        <span class="k">if</span> <span class="f">isinstance</span>(v, str) <span class="k">and</span> v:</span></div><div class="cl"><span class="ln">88</span><span class="ct">            out[k] = v</span></div><div class="cl"><span class="ln">89</span><span class="ct">    <span class="k">return</span> out</span></div></pre>
+    </div>
+
+    <div class="ann reveal d1">
+      <div class="row">
+        <div class="lref">73</div>
+        <div class="txt">The defaults are built first, with <code class="tok">name</code> already baked in as the title.
+          Every later branch can return this dict and the caller still gets all four keys it indexes on
+          lines 65 — 67.</div>
+      </div>
+      <div class="row">
+        <div class="lref">74 — 75</div>
+        <div class="txt">No <code class="tok">meta.json</code> at all is the common, expected case — not an error. Most
+          apps never write one. Return the defaults silently, with no log line.</div>
+      </div>
+      <div class="row">
+        <div class="lref">76 — 80</div>
+        <div class="txt"><b>The never-crash core.</b> A file that is invalid JSON, or unreadable, raises
+          <code class="tok">JSONDecodeError</code> or <code class="tok">OSError</code> — both are caught, a
+          <code class="tok">warning</code> is logged with the path and the exception, and the defaults are
+          returned. One app's typo can never break the index.</div>
+      </div>
+      <div class="row">
+        <div class="lref">81 — 83</div>
+        <div class="txt">Valid JSON is not enough — it must be a JSON <em>object</em>. A file containing
+          <code class="tok">[]</code> or <code class="tok">"hello"</code> or <code class="tok">42</code> parses
+          fine but is not a dict; it is logged and the defaults are used.</div>
+      </div>
+      <div class="row">
+        <div class="lref">84</div>
+        <div class="txt"><code class="tok">dict(defaults)</code> makes a <b>copy</b>. The merge on the next lines
+          mutates <code class="tok">out</code> in place — copying first keeps the shared
+          <code class="tok">defaults</code> dict pristine for any later call.</div>
+      </div>
+      <div class="row">
+        <div class="lref">85 — 88</div>
+        <div class="txt">A strict allow-list merge. Only the four known keys are even looked at — extra keys in
+          <code class="tok">meta.json</code> are ignored. A value overrides its default <b>only</b> if it is a
+          <code class="tok">str</code> <em>and</em> non-empty: <code class="tok">isinstance(v, str) and v</code>.
+          A number, a null, or an empty string all leave the default in place.</div>
+      </div>
+    </div>
+
+    <div class="note reveal d2" style="--ac:var(--peach); margin-top:22px">
+      <h4>Why only non-empty strings survive the merge</h4>
+      <p>The four card fields are all rendered as text. Accepting <code class="tok">"title": 7</code> or
+        <code class="tok">"icon": null</code> would push a non-string into the <code class="tok">App</code> and
+        downstream into the template. The <code class="tok">and v</code> half additionally rejects
+        <code class="tok">""</code> — an empty title is no title, so the <code class="tok">name</code> default is
+        better. The result: every value in the returned dict is either the default or a real, non-empty
+        string.</p>
+    </div>
+
+    <div class="prose reveal d2" style="margin-top:22px">
+      <p>Read top to bottom, <code class="tok">_load_meta</code> is a ladder of four ways
+        <code class="tok">meta.json</code> can fail to be useful — absent, unreadable, not an object, or
+        carrying junk values — and each rung lands on the same safe floor:</p>
+    </div>
+
+    <div class="ladder reveal d3">
+      <div class="lstep">
+        <div class="li">1</div>
+        <div class="lc"><h4>File absent</h4><p>No <code class="tok">meta.json</code> on disk &rarr; defaults, no log.</p></div>
+      </div>
+      <div class="lstep">
+        <div class="li">2</div>
+        <div class="lc"><h4>Unparseable or unreadable</h4><p>Invalid JSON / I/O error &rarr; defaults, <span class="mono">warning</span> logged.</p></div>
+      </div>
+      <div class="lstep">
+        <div class="li">3</div>
+        <div class="lc"><h4>Not an object</h4><p>Parsed to a list / scalar &rarr; defaults, <span class="mono">warning</span> logged.</p></div>
+      </div>
+      <div class="lstep">
+        <div class="li">4</div>
+        <div class="lc"><h4>Object with junk fields</h4><p>Per-key: non-string or empty values silently fall back to the default.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 07 worth noticing ====================== -->
+<section>
+  <div class="wrap">
+    <div class="shead reveal">
+      <div class="tag">07 — step back</div>
+      <h2>Four things to take away.</h2>
+    </div>
+    <div class="notes">
+      <div class="note reveal d1">
+        <h4>This file is a pure reader</h4>
+        <p>Nothing in <code class="tok">registry.py</code> writes, deletes, or mutates. It only
+          <em>observes</em> the filesystem and returns immutable <code class="tok">App</code> records.
+          That is what makes it safe to call on every single request to <code class="tok">GET /</code>.</p>
+      </div>
+      <div class="note reveal d1" style="--ac:var(--sage)">
+        <h4>Failure is data, not an exception</h4>
+        <p>A broken symlink, a missing <code class="tok">index.html</code>, a corrupt
+          <code class="tok">meta.json</code> — none of them raise. Each becomes either a
+          <code class="tok">_broken</code> app or a fall-back to defaults. The list <code class="tok">scan()</code>
+          returns is always complete and always uniform.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--rose)">
+        <h4>Broken always reads as dusty rose</h4>
+        <p>Healthy cards get a name-hashed colour from a 32-pastel palette; broken cards are pinned to
+          the off-palette <code class="tok">#d6928f</code>. The colour itself <em>is</em> the error
+          indicator — no legend, no icon swap needed.</p>
+      </div>
+      <div class="note reveal d2" style="--ac:var(--mist)">
+        <h4>Policy lives in the siblings</h4>
+        <p><code class="tok">_load</code> decides <em>what</em> to resolve; <code class="tok">accents.py</code>
+          and <code class="tok">icons.py</code> decide <em>how</em>. Keeping the filesystem walk and the
+          design-system rules in separate files means each can change without disturbing the other.</p>
+      </div>
+    </div>
+
+    <div class="pager reveal d3" style="margin-top:30px">
+      <a class="prev" href="/technical-explanation/watcher/"><div class="lbl">&larr; PREVIOUS</div><div class="nm"><span class="mono">watcher.py</span></div></a>
+      <a class="next" href="/technical-explanation/index/"><div class="lbl">NEXT &rarr;</div><div class="nm"><span class="mono">index.py</span></div></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>src/localhost_pages/registry.py — 89 lines, 4 functions, 1 frozen dataclass.</span>
+    <span><a href="/technical-explanation/">&larr; all twelve files</a></span>
+  </div>
+</footer>
+
+<script src="/technical-explanation/reveal.js"></script>
+</body>
+</html>
